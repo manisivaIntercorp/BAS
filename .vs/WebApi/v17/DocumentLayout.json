@@ -1,0 +1,245 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "D:\\Workspace\\BAS\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|d:\\workspace\\bas\\controllers\\nationalitycontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|solutionrelative:controllers\\nationalitycontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|d:\\workspace\\bas\\dataaccesslayer\\implementation\\repositorybase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|solutionrelative:dataaccesslayer\\implementation\\repositorybase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|d:\\workspace\\bas\\controllers\\weatherforecastcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|solutionrelative:controllers\\weatherforecastcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|d:\\workspace\\bas\\controllers\\apibasecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|solutionrelative:controllers\\apibasecontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|d:\\workspace\\bas\\dataaccesslayer\\uow\\implementation\\uownationality.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|solutionrelative:dataaccesslayer\\uow\\implementation\\uownationality.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|d:\\workspace\\bas\\dataaccesslayer\\implementation\\nationalitydal.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|solutionrelative:dataaccesslayer\\implementation\\nationalitydal.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|d:\\workspace\\bas\\webapi.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}",
+      "RelativeMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|solutionrelative:webapi.http||{5703B403-55E7-4C63-8C88-A8F52C7A45C5}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|d:\\workspace\\bas\\dataaccesslayer\\interface\\inationalitydal.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|solutionrelative:dataaccesslayer\\interface\\inationalitydal.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|d:\\workspace\\bas\\dataaccesslayer\\model\\nationalitymodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|solutionrelative:dataaccesslayer\\model\\nationalitymodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|d:\\workspace\\bas\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|d:\\workspace\\bas\\webapi.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|solutionrelative:webapi.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|d:\\workspace\\bas\\dataaccesslayer\\uow\\interface\\iuownationality.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|solutionrelative:dataaccesslayer\\uow\\interface\\iuownationality.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|d:\\workspace\\bas\\nlog.config||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{9BE5A8C6-78F4-4C6A-B9C6-E89D4830D0A7}|WebApi.csproj|solutionrelative:nlog.config||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|d:\\workspace\\bas\\dataaccesslayer\\dataaccesslayer.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{EFBAF5C4-96B2-4058-B8BB-60C1DFA3FE1D}|DataAccessLayer\\DataAccessLayer.csproj|solutionrelative:dataaccesslayer\\dataaccesslayer.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "NationalityController.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\Controllers\\NationalityController.cs",
+              "RelativeDocumentMoniker": "Controllers\\NationalityController.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\Controllers\\NationalityController.cs",
+              "RelativeToolTip": "Controllers\\NationalityController.cs",
+              "ViewState": "AgIAABsAAAAAAAAAAAAAAC8AAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T10:58:49.735Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "UowNationality.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\DataAccessLayer\\Uow\\Implementation\\UowNationality.cs",
+              "RelativeDocumentMoniker": "DataAccessLayer\\Uow\\Implementation\\UowNationality.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\DataAccessLayer\\Uow\\Implementation\\UowNationality.cs",
+              "RelativeToolTip": "DataAccessLayer\\Uow\\Implementation\\UowNationality.cs",
+              "ViewState": "AgIAAEsAAAAAAAAAAAAAAB4AAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T09:24:55.237Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "WeatherForecastController.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\Controllers\\WeatherForecastController.cs",
+              "RelativeDocumentMoniker": "Controllers\\WeatherForecastController.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\Controllers\\WeatherForecastController.cs",
+              "RelativeToolTip": "Controllers\\WeatherForecastController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-01-11T13:45:19.483Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "ApiBaseController.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\Controllers\\ApiBaseController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ApiBaseController.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\Controllers\\ApiBaseController.cs",
+              "RelativeToolTip": "Controllers\\ApiBaseController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAAlAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T11:02:26.092Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "RepositoryBase.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\DataAccessLayer\\Implementation\\RepositoryBase.cs",
+              "RelativeDocumentMoniker": "DataAccessLayer\\Implementation\\RepositoryBase.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\DataAccessLayer\\Implementation\\RepositoryBase.cs",
+              "RelativeToolTip": "DataAccessLayer\\Implementation\\RepositoryBase.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T10:36:24.645Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "WebApi.http",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\WebApi.http",
+              "RelativeDocumentMoniker": "WebApi.http",
+              "ToolTip": "D:\\Workspace\\BAS\\WebApi.http",
+              "RelativeToolTip": "WebApi.http",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003502|",
+              "WhenOpened": "2025-01-15T04:50:29.959Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "INationalityDAL.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\DataAccessLayer\\Interface\\INationalityDAL.cs",
+              "RelativeDocumentMoniker": "DataAccessLayer\\Interface\\INationalityDAL.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\DataAccessLayer\\Interface\\INationalityDAL.cs",
+              "RelativeToolTip": "DataAccessLayer\\Interface\\INationalityDAL.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T09:27:45.283Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAArAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T10:59:55.12Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "NationalityDAL.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\DataAccessLayer\\Implementation\\NationalityDAL.cs",
+              "RelativeDocumentMoniker": "DataAccessLayer\\Implementation\\NationalityDAL.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\DataAccessLayer\\Implementation\\NationalityDAL.cs",
+              "RelativeToolTip": "DataAccessLayer\\Implementation\\NationalityDAL.cs",
+              "ViewState": "AgIAAC0AAAAAAAAAAAAAAEsAAAAgAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T09:51:54.671Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "nlog.config",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\nlog.config",
+              "RelativeDocumentMoniker": "nlog.config",
+              "ToolTip": "D:\\Workspace\\BAS\\nlog.config",
+              "RelativeToolTip": "nlog.config",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAABIAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
+              "WhenOpened": "2024-10-17T04:48:42.978Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "WebApi.csproj",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\WebApi.csproj",
+              "RelativeDocumentMoniker": "WebApi.csproj",
+              "ToolTip": "D:\\Workspace\\BAS\\WebApi.csproj",
+              "RelativeToolTip": "WebApi.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-10-16T11:59:42.057Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "IUowNationality.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\DataAccessLayer\\Uow\\Interface\\IUowNationality.cs",
+              "RelativeDocumentMoniker": "DataAccessLayer\\Uow\\Interface\\IUowNationality.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\DataAccessLayer\\Uow\\Interface\\IUowNationality.cs",
+              "RelativeToolTip": "DataAccessLayer\\Uow\\Interface\\IUowNationality.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T09:25:34.476Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "NationalityModel.cs",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\DataAccessLayer\\Model\\NationalityModel.cs",
+              "RelativeDocumentMoniker": "DataAccessLayer\\Model\\NationalityModel.cs",
+              "ToolTip": "D:\\Workspace\\BAS\\DataAccessLayer\\Model\\NationalityModel.cs",
+              "RelativeToolTip": "DataAccessLayer\\Model\\NationalityModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2024-10-16T09:29:41.88Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "DataAccessLayer.csproj",
+              "DocumentMoniker": "D:\\Workspace\\BAS\\DataAccessLayer\\DataAccessLayer.csproj",
+              "RelativeDocumentMoniker": "DataAccessLayer\\DataAccessLayer.csproj",
+              "ToolTip": "D:\\Workspace\\BAS\\DataAccessLayer\\DataAccessLayer.csproj",
+              "RelativeToolTip": "DataAccessLayer\\DataAccessLayer.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2024-10-16T09:31:55.367Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
