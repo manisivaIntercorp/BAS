@@ -77,10 +77,13 @@ namespace WebApi.Controllers
                 using (IUowUserAccount _repo = new UowUserAccount(ConnectionString))
                 {
                     var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel);
+                    var msg = "User Account Inserted Successfully";
                     _repo.Commit();
                     if (result)
                     {
-                        return Ok(result);
+                        Ok(result);
+                        Ok(msg);
+                        
                     }
                     else
                     {
@@ -88,6 +91,8 @@ namespace WebApi.Controllers
                         _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
                         return BadRequest();
                     }
+                    return Ok(msg +' '+ result);
+
                 }
             }
             catch (Exception ex)
@@ -96,6 +101,46 @@ namespace WebApi.Controllers
                 throw;
             }
         }
+
+        [HttpPut("updateUserAccount/{id}")]
+        public async Task<IActionResult> UpdateUserAccount(int id, [FromBody] UserAccountModel userAccount)
+        {
+
+            if (userAccount == null || id != userAccount.UserId)
+            {
+                return BadRequest("Invalid data.");
+            }
+
+            try
+            {
+                using (IUowUserAccount _repo = new UowUserAccount(ConnectionString))
+                {
+                    var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(id,userAccount);
+                    var msg = "User account updated successfully.";
+                    _repo.Commit();
+                    if (result)
+                    {
+                      Ok(result);
+                      Ok(msg);
+                        
+                    }
+                    else
+                    {
+                        _logger.LogError(Environment.NewLine);
+                        _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
+                        return BadRequest();
+                    }
+                    return Ok(msg + result);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+
+            }
+        }
+
         [HttpGet("deleteUserAccount/{id}")]
         public async Task<IActionResult> DeleteUserAccount(int id)
         {
