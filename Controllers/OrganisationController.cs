@@ -54,10 +54,10 @@ namespace WebApi.Controllers
             {
                 //using (IUowOrganisation _repo = new UowOrganisation(ConnectionString))
                 //{
-                    var lstNationalityModel = await _repository.OrganisationDALRepo.GetAllOrganisation();
-                    if (lstNationalityModel != null)
+                    var lsOrganisation = await _repository.OrganisationDALRepo.GetAllOrganisation();
+                    if (lsOrganisation != null)
                     {
-                        return Ok(lstNationalityModel);
+                        return Ok(lsOrganisation);
                     }
                     else
                     {
@@ -77,10 +77,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                //using (IUowOrganisation _repo = new UowOrganisation(ConnectionString))
-                //{
-
-                //UowOrganisation _repo = new UowOrganisation(ConnectionString);
+                
                 var objOrganisationModel = await _repository.OrganisationDALRepo.GetOrganisationById(id);
                 if (objOrganisationModel != null)
                 {
@@ -90,7 +87,6 @@ namespace WebApi.Controllers
                 {
                     return BadRequest();
                 }
-                // }
             }
             catch (Exception ex)
             {
