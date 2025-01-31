@@ -1,16 +1,9 @@
-﻿using Microsoft.Extensions.Logging;
-using System.Data;
+﻿using System.Data;
 
 namespace DataAccessLayer.Implementation
 {
     public class MailServer
     {
-        #region Page Variables 
-        private readonly string _connectionString;
-        private readonly ILogger<MailServer> _logger;
-        #endregion
-
-
         #region Page Properties
         
         public MailServer() { }
