@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+using System.Data;
 using System.Text.Json.Serialization;
 
 namespace DataAccessLayer.Model
@@ -6,6 +7,38 @@ namespace DataAccessLayer.Model
     public class UserAccountModel
     {
         public DataTable UserAccountOrgTable = new DataTable();
+        public DataTable UserAccountRoleTable = new DataTable();
+        public DataTable ConvertToDataTable(List<RoleName> models, int id)
+        {
+            // Define columns dynamically based on the model's properties
+            var properties = typeof(RoleName).GetProperties();
+            UserAccountRoleTable.Columns.Add("UserID", typeof(Int64));
+            foreach (var property in properties)
+            {
+
+                UserAccountRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+            }
+            // Add rows dynamically based on the model data
+            foreach (var model in models)
+            {
+                DataRow row = UserAccountRoleTable.NewRow();
+                foreach (var property in properties)
+                {
+                    if (id == 0)
+                    {
+                        row["UserID"] = 0;
+                    }
+                    else if (id > 0)
+                    {
+                        row["UserID"] = id;
+                    }
+                    row[property.Name] = property.GetValue(model) ?? DBNull.Value;
+                }
+                UserAccountRoleTable.Rows.Add(row);
+            }
+
+            return UserAccountRoleTable;
+        }
         public DataTable ConvertToDataTable(List<UserAccountOrgDatatable> models, int id)
         {
             // Define columns dynamically based on the model's properties
@@ -37,7 +70,6 @@ namespace DataAccessLayer.Model
 
             return UserAccountOrgTable;
         }
-
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
@@ -82,8 +114,11 @@ namespace DataAccessLayer.Model
     public class UserAccountUpdateRequest
     {
         public UserAccountModel UserAccount { get; set; }
+        public List<RoleName> RoleNameList { get; set; } = new List<RoleName>();
+        
         public List<UserAccountOrgDatatable> OrgDatatable { get; set; }
         
+
     }
     public class DeleteRoleinUserAccount
     {
@@ -135,7 +170,6 @@ namespace DataAccessLayer.Model
     public class RoleName
     {
         public long? RoleID { get; set; }
-        //[DataType(DataType.Date)]
         public DateOnly? RoleNameEffectiveDate { get; set; }
         public long CreatedBy { get; set; }
     }
@@ -197,7 +231,8 @@ namespace DataAccessLayer.Model
         public List<GetUserAccountOrg> Organizations { get; set; }
     }
     public class UnlockUser
-    {public long? UpdatedBy { get; set; }
+    {
+        public long? UpdatedBy { get; set; }
         public DataTable UnlockTable = new DataTable();
         public DataTable ConvertToDataTable(List<UnlockUserList> models)
         {

@@ -1,6 +1,0 @@
-2024-10-17 10:33:44.7028|ERROR|WebApi.Controllers.NationalityController|   at WebApi.Controllers.NationalityController.GetNationalityById(Int32 code) in E:\WebApi\Controllers\NationalityController.cs:line 66
-2024-10-17 10:34:58.9537|ERROR|WebApi.Controllers.NationalityController|Attempted to divide by zero.
-2024-10-17 10:44:50.3626|ERROR|WebApi.Controllers.NationalityController|   at WebApi.Controllers.NationalityController.InsertUpdateNationality(NationalityModel objModel) in E:\WebApi\Controllers\NationalityController.cs:line 92
-2024-10-17 11:16:26.7054|ERROR|WebApi.Controllers.NationalityController|Bad Request occurred while accessing the DeleteNationality function in Nationality api controller
-2024-10-17 11:18:07.5105|ERROR|WebApi.Controllers.NationalityController|Bad Request occurred while accessing the DeleteNationality function in Nationality api controller
-2024-10-17 11:31:27.1670|ERROR|WebApi.Controllers.NationalityController|Attempted to divide by zero.

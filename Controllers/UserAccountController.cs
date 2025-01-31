@@ -172,7 +172,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                if (objModel == null || objModel.UserAccount == null || objModel.OrgDatatable == null)
+                if (objModel == null || objModel.UserAccount == null || objModel.OrgDatatable == null ||  objModel.RoleNameList == null)
                 {
                     return BadRequest("Invalid input data.");
                 }
@@ -181,6 +181,7 @@ namespace WebApi.Controllers
                     using (IUowUserAccount _repo = new UowUserAccount(ConnectionString))
                     {
                         DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDatatable, 0);
+                        DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, 0);
                         var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
                         var msg = "User Account Inserted Successfully";
                         _repo.Commit();

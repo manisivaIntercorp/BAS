@@ -207,6 +207,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@ProfileID", model.ProfileID);
             parameters.Add("@EffectiveDate", model.EffectiveDate);
             parameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model.UserAccountOrgTable), DbType.String);
+            parameters.Add("@dtOrgRole", JsonConvert.SerializeObject(model.UserAccountRoleTable), DbType.String);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@Mode", "ADD");
@@ -328,7 +329,7 @@ namespace DataAccessLayer.Implementation
                     string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
 
                     // Return the roles list along with output parameters
-                    return (roles, retVal, msg);
+                    return (roles, retVal, msg);  
                 }
                 
             }
