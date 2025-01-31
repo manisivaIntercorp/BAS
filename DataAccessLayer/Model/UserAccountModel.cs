@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
-using System.Data;
-using System.Text.Json.Serialization;
+﻿using System.Data;
 
 namespace DataAccessLayer.Model
 {
