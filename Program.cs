@@ -51,15 +51,15 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     //app.UseSession();
 }
-<<<<<<< HEAD
+
 
 app.UseSession();
 
-=======
+
 //Session
 app.UseSession();
 app.UseRouting();
->>>>>>> fae90a6fc0d587fa6f70f3c135bf5f65867601fb
+
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
