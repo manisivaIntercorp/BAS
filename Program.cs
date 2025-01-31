@@ -15,6 +15,16 @@ builder.Services.AddScoped<IUowOrganisation>(sp => new UowOrganisation(connectio
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+builder.Services.AddHttpContextAccessor();
+
+
 
 var app = builder.Build();
 
@@ -22,7 +32,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    app.UseSession();
 }
+
+app.UseSession();
 
 app.UseAuthorization();
 app.MapControllers();
