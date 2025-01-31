@@ -1,17 +1,10 @@
 ﻿using System.Data;
 using DataAccessLayer.Implementation;
-using Dapper;
-using System.Data.SqlClient;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using System.Net;
-using DataAccessLayer.Interface;
 
 namespace DataAccessLayer.Model
 {
     public class ForgotPasswordModel
     {
-        
         public ForgotPasswordModel()
         {
         }
