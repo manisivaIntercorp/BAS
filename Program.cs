@@ -1,6 +1,12 @@
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using WebApi.Services;
+using WebApi.Services.Implementation;
+using WebApi.Services.Interface;
+//JWT Authentication
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,9 +45,33 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
+
 builder.Services.AddHttpContextAccessor();
+//builder.Services.AddScoped<IDbContextService, DbContextService>();
+builder.Services.AddControllers();
+
+// JWT Authendification start
+var jwtKey = "123456789123456789123456789123456789123"; // Replace with a strong key
+var key = Encoding.ASCII.GetBytes(jwtKey);
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = false,
+        ValidateAudience = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key)
+    };
+});
 
 
+// JWT Authendification END
 
 var app = builder.Build();
 
@@ -53,13 +83,10 @@ if (app.Environment.IsDevelopment())
 }
 
 
-app.UseSession();
-
-
 //Session
 app.UseSession();
 app.UseRouting();
-
-app.UseAuthorization();
+app.UseAuthentication(); //JWT Authentication
+app.UseAuthorization(); 
 app.MapControllers();
 app.Run();
