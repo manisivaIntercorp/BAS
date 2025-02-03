@@ -1,8 +1,7 @@
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using WebApi.Services;
-using WebApi.Services.Implementation;
-using WebApi.Services.Interface;
+
 //JWT Authentication
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
