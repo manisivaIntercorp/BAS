@@ -20,14 +20,13 @@ namespace WebApi.Controllers
         private readonly ILogger<LoginController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JwtService _jwtService;
-        private Common _common;
+        
 
         public LoginController(ILogger<LoginController> logger,IConfiguration configuration,IHttpContextAccessor httpContextAccessor): base(configuration)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _jwtService = new JwtService("123456789123456789123456789123456789123");
-            _common = new Common();
         }
 
 
