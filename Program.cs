@@ -1,12 +1,11 @@
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using WebApi.Services;
-using WebApi.Services.Implementation;
-using WebApi.Services.Interface;
 //JWT Authentication
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using DataAccessLayer.Services;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +22,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor(); // Required for accessing session in services
 
 // Bind the connection string from configuration
-string connectionString = builder.Configuration.GetConnectionString("connection");
+string connectionString = builder.Configuration.GetConnectionString("connection")?? 
+    throw new InvalidOperationException("Database connection string is missing."); ;
 
 // Register UowOrganisation with DI
 builder.Services.AddScoped<IUowOrganisation>(sp => new UowOrganisation(connectionString));
@@ -35,6 +35,12 @@ builder.Services.AddScoped<EmailServices>();
 
 //Added Session Services with DI
 builder.Services.AddScoped<SessionService>();
+
+//Added ICS Services with DI
+builder.Services.AddScoped<ICS>();
+// Register MailServer with DI
+builder.Services.AddScoped<MailServer>(sp => new MailServer(connectionString));
+
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
