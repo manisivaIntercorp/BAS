@@ -1,12 +1,8 @@
 ﻿using DataAccessLayer.Uow.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Data;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Implementation;
+using Microsoft.Data.SqlClient;
 
 namespace DataAccessLayer.Uow.Implementation
 {
@@ -16,7 +12,7 @@ namespace DataAccessLayer.Uow.Implementation
         IDbTransaction transaction;
         IDbConnection? connection = null;
         public UowUserGroup(string connnectionstring) {
-            connection = new System.Data.SqlClient.SqlConnection(connnectionstring);
+            connection = new SqlConnection(connnectionstring);
             connection.Open();
             transaction = connection.BeginTransaction();
         }
