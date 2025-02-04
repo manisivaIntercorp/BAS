@@ -65,13 +65,13 @@ namespace DataAccessLayer.Model
     }
     public class RoleUpdateRequest
     {
-        public RoleModel RoleModel { get; set; }
-        public List<ModulesDatatable> ModuleDatatable { get; set; }
+        public RoleModel? RoleModel { get; set; }
+        public List<ModulesDatatable>? ModuleDatatable { get; set; }
     }
     public class GetRoleUpdateRequest
     {
-        public RoleModel RoleModel { get; set; }
-        public List<Modules> ModuleDatatable { get; set; }
+        public RoleModel? RoleModel { get; set; }
+        public List<Modules>? ModuleDatatable { get; set; }
     }
 
 }
