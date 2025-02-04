@@ -1,14 +1,11 @@
 ﻿using DataAccessLayer.Uow.Interface;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 using System.Data;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Implementation;
-//using System.Data.SqlClient;
-//using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
+
+
 namespace DataAccessLayer.Uow.Implementation
 {
     public class UowUserAccount: IUowUserAccount
@@ -16,21 +13,75 @@ namespace DataAccessLayer.Uow.Implementation
         IUserAccountDAL? objUserAccountDAL = null;
         IDbTransaction transaction;
         IDbConnection? connection = null;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UowUserAccount(string connnectionstring)
+        public UowUserAccount(string connectionstring, IHttpContextAccessor httpContextAccessor)
         {
-            connection = new System.Data.SqlClient.SqlConnection(connnectionstring);
-            connection.Open();
-            transaction = connection.BeginTransaction();
+            _httpContextAccessor = httpContextAccessor;
+
+            if (_httpContextAccessor.HttpContext?.Session.GetString("DBName") != null)
+            {
+                string dbName = _httpContextAccessor.HttpContext?.Session.GetString("DBName") ?? "";
+                string finalConnectionString = BuildConnectionString(connectionstring, dbName);
+                connection = new Microsoft.Data.SqlClient.SqlConnection(finalConnectionString);
+                connection.Open();
+                transaction = connection.BeginTransaction();
+            }
+            else if (_httpContextAccessor.HttpContext?.Session != null &&
+            _httpContextAccessor.HttpContext?.Session.GetString("InstanceName") != null &&
+            _httpContextAccessor.HttpContext?.Session.GetString("InstanceChange") == "Y" &&
+            _httpContextAccessor.HttpContext?.Session.GetString("DataBaseUserName") != null &&
+            _httpContextAccessor.HttpContext?.Session.GetString("DataBasePassword") != null)
+            {
+
+                string serverName = _httpContextAccessor.HttpContext?.Session?.GetString("InstanceName") ?? "";
+                string userId = _httpContextAccessor.HttpContext?.Session?.GetString("DataBaseUserName") ?? "";
+                string password = _httpContextAccessor.HttpContext?.Session?.GetString("DataBasePassword") ?? "";
+                string dbName = _httpContextAccessor.HttpContext?.Session?.GetString("DBName") ?? "";
+                string maxPoolSize = _httpContextAccessor.HttpContext?.Session?.GetString("MaxPoolSize") ?? "100";
+
+                string finalConnectionString = BuildConnectionString(connectionstring, serverName, userId, password, dbName, maxPoolSize);
+                connection = new Microsoft.Data.SqlClient.SqlConnection(finalConnectionString);
+                connection.Open();
+                transaction = connection.BeginTransaction();
+            }
+            else
+            {
+                connection = new Microsoft.Data.SqlClient.SqlConnection(connectionstring);
+                connection.Open();
+                transaction = connection.BeginTransaction();
+            }
+
         }
+        
         public IUserAccountDAL UserAccountDALRepo
         {
             get
             {
-                return objUserAccountDAL == null ? objUserAccountDAL = new UserAccountDAL(transaction) : objUserAccountDAL;
+                return objUserAccountDAL ?? new UserAccountDAL(transaction);
             }
         }
+        private string BuildConnectionString(string baseConnectionString, string dbName)
+        {
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(baseConnectionString)
+            {
+                InitialCatalog = dbName
+            };
+            return builder.ToString();
+        }
+        private string BuildConnectionString(string baseConnectionString, string serverName, string UserID, string password, string dbName, string maxPoolSize)
+        {
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(baseConnectionString)
+            {
+                DataSource = serverName,
+                UserID = UserID,
+                Password = password,
+                InitialCatalog = dbName,
+                //MaxPoolSize = int.Parse(maxPoolSize)
+            };
 
+            return builder.ToString();
+        }
         public void Commit()
         {
             try
