@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -330,7 +330,7 @@ namespace DataAccessLayer.Implementation
 
         public async Task<string> UpdateOrganisation(int id, OrganisationModel model)
         {
-            bool vResult = true;
+            
             try
             {
                 using (var connection = new SqlConnection(_connectionString))
