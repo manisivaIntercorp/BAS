@@ -1,29 +1,25 @@
 ﻿using System.Data;
-using DataAccessLayer.Implementation;
+using DataAccessLayer.Services;
 
 namespace DataAccessLayer.Model
 {
     public class ForgotPasswordModel
     {
-        public ForgotPasswordModel()
-        {
-        }
-
-        public int ID
+        public int? ID
         {
             get;
             set;
         }
 
-        public string UserName
+        public string? UserName
         {
             get;
             set;
         }
         DataTable Emailtable = new DataTable();
         DataTable MailServerTable = new DataTable();
-        
-        public DataTable ConvertToDataTableAsync(List<GetEmailTemplate> models)
+
+        public DataTable ConvertToDataTableAsync(List<GetEmailTemplate?> models)
         {
             // Define columns dynamically based on the model's properties
             var properties = typeof(GetEmailTemplate).GetProperties();
@@ -37,7 +33,7 @@ namespace DataAccessLayer.Model
                 DataRow row = Emailtable.NewRow();
                 foreach (var property in properties)
                 {
-                    
+
                     row[property.Name] = property.GetValue(model) ?? DBNull.Value;
                 }
                 Emailtable.Rows.Add(row);
@@ -45,7 +41,7 @@ namespace DataAccessLayer.Model
             return Emailtable;
         }
 
-        public DataTable ConvertToDataTableAsync(List<MailServer> models)
+        public DataTable ConvertToDataTableAsync(List<MailServer?> models)
         {
             // Define columns dynamically based on the model's properties
             var properties = typeof(MailServer).GetProperties();
@@ -72,8 +68,18 @@ namespace DataAccessLayer.Model
     {
         public ForgotPasswordModel ForgotPasswordModel { get; set; }
         public EmailTemplate _emailrepository { get; set; }
+        public ForgotPasswordRequest()
+        {
+            _emailrepository = new EmailTemplate(); // Ensure it's never null
+            ForgotPasswordModel = new ForgotPasswordModel();
+        }
     }
-
+    public class GetForgotPasswordModel
+    {
+        public long? UserID { get; set; }
+        public string? UserName { get; set; }
+        public long? ID { get; set; }
+    }
 }
 
 
