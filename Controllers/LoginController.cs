@@ -27,7 +27,6 @@ namespace WebApi.Controllers
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _jwtService = new JwtService("123456789123456789123456789123456789123");
-           
         }
 
 
