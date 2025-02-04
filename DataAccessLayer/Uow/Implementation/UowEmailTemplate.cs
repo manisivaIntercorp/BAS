@@ -1,28 +1,20 @@
 ﻿using DataAccessLayer.Implementation;
-using DataAccessLayer.Interface;
 using DataAccessLayer.Uow.Interface;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
-using System.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DataAccessLayer.Uow.Implementation
 {
     public class UowEmailTemplate: IUowEmailTemplate
     {
         EmailTemplateDAL? objEmailTemplateDAL = null;
-        IDbTransaction _transaction;
+        IDbTransaction? _transaction;
         
         private readonly string connectionString;
-        private readonly IDbConnection _connection;
-        private bool _disposedValue = false; // To detect redundant calls
+        private readonly IDbConnection? _connection;
+        
         IDbConnection? connection = null;
         
-        public UowEmailTemplate(string connectionString)
+        public UowEmailTemplate(string? connectionString)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
                 throw new ArgumentNullException(nameof(connectionString), "Connection string cannot be null or empty.");
@@ -30,7 +22,7 @@ namespace DataAccessLayer.Uow.Implementation
             this.connectionString = connectionString;
 
             // Initialize connection and transaction
-            _connection = new SqlConnection(connectionString);
+            _connection = new Microsoft.Data.SqlClient.SqlConnection(connectionString);
             _connection.Open();
             _transaction = _connection.BeginTransaction();
         }
@@ -47,15 +39,15 @@ namespace DataAccessLayer.Uow.Implementation
         {
             try
             {
-                _transaction.Commit();
+                _transaction?.Commit();
             }
             catch
             {
-                _transaction.Rollback();
+                _transaction?.Rollback();
             }
             finally
             {
-                _transaction.Dispose();
+                _transaction?.Dispose();
 
                 objEmailTemplateDAL = null;
             }
@@ -77,7 +69,6 @@ namespace DataAccessLayer.Uow.Implementation
                     if (_transaction != null)
                     {
                         _transaction.Dispose();
-                        //  transaction = null;
                     }
                     if (connection != null)
                     {
