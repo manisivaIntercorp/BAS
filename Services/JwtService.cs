@@ -2,10 +2,11 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using WebApi.Services.Interface;
 
 namespace WebApi.Services
 {
-    public class JwtService
+    public class JwtService 
     {
 
         private readonly string _key;
