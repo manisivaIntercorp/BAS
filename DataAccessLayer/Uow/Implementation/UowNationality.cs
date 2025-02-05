@@ -24,7 +24,7 @@ namespace DataAccessLayer.Uow.Implementation
             connection.Open();
             transaction = connection.BeginTransaction();
         }
-         public INationalityDAL NationalityDALRepo
+        public INationalityDAL NationalityDALRepo
         {
             get { 
                return objNationalityDAL == null? objNationalityDAL = new NationalityDAL(transaction) : objNationalityDAL;

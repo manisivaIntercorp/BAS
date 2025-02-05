@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Implementation;
 using DataAccessLayer.Uow.Interface;
+
+using System;
 using System.Data;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Data.Common;
@@ -17,16 +17,15 @@ using System.Xml.Linq;
 
 namespace DataAccessLayer.Uow.Implementation
 {
-    public class UowLogin : IUowLogin
+    public class UowLogin : IUowLogin, IDisposable
     {
         private ILoginDAL? objLoginDal = null;
         private readonly IDbTransaction transaction;
         private readonly IDbConnection? connection = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-         
-
-        public UowLogin(string connectionstring,IHttpContextAccessor httpContextAccessor)
+        // Existing constructor that accepts connection string and IHttpContextAccessor.
+        public UowLogin(string connectionstring, IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
 
@@ -39,12 +38,11 @@ namespace DataAccessLayer.Uow.Implementation
                 transaction = connection.BeginTransaction();
             }
             else if (_httpContextAccessor.HttpContext?.Session != null &&
-            _httpContextAccessor.HttpContext?.Session.GetString("InstanceName") != null &&
-            _httpContextAccessor.HttpContext?.Session.GetString("InstanceChange") == "Y" &&
-            _httpContextAccessor.HttpContext?.Session.GetString("DataBaseUserName") != null &&
-            _httpContextAccessor.HttpContext?.Session.GetString("DataBasePassword") != null)
+                     _httpContextAccessor.HttpContext?.Session.GetString("InstanceName") != null &&
+                     _httpContextAccessor.HttpContext?.Session.GetString("InstanceChange") == "Y" &&
+                     _httpContextAccessor.HttpContext?.Session.GetString("DataBaseUserName") != null &&
+                     _httpContextAccessor.HttpContext?.Session.GetString("DataBasePassword") != null)
             {
-
                 string serverName = _httpContextAccessor.HttpContext?.Session?.GetString("InstanceName") ?? "";
                 string userId = _httpContextAccessor.HttpContext?.Session?.GetString("DataBaseUserName") ?? "";
                 string password = _httpContextAccessor.HttpContext?.Session?.GetString("DataBasePassword") ?? "";
@@ -52,19 +50,31 @@ namespace DataAccessLayer.Uow.Implementation
                 string maxPoolSize = _httpContextAccessor.HttpContext?.Session?.GetString("MaxPoolSize") ?? "100";
 
                 string finalConnectionString = BuildConnectionString(connectionstring, serverName, userId, password, dbName, maxPoolSize);
-                connection = new Microsoft.Data.SqlClient.SqlConnection(finalConnectionString);
+                connection = new SqlConnection(finalConnectionString);
                 connection.Open();
                 transaction = connection.BeginTransaction();
             }
             else
             {
-                connection = new Microsoft.Data.SqlClient.SqlConnection(connectionstring);
+                connection = new SqlConnection(connectionstring);
                 connection.Open();
                 transaction = connection.BeginTransaction();
             }
-
         }
 
+        // Overloaded constructor that retrieves the connection string from HttpContext (set by your middleware)
+        public UowLogin(IHttpContextAccessor httpContextAccessor): this(
+           // Try to get the connection string from HttpContext.Items.
+           httpContextAccessor.HttpContext?.Items["connection"] as string
+           // If not found, fallback to the configuration.
+           ?? (httpContextAccessor.HttpContext?.RequestServices
+                 .GetService(typeof(IConfiguration)) as IConfiguration)
+                 ?.GetConnectionString("connection")
+           // If still not found, throw an exception.
+           ?? throw new InvalidOperationException("No connection string found in HttpContext or configuration."),
+           httpContextAccessor)
+        {
+        }
         public ILoginDAL LoginDALRepo
         {
             get
@@ -72,6 +82,7 @@ namespace DataAccessLayer.Uow.Implementation
                 return objLoginDal == null ? objLoginDal = new LoginDAL(transaction) : objLoginDal;
             }
         }
+
         private string BuildConnectionString(string baseConnectionString, string dbName)
         {
             var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(baseConnectionString)
@@ -80,19 +91,20 @@ namespace DataAccessLayer.Uow.Implementation
             };
             return builder.ToString();
         }
-        private string BuildConnectionString(string baseConnectionString, string serverName, string UserID, string password, string dbName, string maxPoolSize)
+
+        private string BuildConnectionString(string baseConnectionString, string serverName, string userID, string password, string dbName, string maxPoolSize)
         {
             var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(baseConnectionString)
             {
                 DataSource = serverName,
-                UserID = UserID,
+                UserID = userID,
                 Password = password,
                 InitialCatalog = dbName,
                 //MaxPoolSize = int.Parse(maxPoolSize)
             };
-
             return builder.ToString();
         }
+
         public void commit()
         {
             try
@@ -109,6 +121,7 @@ namespace DataAccessLayer.Uow.Implementation
                 objLoginDal = null;
             }
         }
+
         private bool disposedValue = false;
         public void Dispose()
         {
@@ -122,19 +135,13 @@ namespace DataAccessLayer.Uow.Implementation
             {
                 if (disposing)
                 {
-                    if (transaction != null)
-                    {
-                        transaction.Dispose();
-                    }
-                    if (connection != null)
-                    {
-                        connection.Dispose();
-                       // connection = null;
-                    }
+                    transaction?.Dispose();
+                    connection?.Dispose();
                 }
                 disposedValue = true;
             }
         }
+
         ~UowLogin()
         {
             Dispose(false);

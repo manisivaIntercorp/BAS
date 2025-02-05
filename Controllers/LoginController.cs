@@ -10,6 +10,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Runtime.Serialization;
 using System.Xml.Linq;
 using WebApi.Services;
+using WebApi.Services.Interface;
 
 namespace WebApi.Controllers
 {
@@ -20,57 +21,55 @@ namespace WebApi.Controllers
         private readonly ILogger<LoginController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JwtService _jwtService;
-        
+        private readonly AppGlobalVariableService _appGlobalVariableService;
 
-        public LoginController(ILogger<LoginController> logger,IConfiguration configuration,IHttpContextAccessor httpContextAccessor): base(configuration)
+
+        public LoginController(ILogger<LoginController> logger, AppGlobalVariableService appGlobalVariableService, IConfiguration configuration, IHttpContextAccessor httpContextAccessor) : base(configuration)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
-            _jwtService = new JwtService("123456789123456789123456789123456789123");
-        }
 
+            // Retrieve JWT key from configuration
+            var jwtKey = configuration["JwtSettings:Key"];
+            _jwtService = new JwtService(jwtKey);
+            _appGlobalVariableService = appGlobalVariableService;
+        }
 
         [HttpPost("UserLogin")]
         public async Task<IActionResult> UserLogin(LoginModel objLogModel)
         {
             try
             {
-
-                using (IUowLogin _repo = new UowLogin(ConnectionString, _httpContextAccessor))
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor))
                 {
                     var lstLoginUser = await _repo.LoginDALRepo.UserLogin(objLogModel);
 
-                    if (lstLoginUser != null && lstLoginUser.Count > 0)
+                    if (lstLoginUser != null && lstLoginUser.Any())
                     {
-                        var strRetVal = lstLoginUser[0].RetVal;
-                        var strRetMsg = lstLoginUser[0].RetMsg;
-                        var lstLoginUserDetails = lstLoginUser[0].lstLoginDetails;
-                        string strDbName = lstLoginUser?.FirstOrDefault()?.lstLoginDetails?.FirstOrDefault()?.DBName ?? "";
-                        string strUserName = lstLoginUser?.FirstOrDefault()?.lstLoginDetails?.FirstOrDefault()?.UserName ?? "";
-                        if (lstLoginUser != null)
+                        var loginResult = lstLoginUser.First();
+                        var loginDetail = loginResult.lstLoginDetails?.FirstOrDefault();
+
+                        if (loginDetail != null)
                         {
-                            GetUserData(lstLoginUser, "Get");
+                            HttpContext.Session.SetString("DBName", loginDetail.DBName);
+                            // You can store other values as needed
                         }
-                        HttpContext.Session.SetString("DBName", strDbName);
-                        HttpContext.Session.SetString("ConnectionString", strUserName);
 
                         var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "");
                         return Ok(token);
                     }
                     else
                     {
-                         Unauthorized();
-                        return BadRequest("Invalid login.");
+                        return Unauthorized("Invalid login.");
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                _logger.LogError($"{ex.Message}  {ex.StackTrace}");
                 return StatusCode(StatusCodes.Status500InternalServerError, "Internal server error.");
             }
         }
-
         private void GetUserData(List<ResultModel> objLoginModel, string strMode)
         {
             if (objLoginModel != null && objLoginModel.Count > 0)
@@ -111,11 +110,11 @@ namespace WebApi.Controllers
                         HttpContext.Session.SetString("strPayrollAccessible", strPayrollAccessible);
                         HttpContext.Session.SetString("strUserAccessRightsCount", strUserAccessRightsCount);
                         HttpContext.Session.SetString("strSetPassword", strSetPassword);
-                        HttpContext.Session.SetString("strSetPassword", strPasswordExpiry);
-                        HttpContext.Session.SetString("strSetPassword", strValidateOTP);
-                        HttpContext.Session.SetString("strSetPassword", strIsProfileUser);
-                        HttpContext.Session.SetString("strSetPassword", strIsSystemUser);
-                        HttpContext.Session.SetString("strSetPassword", strUserImgPath);
+                        HttpContext.Session.SetString("strPasswordExpiry", strPasswordExpiry);
+                        HttpContext.Session.SetString("strValidateOTP", strValidateOTP);
+                        HttpContext.Session.SetString("strIsProfileUser", strIsProfileUser);
+                        HttpContext.Session.SetString("strIsSystemUser", strIsSystemUser);
+                        HttpContext.Session.SetString("strUserImgPath", strUserImgPath);
                     }
 
                     if (string.IsNullOrWhiteSpace(strDBName))
@@ -162,12 +161,14 @@ namespace WebApi.Controllers
                 }
             }
         }
+        
+
         [HttpPost("Get UserID")]
         public async Task<IActionResult> GetUserID(LoginModel objModel)
         {
             try
             {
-                using (IUowLogin _repo = new UowLogin(ConnectionString, _httpContextAccessor))
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor))
                 {
                     var lstuser = await _repo.LoginDALRepo.GetUserID(objModel);
                     if(lstuser != null)
