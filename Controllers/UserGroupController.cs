@@ -13,9 +13,11 @@ namespace WebApi.Controllers
     public class UserGroupController : ApiBaseController
     {
         private readonly ILogger<UserGroupController> _logger;
-        public UserGroupController(ILogger<UserGroupController> logger, IConfiguration configuration) : base(configuration)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public UserGroupController(ILogger<UserGroupController> logger,IHttpContextAccessor httpContextAccessor ,IConfiguration configuration) : base(configuration)
         {
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
 
         }
         [HttpGet("getAllUserPolicy")]
@@ -23,7 +25,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowUserGroup _repo = new UowUserGroup(ConnectionString))
+                using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
                     var lstUserGroupModel = await _repo.UserGroupDALRepo.GetAllUserPolicy();
                     if (lstUserGroupModel != null)
@@ -49,7 +51,7 @@ namespace WebApi.Controllers
             {
                 //int i = 0;
                 //var j = 1 / i;
-                using (IUowUserGroup _repo = new UowUserGroup(ConnectionString))
+                using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
                     var objUserGroupModel = await _repo.UserGroupDALRepo.GetUserPolicyById(id);
                     if (objUserGroupModel != null)
@@ -73,7 +75,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowUserGroup _repo = new UowUserGroup(ConnectionString))
+                using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
                     var result = await _repo.UserGroupDALRepo.InsertUpdateUserPolicy(objModel);
                     var msg = "User Policy Inserted Successfully";
@@ -112,7 +114,7 @@ namespace WebApi.Controllers
 
             try
             {
-                using (IUowUserGroup _repo = new UowUserGroup(ConnectionString))
+                using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
                     var result = await _repo.UserGroupDALRepo.UpdateUserPolicyAsync(id, UserGroup);
                     var msg = "User Group updated successfully.";
@@ -145,7 +147,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowUserGroup _repo = new UowUserGroup(ConnectionString))
+                using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
                     var result = await _repo.UserGroupDALRepo.DeleteUserPolicy(id);
                     _repo.Commit();
