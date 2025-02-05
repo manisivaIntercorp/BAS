@@ -5,6 +5,7 @@ using DataAccessLayer.Uow.Interface;
 
 using System;
 using System.Data;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System.Data.Common;
