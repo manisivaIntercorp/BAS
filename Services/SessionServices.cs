@@ -12,19 +12,19 @@
         //  Set Session Variable
         public void SetSession(string key, string value)
         {
-            _httpContextAccessor.HttpContext.Session.SetString(key, value);
+            _httpContextAccessor?.HttpContext?.Session?.SetString(key, value);
         }
 
         //  Get Session Variable
         public string GetSession(string key)
         {
-            return _httpContextAccessor.HttpContext.Session.GetString(key);
+            return _httpContextAccessor.HttpContext?.Session.GetString(key)??string.Empty;
         }
 
         //  Remove Session Variable
         public void RemoveSession(string key)
         {
-            _httpContextAccessor.HttpContext.Session.Remove(key);
+            _httpContextAccessor?.HttpContext?.Session?.Remove(key);
         }
     }
 

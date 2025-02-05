@@ -89,7 +89,6 @@ namespace WebApi.Controllers
                         _logger.LogError(Environment.NewLine);
                         _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserGroup function in User Group api controller");
                         return NotFound("User Policy Already Exists");
-                        return BadRequest();
                     }
                     return Ok(msg + ' ' + result);
 

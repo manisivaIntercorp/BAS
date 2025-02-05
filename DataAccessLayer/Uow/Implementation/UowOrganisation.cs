@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Data;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Implementation;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 namespace DataAccessLayer.Uow.Implementation

@@ -5,10 +5,14 @@ using DataAccessLayer.Uow.Interface;
 
 using System;
 using System.Data;
-
-using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
+using System.Data.Common;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.SqlServer.Management.XEvent;
+using Microsoft.SqlServer.Management.Smo;
+using System.Xml.Linq;
 
 namespace DataAccessLayer.Uow.Implementation
 {
@@ -28,7 +32,7 @@ namespace DataAccessLayer.Uow.Implementation
             {
                 string dbName = _httpContextAccessor.HttpContext?.Session.GetString("DBName") ?? "";
                 string finalConnectionString = BuildConnectionString(connectionstring, dbName);
-                connection = new SqlConnection(finalConnectionString);
+                connection = new Microsoft.Data.SqlClient.SqlConnection(finalConnectionString);
                 connection.Open();
                 transaction = connection.BeginTransaction();
             }
@@ -80,7 +84,7 @@ namespace DataAccessLayer.Uow.Implementation
 
         private string BuildConnectionString(string baseConnectionString, string dbName)
         {
-            var builder = new SqlConnectionStringBuilder(baseConnectionString)
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(baseConnectionString)
             {
                 InitialCatalog = dbName
             };
@@ -89,7 +93,7 @@ namespace DataAccessLayer.Uow.Implementation
 
         private string BuildConnectionString(string baseConnectionString, string serverName, string userID, string password, string dbName, string maxPoolSize)
         {
-            var builder = new SqlConnectionStringBuilder(baseConnectionString)
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(baseConnectionString)
             {
                 DataSource = serverName,
                 UserID = userID,
@@ -106,7 +110,7 @@ namespace DataAccessLayer.Uow.Implementation
             {
                 transaction.Commit();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 transaction.Rollback();
             }

@@ -10,10 +10,10 @@ namespace DataAccessLayer.Uow.Implementation
     {
         IForgotPasswordDAL? objForgotPasswordDAL = null;
         IDbTransaction transaction;
-        private readonly string connectionString;
+        
         IDbConnection? connection = null;
-        public UowForgotPassword(string connnectionstring) {
-            connection = new System.Data.SqlClient.SqlConnection(connnectionstring);
+        public UowForgotPassword(string? connnectionstring) {
+            connection = new Microsoft.Data.SqlClient.SqlConnection(connnectionstring);
             connection.Open();
             transaction = connection.BeginTransaction();
         }
@@ -21,7 +21,7 @@ namespace DataAccessLayer.Uow.Implementation
         public IForgotPasswordDAL ForgotPasswordDALRepo {
             get
             {
-                return objForgotPasswordDAL == null ? objForgotPasswordDAL = new ForgotPasswordDAL(transaction,connectionString) : objForgotPasswordDAL;
+                return objForgotPasswordDAL ??= objForgotPasswordDAL = new ForgotPasswordDAL(transaction);
             }
         }
 
@@ -29,15 +29,15 @@ namespace DataAccessLayer.Uow.Implementation
         {
             try
             {
-                transaction.Commit();
+                transaction?.Commit();
             }
             catch
             {
-                transaction.Rollback();
+                transaction?.Rollback();
             }
             finally
             {
-                transaction.Dispose();
+                transaction?.Dispose();
 
                 objForgotPasswordDAL = null;
             }
@@ -59,7 +59,6 @@ namespace DataAccessLayer.Uow.Implementation
                     if (transaction != null)
                     {
                         transaction.Dispose();
-                        //  transaction = null;
                     }
                     if (connection != null)
                     {

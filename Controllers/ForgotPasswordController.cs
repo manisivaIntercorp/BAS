@@ -1,6 +1,6 @@
 ﻿using Dapper;
-using DataAccessLayer.Implementation;
 using DataAccessLayer.Model;
+using DataAccessLayer.Services;
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using Microsoft.AspNetCore.Http;
@@ -22,7 +22,6 @@ namespace WebApi.Controllers
         private readonly EmailServices _emailService;
         private readonly SessionService _SessionService;
 
-        
         public ForgotPasswordController(EmailServices emailService,SessionService sessionService,
             ILogger<ForgotPasswordController> logger, IConfiguration configuration) : base(configuration)
         {
@@ -53,17 +52,12 @@ namespace WebApi.Controllers
                             {
                                 case >= 1:// success
                                     
-                                    var mailserver = _repo.ForgotPasswordDALRepo.mailServerport();
-
-                                    _SessionService.SetSession("TimeZoneID","1");
-                                    mailserver.TimeZoneID = _SessionService.GetSession("TimeZoneID");
+                                    
                                     await _emailService.SendMailMessage(EmailTemplateCode.FORGOT_PASSWORD,
-                                                      Convert.ToInt32(result.RetVal.ToString()),
-                                    Convert.ToInt32(result.Msg.ToString()),
-                                                      string.Empty);
-                                    
-                                    
-                                        return Ok();
+                                                                        Convert.ToInt32(result.RetVal.ToString()),
+                                                                        Convert.ToInt32(result.Msg.ToString()),
+                                                                        string.Empty);
+                                    return Ok();
                                     
                                     
                                 case -1:// User Not Exists
@@ -78,6 +72,35 @@ namespace WebApi.Controllers
                     }
                 }
                 return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+        //Validating the token from email
+        [HttpGet("ValidateTokenForgotPassword/{token}")]
+        public async Task<IActionResult> ValidateTokenForgotPassword(string? token)
+        {
+            try
+            {
+                
+                using (IUowForgotPassword _repo = new UowForgotPassword(ConnectionString))
+                {
+                    var objvalidatetoken = await _repo.ForgotPasswordDALRepo.ValidateTokenForgotPassword(token);
+                    if (objvalidatetoken != null)
+                    {
+                        _SessionService.SetSession("@UserName", objvalidatetoken.UserName??string.Empty);
+                        _SessionService.SetSession("@UserID", Convert.ToString(objvalidatetoken.UserID) ?? "0");
+                        _SessionService.SetSession("@RefID",Convert.ToString(objvalidatetoken.ID) ??"0");
+                        return Ok(objvalidatetoken);
+                    }
+                    else
+                    {
+                        return BadRequest();
+                    }
+                }
             }
             catch (Exception ex)
             {

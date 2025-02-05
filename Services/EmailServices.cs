@@ -1,25 +1,24 @@
-﻿using DataAccessLayer.Implementation;
-using DataAccessLayer.Model;
+﻿using DataAccessLayer.Model;
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using System.Data;
 using WebApi.Controllers;
 using MailKit.Net.Smtp;
 using MimeKit;
+using DataAccessLayer.Services;
 
 namespace WebApi.Services
 {
     public class EmailServices : ApiBaseController
     {
         private readonly ILogger<EmailServices> _logger;
-        public EmailServices(IConfiguration configuration) : base(configuration)
-        {
-        }
-        public EmailServices(ILogger<EmailServices> logger, IConfiguration configuration) : base(configuration)
+        private SessionService _SessionService;
+        public EmailServices(ILogger<EmailServices> logger, SessionService sessionService, IConfiguration configuration) : base(configuration)
         {
             _logger = logger;
+            _SessionService = sessionService;
         }
-        public async Task SendMailMessage(string TemplateCode, int RefID, int UserID, string Password, ForgotPasswordRequest forgotPasswordRequest=null)
+        public async Task SendMailMessage(string? TemplateCode, int? RefID, int? UserID, string? Password, ForgotPasswordRequest? forgotPasswordRequest = null)
         {
             
             try
@@ -40,23 +39,22 @@ namespace WebApi.Services
 
                 using (IUowEmailTemplate _repo = new UowEmailTemplate(ConnectionString))
                 {
-                    List<GetEmailTemplate> lstEmailTemplate = _repo.EmailTemplateDALRepo.GetEmailTemplate(forgotPasswordRequest._emailrepository);
+                    List<GetEmailTemplate?> lstEmailTemplate = _repo.EmailTemplateDALRepo.GetEmailTemplate(forgotPasswordRequest._emailrepository);
                     _repo.Commit();
                     // Ensure this async method is awaited
-                    DataTable dtEmailTemplate = forgotPasswordRequest.ForgotPasswordModel.ConvertToDataTableAsync(lstEmailTemplate);
-
+                    DataTable dtEmailTemplate = forgotPasswordRequest.ForgotPasswordModel.ConvertToDataTableAsync(lstEmailTemplate??new List<GetEmailTemplate?>());
                     // Iterate over the data table
-                    for (int i = 0; i < dtEmailTemplate.Rows.Count; i++)
+                    foreach (DataRow row in dtEmailTemplate.Rows)
                     {
                         try
                         {
-                            string EmailID = dtEmailTemplate.Rows[i]["EmailID"].ToString().Trim();  // Fetch EmailID from the DataTable
+                            string EmailID = row["EmailID"] as string ?? string.Empty;  // Fetch EmailID from the DataTable
 
                             if (!string.IsNullOrEmpty(EmailID))  // Ensure EmailID is not empty
                             {
-                                string Template = dtEmailTemplate.Rows[i]["Template"].ToString();
-                                string Subject = dtEmailTemplate.Rows[i]["Subject"].ToString();
-                                string MobileContent = dtEmailTemplate.Rows[i]["MobileContent"].ToString();
+                                string Template = row["Template"] as string ?? string.Empty;
+                                string Subject = row["Subject"] as string ?? string.Empty;
+                                string MobileContent = row["MobileContent"] as string ?? string.Empty;
                                 string ApproverID = string.Empty; // Ensure this is populated if needed
                                 string EmployeeID = string.Empty;
 
@@ -66,9 +64,8 @@ namespace WebApi.Services
                                 // Send email with the updated template
                                 ForgotPasswordModel objModel = new ForgotPasswordModel();
                                 await SendEmail(EmailID, Subject, Template, MobileContent,
-                                                    string.IsNullOrEmpty(ApproverID) ? Convert.ToString(UserID) : ApproverID,
-                                                    TemplateCode, objModel);
-                                
+                                                string.IsNullOrEmpty(ApproverID) ? Convert.ToString(UserID) : ApproverID,
+                                                TemplateCode, objModel);
                             }
                         }
                         catch (Exception ex)
@@ -86,31 +83,32 @@ namespace WebApi.Services
             
         }
 
-        public async Task SendEmail(string EmailID, string Subject, string Template, string MobileContent, string ApproverID, string Templatecode, ForgotPasswordModel forgotPasswordModel)
+        public async Task SendEmail(string? EmailID, string? Subject, string? Template, string? MobileContent, string? ApproverID, string? Templatecode, ForgotPasswordModel forgotPasswordModel)
         {
             
-            MailServer objMailServerConfig = new MailServer();
+            MailServer? objMailServerConfig = new MailServer();
 
             objMailServerConfig.ID = 1;
+            objMailServerConfig.TimeZoneID = _SessionService.GetSession("@TimeZoneID");
             using (IUowEmailTemplate _repo = new UowEmailTemplate(ConnectionString))
             {
-                List<MailServer> lstMailServerConfig = _repo.EmailTemplateDALRepo.GetMailServerConfig(objMailServerConfig);
+                List<MailServer?> lstMailServerConfig = _repo.EmailTemplateDALRepo.GetMailServerConfig(objMailServerConfig ?? new MailServer());
                 _repo.Commit();
-                DataTable dtMailServerConfig = forgotPasswordModel.ConvertToDataTableAsync(lstMailServerConfig);
+                DataTable dtMailServerConfig = forgotPasswordModel.ConvertToDataTableAsync(lstMailServerConfig?? new List<MailServer?>());
                 if (dtMailServerConfig.Rows.Count > 0)
                 {
-                    string FromEmail = Convert.ToString(dtMailServerConfig.Rows[0]["ReplyEmail"]);
-                    string SmtpServer = Convert.ToString(dtMailServerConfig.Rows[0]["SMTP_Address"]);
-                    int SmtpPort = Convert.ToInt32(Convert.ToString(dtMailServerConfig.Rows[0]["SMTP_Port"]));
-                    bool SmtpSSL = Convert.ToBoolean(Convert.ToString(dtMailServerConfig.Rows[0]["SSL_Required"]).Equals("Y") ? true : false);
-                    bool SmtpAuthentication = Convert.ToBoolean(Convert.ToString(dtMailServerConfig.Rows[0]["CredentialRequired"]).Equals("Y") ? true : false);
-                    string SmtpAuthenticationID = Convert.ToString(dtMailServerConfig.Rows[0]["UserName"]);
-                    string SmtpAuthenticationPwd = Convert.ToString(dtMailServerConfig.Rows[0]["Password"]);
+                    string FromEmail = dtMailServerConfig.Rows[0]["ReplyEmail"] as string?? string.Empty;
+                    string SmtpServer = dtMailServerConfig.Rows[0]["SMTP_Address"] as string ?? string.Empty;
+                    int SmtpPort = dtMailServerConfig.Rows[0]["SMTP_Port"] is not DBNull ? Convert.ToInt32(dtMailServerConfig.Rows[0]["SMTP_Port"]):0 ;
+                    bool SmtpSSL = Convert.ToBoolean(dtMailServerConfig.Rows[0]["SSL_Required"].Equals("Y") ? true : false);
+                    bool SmtpAuthentication = string.Equals(dtMailServerConfig.Rows[0]["CredentialRequired"]?.ToString(), "Y", StringComparison.OrdinalIgnoreCase);
+                    string SmtpAuthenticationID = dtMailServerConfig.Rows[0]["UserName"] as string ?? string.Empty;
+                    string SmtpAuthenticationPwd = dtMailServerConfig.Rows[0]["Password"] as string ?? string.Empty;
 
                     
                     // Using MimeKit to create the email message
                     var emailMessage = new MimeMessage();
-                    emailMessage.From.Add(new MailboxAddress("My App", FromEmail));
+                    emailMessage.From.Add(new MailboxAddress("", FromEmail));
                     emailMessage.To.Add(new MailboxAddress("", EmailID));
                     emailMessage.Subject = Subject;
                     var bodyBuilder = new BodyBuilder
@@ -130,20 +128,14 @@ namespace WebApi.Services
                             await smtp.SendAsync(emailMessage); // Use async
                             await smtp.DisconnectAsync(true); // Disconnect async
                         }
-
-                        
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError($"Error sending email: {ex.Message}");
                     }
                 }
-                
-                
             }
             
         }
-
     }
-    
 }

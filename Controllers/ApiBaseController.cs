@@ -11,6 +11,5 @@ namespace WebApi.Controllers
             this._configuration = configuration;
             this.ConnectionString = this._configuration.GetConnectionString("connection")??"";
         }
-
     }
 }

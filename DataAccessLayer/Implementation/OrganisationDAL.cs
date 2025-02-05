@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using Microsoft.Data.SqlClient;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -15,7 +16,6 @@ using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
-using Microsoft.Data.SqlClient;
 
 
 
@@ -35,7 +35,7 @@ namespace DataAccessLayer.Implementation
         {
             try
             {
-                using (var connection = new System.Data.SqlClient.SqlConnection(_connectionString))
+                using (var connection = new SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
 
@@ -331,7 +331,7 @@ namespace DataAccessLayer.Implementation
 
         public async Task<string> UpdateOrganisation(int id, OrganisationModel model)
         {
-            bool vResult = true;
+            
             try
             {
                 using (var connection = new SqlConnection(_connectionString))

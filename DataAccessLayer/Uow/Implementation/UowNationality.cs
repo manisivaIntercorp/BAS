@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using System.Data;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Implementation;
+using Microsoft.Data.SqlClient;
+
 namespace DataAccessLayer.Uow.Implementation
 {
     public class UowNationality : IUowNationality
@@ -18,7 +20,7 @@ namespace DataAccessLayer.Uow.Implementation
         IDbConnection? connection = null;
         public UowNationality(string connnectionstring)
         {
-            connection = new System.Data.SqlClient.SqlConnection(connnectionstring);
+            connection = new SqlConnection(connnectionstring);
             connection.Open();
             transaction = connection.BeginTransaction();
         }

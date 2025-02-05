@@ -1,10 +1,7 @@
-﻿using Dapper;
-using System.Data;
-using System.Reflection;
+﻿using System.Data;
 using System.Runtime.Serialization;
 using System.Text.Json.Serialization;
-using System.Transactions;
-using Dapper;
+
 
 namespace DataAccessLayer.Model
 {

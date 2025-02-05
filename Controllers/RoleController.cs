@@ -83,6 +83,7 @@ namespace WebApi.Controllers
         {
             try
             {
+                string responsemsg = string.Empty;
                 if (objModel == null || objModel.RoleModel == null || objModel.ModuleDatatable == null)
                 {
                     return BadRequest("Invalid input data.");
@@ -92,31 +93,33 @@ namespace WebApi.Controllers
                 {
                     using (IUowRole _repo = new UowRole(ConnectionString))
                     {
-                     DataTable dataTable = objModel.RoleModel.ConvertToDataTable(objModel.ModuleDatatable);
+                        DataTable dataTable = objModel.RoleModel.ConvertToDataTable(objModel.ModuleDatatable);
                         var result = await _repo.RoleDALRepo.InsertUpdateRole(objModel.RoleModel);
                         var msg = "Role Inserted Successfully";
                         _repo.Commit();
-                        if (result.roleModels!=null && result.RetVal>=1)
+                        if (result.roleModels!=null)
                         {
-                            return Ok(msg);
+                            switch (result.RetVal)
+                            {
+                                case >= 1://Success
+                                    responsemsg = msg;
+                                    break;
+                                case -1:
+                                    responsemsg = result.Msg??string.Empty;
+                                    break;
+                                case 0:
+                                    responsemsg = result.Msg??string.Empty;
+                                    break;
+                                default:
+                                    _logger.LogError(Environment.NewLine);
+                                    _logger.LogError("Bad Request occurred while accessing the InsertUpdateRole function in Role api controller");
+                                    return BadRequest();
+                            }
+                            
                         }
-                        if(result.roleModels != null && result.RetVal == -1)
-                        { 
-                            return Ok(result.Msg); 
-                        }
-                        if (result.roleModels != null && result.RetVal == 0)
-                        {
-                            return Ok(result.Msg);
-                        }
-                        else
-                        {
-                            _logger.LogError(Environment.NewLine);
-                            _logger.LogError("Bad Request occurred while accessing the InsertUpdateRole function in Role api controller");
-                            return BadRequest();
-                        }
-                        
                     }
                 }
+                return Ok(responsemsg);
             }
             catch (Exception ex)
             {
@@ -138,27 +141,36 @@ namespace WebApi.Controllers
             {
                 try
                 {
+                    string responsemsg = string.Empty;
                     using (IUowRole _repo = new UowRole(ConnectionString))
                     {
-
+                        
                         var result = await _repo.RoleDALRepo.UpdateRoleAsync(id, roleModel);
                         var msg = "Role updated successfully.";
                         _repo.Commit();
-                        if (result.roleModels != null && result.RetVal >= 1)
+                        if (result.roleModels != null)
                         {
-                            return Ok(msg);
+                            switch (result.RetVal)
+                            {
+                                case >= 1:
+                                    responsemsg = msg;
+                                    break;
+
+                                case -1:
+                                    responsemsg=result.Msg??string.Empty;
+                                    break;
+
+                                default:
+                                    _logger.LogError(Environment.NewLine);
+                                    _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
+                                    return BadRequest();
+                                }
+                            
                         }
-                        if (result.roleModels != null && result.RetVal == -1)
-                        {
-                            return Ok(result.Msg);
-                        }
-                        else
-                        {
-                            _logger.LogError(Environment.NewLine);
-                            _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
-                            return BadRequest();
-                        }
+                        
+                        
                     }
+                    return Ok(responsemsg);
                 }
                 catch (Exception ex)
                 {

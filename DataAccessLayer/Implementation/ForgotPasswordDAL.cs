@@ -1,18 +1,18 @@
 ﻿using Dapper;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Model;
+using DataAccessLayer.Services;
 using System.Data;
-using System.Data.SqlClient;
+using System.Reflection;
 
 namespace DataAccessLayer.Implementation
 {
     public class ForgotPasswordDAL: RepositoryBase, IForgotPasswordDAL
     {
-        private IDbTransaction transaction;
-        private readonly string _connectionString;
-        public ForgotPasswordDAL(IDbTransaction transaction, string connectionString) :base(transaction)
+        
+        public ForgotPasswordDAL(IDbTransaction transaction) :base(transaction)
         {
-            _connectionString = connectionString; 
+            
         }
         
         public async Task<(List<ForgotPasswordModel> forgotPasswordModels, int RetVal, string Msg)> InsertUpdateForgotPassword(ForgotPasswordModel model)
@@ -48,7 +48,20 @@ namespace DataAccessLayer.Implementation
         {
             return new MailServer();
         }
-        
-
+        public async Task<GetForgotPasswordModel?> ValidateTokenForgotPassword(string? token)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            
+            parameters.Add("@Token", token);
+            parameters.Add("@Mode", "VALIDATE_TOKEN");
+            
+            using (var result = await Connection.QueryMultipleAsync("sp_ForgotPassword",
+                                                                        parameters,
+                                                                        transaction: Transaction,
+                                                                        commandType: CommandType.StoredProcedure))
+            {
+                return result.Read<GetForgotPasswordModel?>().FirstOrDefault();
+            }
+        }
     }
 }
