@@ -12,6 +12,7 @@ namespace WebApi.Controllers
     [ApiController]
     public class NationalityController : ApiBaseController
     {
+        private readonly IHttpContextAccessor _httpContextAccessor;
         //public readonly IUowNationality _repo;
         // private readonly IConfiguration _configuration;
         //public NationalityController(IUowNationality repo,IConfiguration configuration):base(configuration)
@@ -19,18 +20,20 @@ namespace WebApi.Controllers
         //    this._repo = repo;
 
         //}
+
         private readonly ILogger<NationalityController> _logger;
         
-        public NationalityController(ILogger<NationalityController> logger, IConfiguration configuration) : base(configuration)
+        public NationalityController(ILogger<NationalityController> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor) : base(configuration)
         {
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
             //var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
             //NLog.GlobalDiagnosticsContext.Set("LoggingDirectory", logPath);
         }
         // private readonly IConfiguration _config;
         //public NationalityController()
         //{
-        //   // IUowNationality _repo = new UowNationality(ConnectionString);
+        //   // IUowNationality _repo = new UowNationality(_httpContextAccessor);
         //}
 
         [HttpGet("getAllNationality")]
@@ -38,7 +41,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowNationality _repo = new UowNationality(ConnectionString))
+                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
                 {
                     var lstNationalityModel = await _repo.NationalityDALRepo.GetAllNationality();
                     if (lstNationalityModel != null)
@@ -64,7 +67,7 @@ namespace WebApi.Controllers
             {
                 int i = 0;
                 var j = 1 / i;
-                using (IUowNationality _repo = new UowNationality(ConnectionString))
+                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
                 {
                     var objNationalityModel = await _repo.NationalityDALRepo.GetNationalityById(code);
                     if (objNationalityModel != null)
@@ -88,7 +91,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowNationality _repo = new UowNationality(ConnectionString))
+                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
                 {
                     var result = await _repo.NationalityDALRepo.InsertUpdateNationality(objModel);
                     _repo.Commit();
@@ -115,7 +118,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowNationality _repo = new UowNationality(ConnectionString))
+                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
                 {
                     var result = await _repo.NationalityDALRepo.DeleteNationality(code);
                     _repo.Commit();
