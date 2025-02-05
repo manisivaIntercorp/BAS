@@ -1,97 +1,106 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using System;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 
 namespace DataAccessLayer.Services
 {
     public class ICS
     {
-        private static ILogger<ICS> _logger;
-        private readonly byte[] _key;
-        private readonly byte[] _iv;
+      
 
-        public ICS(ILogger<ICS> logger)
+        private static readonly string Key = "12345678901234567890123456789012"; // 32 chars = 32 bytes
+        //public ICS(ILogger<ICS> logger)
+        //{
+        //    _logger = logger;
+        //}
+        
+        public string Encrypt(string plainText)
         {
-            _logger = logger;
-        }
-        public  string Encrypt(string? Input)
-        {
-            return Encrypt256(Input);
-        }
-
-        public  string Decrypt(string? Input)
-        {
-            return Decrypt256(Input);
-        }
-
-        private static string Encrypt256(string? Input)
-        {
-            try {
-                if (string.IsNullOrEmpty(Input ?? string.Empty))
-                    throw new ArgumentException("Input cannot be null or empty.");
-
-                string s = "!QAZ2WSX#EDC4RFV";
-                string s2 = "5TGB&YHN7UJM(IK<5TGB&YHN7UJM(IK<";
-                AesCryptoServiceProvider aesCryptoServiceProvider = new AesCryptoServiceProvider();
-                aesCryptoServiceProvider.BlockSize = 128;
-                aesCryptoServiceProvider.KeySize = 256;
-                aesCryptoServiceProvider.IV = Encoding.UTF8.GetBytes(s);
-                aesCryptoServiceProvider.Key = Encoding.UTF8.GetBytes(s2);
-                aesCryptoServiceProvider.Mode = CipherMode.CBC;
-                aesCryptoServiceProvider.Padding = PaddingMode.PKCS7;
-                byte[] bytes = Encoding.Unicode.GetBytes(Input ?? string.Empty);
-                using ICryptoTransform cryptoTransform = aesCryptoServiceProvider.CreateEncryptor();
-                byte[] inArray = cryptoTransform.TransformFinalBlock(bytes, 0, bytes.Length);
-                return Convert.ToBase64String(inArray);
-            }
-            catch (EncoderFallbackException ex)
+            using (Aes aesAlg = Aes.Create())
             {
-                _logger.LogError(ex, "EncoderFallbackException: {Message}", ex.Message);
-                return null;
-            }
-            catch (CryptographicException ex)
-            {
-                _logger.LogError(ex, "CryptographicException: {Message}", ex.Message);
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Exception: {Message}", ex.Message);
-                return null;
-            }
-        }
-            private static string Decrypt256(string? Input)
-        {
-            if (string.IsNullOrEmpty(Input ?? string.Empty))
-                throw new ArgumentException("Input cannot be null or empty.");
-            try
-            {
-                byte[] cipherBytes = Convert.FromBase64String(Input??string.Empty);
+                aesAlg.Key = Encoding.UTF8.GetBytes(Key);
+                
+                aesAlg.GenerateIV(); // Generate a new IV for each encryption
+                byte[] iv = aesAlg.IV;
+                aesAlg.Padding = PaddingMode.PKCS7;
 
-                using (Aes aesAlg = Aes.Create())
+                using (MemoryStream msEncrypt = new MemoryStream())
                 {
-                    aesAlg.GenerateKey();
-                    aesAlg.GenerateIV();
+                    msEncrypt.Write(iv, 0, iv.Length); // Prepend IV to the encrypted data
 
-                    aesAlg.Key = aesAlg.Key;
-   
-                    aesAlg.IV = aesAlg.IV;
-                    aesAlg.Mode = CipherMode.CBC;
-                    aesAlg.Padding = PaddingMode.PKCS7;
-
-                    using (ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV))
-                    using (MemoryStream msDecrypt = new MemoryStream(cipherBytes))
-                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
-                    using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, aesAlg.CreateEncryptor(), CryptoStreamMode.Write))
+                    using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
                     {
-                        return srDecrypt.ReadToEnd();
+                        swEncrypt.Write(plainText);
                     }
+
+                    return Convert.ToBase64String(msEncrypt.ToArray()); // Convert encrypted data to Base64 string
                 }
             }
-            catch (Exception ex)
+        }
+        public string Decrypt(string cipherText)
+        {
+            byte[] fullCipher = Convert.FromBase64String(cipherText);
+
+            using (Aes aesAlg = Aes.Create())
             {
-                throw new Exception("Decryption failed.", ex);
+                // Ensure key is 32 bytes (AES-256)
+                byte[] keyBytes = Encoding.UTF8.GetBytes(Key); // Ensure 32-byte key
+
+                if (keyBytes.Length != 16 && keyBytes.Length != 24 && keyBytes.Length != 32)
+                {
+                    throw new CryptographicException("Invalid AES key size. It must be 16, 24, or 32 bytes.");
+                }
+
+                aesAlg.Key = keyBytes;
+                aesAlg.Mode = CipherMode.CBC;
+                //aesAlg.Padding = PaddingMode.PKCS7;
+                aesAlg.Padding = PaddingMode.Zeros;
+                // Extract IV from the beginning of the encrypted data
+                byte[] iv = new byte[aesAlg.BlockSize / 8];
+                Array.Copy(fullCipher, 0, iv, 0, iv.Length);
+                aesAlg.IV = iv;
+
+                // Extract encrypted data after IV
+                byte[] cipherBytes = new byte[fullCipher.Length - iv.Length];
+                Array.Copy(fullCipher, iv.Length, cipherBytes, 0, cipherBytes.Length);
+
+                using (MemoryStream msDecrypt = new MemoryStream(cipherBytes))
+                using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, aesAlg.CreateDecryptor(), CryptoStreamMode.Read))
+                using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                {
+                    return srDecrypt.ReadToEnd().Trim();
+                }
             }
         }
+
+        //public string Decrypt(string cipherText)
+        //{
+        //    byte[] fullCipher = Convert.FromBase64String(cipherText);
+
+        //    using (Aes aesAlg = Aes.Create())
+        //    {
+        //        byte[] keyBytes = Convert.FromBase64String(Key); // Ensure valid key size
+
+        //        if (keyBytes.Length != 16 && keyBytes.Length != 24 && keyBytes.Length != 32)
+        //        {
+        //            throw new CryptographicException("Invalid AES key size. It must be 16, 24, or 32 bytes.");
+        //        }
+
+        //        aesAlg.Key = keyBytes;
+
+        //        byte[] iv = new byte[aesAlg.BlockSize / 8];
+        //        Array.Copy(fullCipher, 0, iv, 0, iv.Length); // Extract IV
+
+        //        using (MemoryStream msDecrypt = new MemoryStream(fullCipher, iv.Length, fullCipher.Length - iv.Length))
+        //        using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, aesAlg.CreateDecryptor(aesAlg.Key, iv), CryptoStreamMode.Read))
+        //        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+        //        {
+        //            return srDecrypt.ReadToEnd();
+        //        }
+        //    }
+        //}
     }
 }
