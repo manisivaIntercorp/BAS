@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 using System.Data;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Implementation;
-//using System.Data.SqlClient;
-//using Microsoft.Extensions.Configuration;
 namespace DataAccessLayer.Uow.Implementation
 {
     public class UowNationality : IUowNationality
@@ -24,7 +22,7 @@ namespace DataAccessLayer.Uow.Implementation
             connection.Open();
             transaction = connection.BeginTransaction();
         }
-         public INationalityDAL NationalityDALRepo
+        public INationalityDAL NationalityDALRepo
         {
             get { 
                return objNationalityDAL == null? objNationalityDAL = new NationalityDAL(transaction) : objNationalityDAL;
