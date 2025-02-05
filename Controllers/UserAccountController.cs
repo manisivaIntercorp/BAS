@@ -12,6 +12,7 @@ using System.Text.RegularExpressions;
 using MimeKit;
 using Microsoft.AspNetCore.Http;
 using Microsoft.SqlServer.Management.Smo;
+using System.Text;
 
 namespace WebApi.Controllers
 {
@@ -23,15 +24,14 @@ namespace WebApi.Controllers
         private readonly EmailServices _emailService;
         private readonly SessionService _SessionService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ICS _iCS;
-
+        
         public UserAccountController(EmailServices emailServices, SessionService sessionService,ICS iCS, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : base(configuration)
         {
             _emailService = emailServices;
             _SessionService = sessionService;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
-            _iCS = iCS;
+            
         }
         //List Page for User Creation
         [HttpGet("getAllUserAccount")]
@@ -39,12 +39,13 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     var lstUserAccountModel = await _repo.UserAccountDALRepo.GetAllUserAccount();
                     if (lstUserAccountModel != null)
                     {
-                        //var decrypt=_iCS.Decrypt("9cc3e5abdfaee198a6b74b97ea91e306e1744ddf49876d3dcf6cb936dfd5c9d7");
+                        //string plaintext = "Server=103.224.167.139,1437;Database=MasterData;User ID=sa;Password=DEV@dmin;MultipleActiveResultSets=True;TrustServerCertificate=True;";
+                        //byte[] ciphertext = _iCS.Encrypt(plaintext, key, iv);
                         return Ok(lstUserAccountModel);
 
                     }
@@ -67,7 +68,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     var lstUserPolicyModel = await _repo.UserAccountDALRepo.getAllUserPolicyinDropdown();
                     if (lstUserPolicyModel != null)
@@ -92,7 +93,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     var lstUserPolicyModel = await _repo.UserAccountDALRepo.getAllUserRoleinDropdown();
                     if (lstUserPolicyModel != null)
@@ -118,7 +119,7 @@ namespace WebApi.Controllers
         public async Task<IActionResult> GetUserAccountById(int Userid)
         {
             try {
-                using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     var objuseraccountModel = await _repo.UserAccountDALRepo.GetUserAccountById(Userid);
                     var response = new UserAccountResponse();
@@ -162,7 +163,7 @@ namespace WebApi.Controllers
             try
             {
                 
-                using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     var objuseraccountModel = await _repo.UserAccountDALRepo.GetOrgDetailsByUserId();
                     if (objuseraccountModel != null)
@@ -195,7 +196,7 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDatatable, 0);
                         DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, 0);
@@ -248,7 +249,7 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         var result = await _repo.UserAccountDALRepo.AddRoleName(objModel);
                         
@@ -312,7 +313,7 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    using (IUowUserAccount _repo = new UowUserAccount(ConnectionString,_httpContextAccessor))
+                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         var result = await _repo.UserAccountDALRepo.ResetPasswordinUserAccount(objModel);
                         
@@ -367,7 +368,7 @@ namespace WebApi.Controllers
                 try
                 {
                     string responseMsg = string.Empty;
-                    using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         
                         var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(id, userAccount);
@@ -414,7 +415,7 @@ namespace WebApi.Controllers
                 try
                 {
                     var responseMsg = string.Empty;
-                    using (IUowUserAccount _repo = new UowUserAccount(ConnectionString,_httpContextAccessor))
+                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                          DataTable? datatable = listofunlock.User?.ConvertToDataTable(listofunlock.Users ?? new List<UnlockUserList>()) ?? new DataTable();
                         var result = await _repo.UserAccountDALRepo.UnlockUserAsync(listofunlock.User);
@@ -462,7 +463,7 @@ namespace WebApi.Controllers
                 }
                 else
                 {
-                    using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         DataTable? deletetable = objModel.DeleteRoleNamesingle?.ConvertToDataTable(objModel.DeleteRoleName ?? new List<DeleteRoleNameinList>());
                         var result = await _repo.UserAccountDALRepo.DeleteRoleinUserAccount(objModel.DeleteRoleNamesingle ?? new DeleteRoleName());
@@ -505,7 +506,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowUserAccount _repo = new UowUserAccount(ConnectionString, _httpContextAccessor))
+                using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     var result = await _repo.UserAccountDALRepo.DeleteUserAccount(id);
                     var msg = "User Account Deleted Successfully";
