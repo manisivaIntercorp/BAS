@@ -15,9 +15,11 @@ namespace WebApi.Controllers
     public class RoleController : ApiBaseController
     {
         private readonly ILogger<RoleController> _logger;
-        public RoleController(ILogger<RoleController> logger, IConfiguration configuration) : base(configuration)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public RoleController(ILogger<RoleController> logger, IConfiguration configuration,IHttpContextAccessor httpContextAccessor) : base(configuration)
         {
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
             //var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
             //NLog.GlobalDiagnosticsContext.Set("LoggingDirectory", logPath);
         }
@@ -26,7 +28,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowRole _repo = new UowRole(ConnectionString))
+                using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
                     var lstRoleModel = await _repo.RoleDALRepo.GetAllRole();
                     if (lstRoleModel != null)
@@ -52,7 +54,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowRole _repo = new UowRole(ConnectionString))
+                using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
                     var objRoleModel = await _repo.RoleDALRepo.getModulesBasedonRole(Roleid, IsPayrollAccessible, UserID);
                     if (objRoleModel.ModuleDatatable == null || objRoleModel.ModuleDatatable != null)
@@ -91,7 +93,7 @@ namespace WebApi.Controllers
 
                 else
                 {
-                    using (IUowRole _repo = new UowRole(ConnectionString))
+                    using (IUowRole _repo = new UowRole(_httpContextAccessor))
                     {
                         DataTable dataTable = objModel.RoleModel.ConvertToDataTable(objModel.ModuleDatatable);
                         var result = await _repo.RoleDALRepo.InsertUpdateRole(objModel.RoleModel);
@@ -142,7 +144,7 @@ namespace WebApi.Controllers
                 try
                 {
                     string responsemsg = string.Empty;
-                    using (IUowRole _repo = new UowRole(ConnectionString))
+                    using (IUowRole _repo = new UowRole(_httpContextAccessor))
                     {
                         
                         var result = await _repo.RoleDALRepo.UpdateRoleAsync(id, roleModel);
@@ -184,7 +186,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowRole _repo = new UowRole(ConnectionString))
+                using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
                     var result = await _repo.RoleDALRepo.DeleteRole(id);
                     _repo.Commit();
