@@ -6,7 +6,7 @@ using Microsoft.Data.SqlClient;
 
 namespace DataAccessLayer.Implementation
 {
-    public class EmailTemplateDAL:RepositoryBase, IEmailTemplate
+    public class EmailTemplateDAL:RepositoryBase, IEmailTemplateDAL
     {
         private readonly IDbTransaction? _transaction;
         private readonly string? _connectionString;
