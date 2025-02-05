@@ -4,6 +4,7 @@ using System.Data;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Implementation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 
 
 namespace DataAccessLayer.Uow.Implementation
@@ -14,7 +15,17 @@ namespace DataAccessLayer.Uow.Implementation
         IDbTransaction transaction;
         IDbConnection? connection = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
-
+        public UowUserAccount(IHttpContextAccessor httpContextAccessor) : this(
+           // Try to get the connection string from HttpContext.Items.
+           httpContextAccessor.HttpContext?.Items["connection"] as string
+           // If not found, fallback to the configuration.
+           ?? (httpContextAccessor.HttpContext?.RequestServices
+                 .GetService(typeof(IConfiguration)) as IConfiguration)
+                 ?.GetConnectionString("connection")
+           // If still not found, throw an exception.
+           ?? throw new InvalidOperationException("No connection string found in HttpContext or configuration."),
+           httpContextAccessor)
+        { }
         public UowUserAccount(string connectionstring, IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
