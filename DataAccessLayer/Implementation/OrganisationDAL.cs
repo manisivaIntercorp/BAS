@@ -8,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -16,7 +15,9 @@ using System.Security;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using Microsoft.Data.SqlClient;
+
+
 
 namespace DataAccessLayer.Implementation
 {
@@ -34,7 +35,7 @@ namespace DataAccessLayer.Implementation
         {
             try
             {
-                using (var connection = new SqlConnection(_connectionString))
+                using (var connection = new System.Data.SqlClient.SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
 
@@ -56,7 +57,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
                     await connection.ExecuteAsync(
-                        "sp_OrganisationConfiguration_T",
+                        "sp_OrganisationConfiguration",
                         parameters,
                         commandType: CommandType.StoredProcedure
                     );
@@ -82,7 +83,7 @@ namespace DataAccessLayer.Implementation
             try
             {
 
-                using (var connection = new SqlConnection(_connectionString))
+                using (var connection = new Microsoft.Data.SqlClient.SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
                     using (var transaction = connection.BeginTransaction())
@@ -128,7 +129,7 @@ namespace DataAccessLayer.Implementation
             OrganisationModel Rst = new OrganisationModel();
             try
             {
-                using (var connection = new SqlConnection(_connectionString))
+                using (var connection = new  SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
                     using (var transaction = connection.BeginTransaction())
