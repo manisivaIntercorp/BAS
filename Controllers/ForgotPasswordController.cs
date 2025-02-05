@@ -21,13 +21,15 @@ namespace WebApi.Controllers
         private readonly ILogger<ForgotPasswordController> _logger;
         private readonly EmailServices _emailService;
         private readonly SessionService _SessionService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public ForgotPasswordController(EmailServices emailService,SessionService sessionService,
-            ILogger<ForgotPasswordController> logger, IConfiguration configuration) : base(configuration)
+            ILogger<ForgotPasswordController> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor) : base(configuration)
         {
             _logger = logger;
             _emailService= emailService;
             _SessionService= sessionService;
+            _httpContextAccessor= httpContextAccessor;
         }
         [HttpPost("InsertUpdateForgotPassword")]
         public async Task<IActionResult> InsertUpdateForgotPassword(ForgotPasswordModel objModel)
@@ -41,7 +43,7 @@ namespace WebApi.Controllers
 
                 else
                 {
-                    using (IUowForgotPassword _repo = new UowForgotPassword(ConnectionString))
+                    using (IUowForgotPassword _repo = new UowForgotPassword(_httpContextAccessor))
                     {
 
                         var result = await _repo.ForgotPasswordDALRepo.InsertUpdateForgotPassword(objModel);
@@ -86,7 +88,7 @@ namespace WebApi.Controllers
             try
             {
                 
-                using (IUowForgotPassword _repo = new UowForgotPassword(ConnectionString))
+                using (IUowForgotPassword _repo = new UowForgotPassword(_httpContextAccessor))
                 {
                     var objvalidatetoken = await _repo.ForgotPasswordDALRepo.ValidateTokenForgotPassword(token);
                     if (objvalidatetoken != null)
