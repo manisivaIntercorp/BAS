@@ -14,10 +14,12 @@ namespace WebApi.Controllers
     public class LanguageController : ApiBaseController
     {
         private readonly ILogger<LanguageController> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public LanguageController(ILogger<LanguageController> logger, IConfiguration configuration) : base(configuration)
+        public LanguageController(ILogger<LanguageController> logger, IConfiguration configuration,IHttpContextAccessor httpContextAccessor) : base(configuration)
         {
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
             
         }
         [HttpGet("getAllLanguageinDropdown")]
@@ -25,7 +27,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowLanguage _repo = new UowLanguage(ConnectionString))
+                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                 {
                     var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguageinDropdown();
                     if (lstLanguageModel != null)
@@ -51,7 +53,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowLanguage _repo = new UowLanguage(ConnectionString))
+                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                 {
                     var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguageinDropdown();
                     if (lstLanguageModel != null)
@@ -77,7 +79,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowLanguage _repo = new UowLanguage(ConnectionString))
+                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                 {
                     var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguage();
                     if (lstLanguageModel != null)
@@ -101,7 +103,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowLanguage _repo = new UowLanguage(ConnectionString))
+                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                 {
                     var objLanguageModel = await _repo.LanguageDALRepo.GetLanguageById(id);
                     if (objLanguageModel != null)
@@ -125,7 +127,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowLanguage _repo = new UowLanguage(ConnectionString))
+                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                 {
                     var result = await _repo.LanguageDALRepo.InsertUpdateLanguage(objModel);
                     var msg = "Language Inserted Successfully";
@@ -160,7 +162,7 @@ namespace WebApi.Controllers
             {
                 try
                 {
-                    using (IUowLanguage _repo = new UowLanguage(ConnectionString))
+                    using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                     {
                         var result = await _repo.LanguageDALRepo.UpdateLanguageAsync(id, objModel);
                         var msg = "User account updated successfully.";
@@ -190,7 +192,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                using (IUowLanguage _repo = new UowLanguage(ConnectionString))
+                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
                 {
                     var result = await _repo.LanguageDALRepo.DeleteLanguage(id);
                     _repo.Commit();
