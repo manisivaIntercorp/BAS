@@ -6,8 +6,8 @@ namespace WebApi.Controllers {
 [ApiController]
 public class EncryptionController : ControllerBase
 {
-    public readonly ICS _aesHelper;
-    public EncryptionController(ICS iCS) {
+    public readonly EncryptedDecrypt _aesHelper;
+    public EncryptionController(EncryptedDecrypt iCS) {
             _aesHelper = iCS;
         }
 
