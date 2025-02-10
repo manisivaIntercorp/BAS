@@ -7,6 +7,10 @@ using Microsoft.Data.SqlClient;
 using System.Data;
 using DataAccessLayer.Services;
 using Newtonsoft.Json;
+using Microsoft.SqlServer.Management.Smo;
+using System.Net.Http;
+using System.Xml.Linq;
+using Microsoft.AspNetCore.Hosting.Server;
 
 namespace DataAccessLayer.Implementation
 {
@@ -152,6 +156,15 @@ namespace DataAccessLayer.Implementation
                         var firstOrg = OrgDetails.FirstOrDefault();
                         UpdateConnectionString(firstOrg?.DBName, firstOrg?.InstanceName, firstOrg?.ConUserName, firstOrg?.ConPassword);
                         var ClientResult = await InsertUpdateUserAccountClient(model);
+                        var httpContext = _httpContextAccessor.HttpContext;
+                        if (httpContext != null)
+                        {
+                            httpContext.Session.Remove("DBName");
+                            httpContext.Session.Remove("InstanceName");
+                            httpContext.Session.Remove("DataBaseUserName");
+                            httpContext.Session.Remove("DataBasePassword");
+                        }
+                        
                         return (ClientResult.InsertedClientUsers, ClientResult.OrgClientDetails, ClientResult.RetClientVal, ClientResult.ClientMsg);
                     }
 
@@ -211,7 +224,7 @@ namespace DataAccessLayer.Implementation
             int RetValClient = clientParameters.Get<int?>("@RetVal") ?? -4;
             string MsgClient = clientParameters.Get<string?>("@Msg") ?? "No Records Found";
             List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
-            OrgDetails = await GetOrgDetailsByUserId(RetValClient);
+            //OrgDetails = await GetOrgDetailsByUserId(RetValClient);
             return (InsertedUsersClient, OrgDetails,RetValClient, MsgClient);
         }
 
