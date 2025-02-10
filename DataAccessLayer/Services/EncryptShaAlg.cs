@@ -7,8 +7,11 @@ namespace DataAccessLayer.Services
 {
     public class EncryptShaAlg
     {
-        private static ILogger<EncryptShaAlg> _logger;
-        public EncryptShaAlg(ILogger<EncryptShaAlg?> logger)
+        //To Remove Warning in Logger
+        private static ILogger<EncryptShaAlg> _logger = LoggerFactory
+                                                                 .Create(builder => builder.AddConsole())
+                                                                 .CreateLogger<EncryptShaAlg>();
+        public EncryptShaAlg(ILogger<EncryptShaAlg> logger)
         {
             _logger = logger;
         }
@@ -50,12 +53,7 @@ namespace DataAccessLayer.Services
                 return null;
             }
         }
-
-
     }
-
-
-    
 }
    
 
