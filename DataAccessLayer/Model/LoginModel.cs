@@ -59,6 +59,11 @@ namespace DataAccessLayer.Model
         public string? DeviceName { get; set; }
 
         public string? BrowserName { get; set; }
+        public string? GlobalUser { get; set; }
+        public string? LanguageCode { get; set; }
+
+        
+
     }
     public class ResultModel
     {
@@ -66,5 +71,18 @@ namespace DataAccessLayer.Model
         public  string? RetMsg { get; set; }
 
         public List<LoginDetailModel>? lstLoginDetails { get; set;}
+    }
+
+    public class OrganisationDBDetails
+    {
+        public int? ID { get; set; }
+        public string? OrgCode { get; set; }
+        public string? OrgName { get; set; }
+        public string? Logo { get; set; }
+        public string? DBName { get; set; }
+        public string? AutoID { get; set; }
+        public string? InstanceName { get; set; }
+        public string? ConUserName { get; set; }
+        public string? ConPassword { get; set; }
     }
 }
