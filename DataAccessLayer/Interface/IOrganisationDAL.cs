@@ -16,5 +16,7 @@ namespace DataAccessLayer.Interface
 
         Task<string> InsertOrganisation(OrganisationModel OrganisationModel);
         Task<string> UpdateOrganisation(int id, OrganisationModel OrganisationModel);
+
+        Task<List<OrganisationDeleteRecord>> DeleteOrganisation(List<DeleteRecord> dltOrg);
     }
 }

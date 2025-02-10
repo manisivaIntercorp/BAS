@@ -10,6 +10,7 @@ namespace DataAccessLayer.Interface
     public interface ILoginDAL
     {
         Task<List<ResultModel>> UserLogin(LoginModel loginModel);
-        Task<List<LoginModel>> GetUserID(LoginModel loginModel);
+        Task<List<ResultModel>> GetUserID(LoginModel loginModel);
+        Task<List<OrganisationDBDetails>> GetOrganisationWithDBDetails(LoginModel loginModel);
     }
 }
