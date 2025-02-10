@@ -19,7 +19,7 @@ namespace DataAccessLayer.Services
                 throw new ArgumentException("Invalid AES Key. It must be 32 characters long.");
             }
         }
-        public string Encrypt(string plainText)
+        public string Encrypt(string? plainText)
         {
             using (Aes aesAlg = Aes.Create())
             {
@@ -43,9 +43,9 @@ namespace DataAccessLayer.Services
                 }
             }
         }
-        public string Decrypt(string cipherText)
+        public string Decrypt(string? cipherText)
         {
-            byte[] fullCipher = Convert.FromBase64String(cipherText);
+            byte[] fullCipher = Convert.FromBase64String(cipherText??string.Empty);
 
             using (Aes aesAlg = Aes.Create())
             {

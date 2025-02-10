@@ -10,7 +10,8 @@ namespace DataAccessLayer.Interface
     public interface INationalityDAL
     {
         Task<List<NationalityModel>> GetAllNationality();
-        Task<bool> InsertUpdateNationality(NationalityModel NM);
+        Task<(bool Insertnationality, int RetVal, string Msg)> InsertUpdateNationality(NationalityModel NM);
+        Task<(bool Updatenationality, int RetVal, string Msg)> UpdateNationality(NationalityModel NM);
         Task<bool> DeleteNationality(int Id);
         Task<NationalityModel> GetNationalityById(int Id);
 

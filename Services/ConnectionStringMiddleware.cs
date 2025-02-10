@@ -23,8 +23,7 @@ namespace WebApi.Services
 
         public async Task InvokeAsync(HttpContext context)
         {
-            string connectionString;
-
+            string? connectionString=string.Empty;
             var session = context.Session;
             if (session == null)
             {
@@ -66,7 +65,7 @@ namespace WebApi.Services
             await _next(context);
         }
 
-        private string BuildConnectionString(string dbName)
+        private string BuildConnectionString(string? dbName)
         {
             var config = _httpContextAccessor?.HttpContext?.RequestServices.GetService<IConfiguration>();
             var connectionString = config?.GetConnectionString("connection");
@@ -77,10 +76,10 @@ namespace WebApi.Services
             return builder.ToString();
         }
 
-        private string BuildConnectionString(string serverName, string userID, string password, string dbName)
+        private string BuildConnectionString(string? serverName, string? userID, string? password, string? dbName)
         {
-            var config = _httpContextAccessor?.HttpContext?.RequestServices.GetService<IConfiguration>();
-            var connectionString = config?.GetConnectionString("DefaultConnection");
+            var config = _httpContextAccessor.HttpContext.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
+            var connectionString = config.GetConnectionString("connection");
             var builder = new SqlConnectionStringBuilder(connectionString)
             {
                 DataSource = serverName,

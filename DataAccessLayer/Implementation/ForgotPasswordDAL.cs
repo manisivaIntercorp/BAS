@@ -44,7 +44,7 @@ namespace DataAccessLayer.Implementation
                 return (forgotPasswordModels, retVal, msg);
             }
         }
-        public MailServer mailServerport()
+        public MailServer mailServerPort()
         {
             return new MailServer();
         }

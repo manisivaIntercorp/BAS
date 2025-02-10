@@ -9,7 +9,7 @@ namespace DataAccessLayer.Services
         private readonly string? connectionString;
         private readonly IDbConnection? _connection;
 
-        IDbConnection? connection = null;
+        
         public MailServer(string? connectionString)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
