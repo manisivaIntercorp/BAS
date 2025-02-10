@@ -52,8 +52,6 @@ namespace WebApi.Controllers
         {
             try
             {
-                //using (IUowOrganisation _repo = new UowOrganisation(ConnectionString))
-                //{
                     var lsOrganisation = await _repository.OrganisationDALRepo.GetAllOrganisation();
                     if (lsOrganisation != null)
                     {
@@ -63,7 +61,6 @@ namespace WebApi.Controllers
                     {
                         return BadRequest();
                     }
-                //}
             }
             catch (Exception ex)
             {
@@ -96,43 +93,64 @@ namespace WebApi.Controllers
         }
 
 
-        //[HttpPut("UpdateOrganisation/{id}")]
-        //public async Task<IActionResult> UpdateOrganisation(int id, [FromBody] OrganisationModel Org)
-        //{
+        [HttpPut("UpdateOrganisation/{id}")]
+        public async Task<IActionResult> UpdateOrganisation(int id, [FromBody] OrganisationModel Org)
+        {
 
-        //    if (Org == null || id != Org.ID)
-        //    {
-        //        return BadRequest("Invalid data.");
-        //    }
+            if (Org == null || id != Org.ID)
+            {
+                return BadRequest("Invalid data.");
+            }
 
-        //    try
-        //    {
-        //        //using (IUowOrganisation _repo = new UowOrganisation(ConnectionString))
-        //        //{
-        //            var result = await _repository.OrganisationDALRepo.UpdateOrganisation(id, Org);
-        //            var msg = "User account updated successfully.";
-        //           // _repo.Commit();
-        //            if (result == "1")
-        //            {
-        //                Ok(result);
-        //                Ok(msg);
+            try
+            {
 
-        //            }
-        //            else
-        //            {
-        //                _logger.LogError(Environment.NewLine);
-        //                _logger.LogError("Bad Request occurred while accessing the update Organisation function in Organisation Update api controller");
-        //                return BadRequest();
-        //            }
-        //            return Ok(msg + result);
-        //        //}
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex.Message + "  " + ex.StackTrace);
-        //        throw;
+                var result = await _repository.OrganisationDALRepo.UpdateOrganisation(id, Org);
+                var msg = "User account updated successfully.";
+                if (result == "1")
+                {
+                    Ok(result);
+                    Ok(msg);
 
-        //    }
-        //}
+                }
+                else
+                {
+                    _logger.LogError(Environment.NewLine);
+                    _logger.LogError("Bad Request occurred while accessing the update Organisation function in Organisation Update api controller");
+                    return BadRequest();
+                }
+                return Ok(msg + result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+
+            }
+        }
+
+
+        [HttpGet("Delete Organisation")]
+        public async Task<IActionResult> Deleterganisation(List<DeleteRecord> dltOrg)
+        {
+            try
+            {
+
+                var objOrganisationModel = await _repository.OrganisationDALRepo.DeleteOrganisation(dltOrg);
+                if (objOrganisationModel != null)
+                {
+                    return Ok(objOrganisationModel);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
     }
 }
