@@ -173,162 +173,6 @@ namespace DataAccessLayer.Implementation
             }
         }
 
-       
-        //public async Task<string> InsertOrganisation(OrganisationModel model)
-        //{
-        //    try
-        //    {
-        //        DynamicParameters parameters = new DynamicParameters();
-        //        parameters.Add("@OrgID", model.ID);
-        //        parameters.Add("@OrgCode", model.OrgCode);
-        //        parameters.Add("@OrgName", model.OrgName);
-        //        parameters.Add("@OrgAddress", model.Address);
-        //        parameters.Add("@Country", model.Country);
-        //        parameters.Add("@PriContactNo", model.PriContactNo);
-        //        parameters.Add("@SecContactNo", model.SecContactNo);
-        //        parameters.Add("@PriEmailAddress", model.PriEmailAddress);
-        //        parameters.Add("@SecEmailAddress", model.SecEmailAddress);
-        //        parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-        //        parameters.Add("@CompanyLogo", model.Logo);
-        //        parameters.Add("@UpdatedBy", model.UserID);
-        //        parameters.Add("@Active", model.Active);
-        //        parameters.Add("@Mode", "ADD");
-
-        //        // Execute stored procedure
-        //        var multi = await Connection.ExecuteAsync("sp_OrganisationConfiguration",
-        //            parameters,
-        //            transaction: Transaction,
-        //            commandType: CommandType.StoredProcedure);
-
-        //        // Determine success based on rows affected
-        //        return multi > 0 ? "1" : "0";
-        //    }
-        //    catch (SqlException ex)
-        //    {
-        //        // Log SQL exception (log framework or custom logger)
-        //        Console.WriteLine($"SQL Error: {ex.Message}");
-        //        return $"Error: {ex.Message}";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Log general exceptions
-        //        Console.WriteLine($"Error: {ex.Message}");
-        //        return $"Error: {ex.Message}";
-        //    }
-        //}
-
-        //public async Task<string> InsertOrganisation(OrganisationModel model)
-        //{
-        //    try
-        //    {
-        //        using (IUowOrganisation _repo = new UowOrganisation(ConnectionString))
-        //        {
-        //            string query = "sp_OrganisationConfiguration";
-        //            var parameters = new DynamicParameters();
-        //            parameters.Add("@OrgID", model.ID);
-        //            parameters.Add("@OrgCode", model.OrgCode);
-        //            // Add remaining parameters...
-
-        //            var result = await _connection.ExecuteAsync(query, parameters, commandType: CommandType.StoredProcedure);
-        //            return result > 0 ? "1" : "0";
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception($"Database error: {ex.Message}");
-        //    }
-        //}
-
-        ///// <summary>
-        ///// workin
-        ///// </summary>
-        ///// <param name = "model" ></ param >
-        ///// < returns ></ returns >
-        //public async Task<string> InsertOrganisation(OrganisationModel model)
-        //{
-        //    try
-        //    {
-        //        // Prepare the connection string
-        //        using (var connection = new SqlConnection(Connection.ConnectionString)) // Reuse the existing connection string
-        //        {
-        //            // Open the connection
-        //            await connection.OpenAsync();
-
-        //            // Prepare parameters for the stored procedure
-        //            var parameters = new DynamicParameters();
-        //            parameters.Add("@OrgID", model.ID);
-        //            parameters.Add("@OrgCode", model.OrgCode);
-        //            parameters.Add("@OrgName", model.OrgName);
-        //            parameters.Add("@OrgAddress", model.Address);
-        //            parameters.Add("@Country", model.Country);
-        //            parameters.Add("@PriContactNo", model.PriContactNo);
-        //            parameters.Add("@SecContactNo", model.SecContactNo);
-        //            parameters.Add("@PriEmailAddress", model.PriEmailAddress);
-        //            parameters.Add("@SecEmailAddress", model.SecEmailAddress);
-        //            parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-        //            parameters.Add("@CompanyLogo", model.Logo);
-        //            parameters.Add("@UpdatedBy", model.UserID);
-        //            parameters.Add("@Active", model.Active);
-        //            parameters.Add("@Mode", "ADD");
-
-        //            // Execute the stored procedure
-        //            int rowsAffected = await connection.ExecuteAsync(
-        //                "sp_OrganisationConfiguration",
-        //                parameters,
-        //                commandType: CommandType.StoredProcedure
-        //            );
-
-        //            // Return result based on rows affected
-        //            return rowsAffected > 0 ? "1" : "0";
-        //        }
-        //    }
-        //    catch (SqlException ex)
-        //    {
-        //        // Log SQL exception
-        //        Console.WriteLine($"SQL Error: {ex.Message}");
-        //        return $"SQL Error: {ex.Message}";
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // Log general exceptions
-        //        Console.WriteLine($"Error: {ex.Message}");
-        //        return $"Error: {ex.Message}";
-        //    }
-        //}
-
-        //public async Task<string> InsertOrganisation(OrganisationModel model)
-        //{
-        //    DynamicParameters parameters = new DynamicParameters();
-
-        //    parameters.Add("@UserName", model.OrgCode);
-        //    parameters.Add("@Password", model.OrgName);
-
-        //    parameters.Add("@Mode", "ADD");
-        //    var multi = await Connection.ExecuteAsync("sp_SampleTest",
-        //        parameters,
-        //        transaction: Transaction,
-        //        commandType: CommandType.StoredProcedure);
-        //    var res = multi > 0 ? "1" : "0";
-        //    return res;
-        //}
-
-
-        //  public async Task<string> InsertOrganisation(OrganisationModel model)
-        //{
-        //    DynamicParameters parameters = new DynamicParameters();
-
-        //    parameters.Add("@UserName", model.OrgCode);
-        //    parameters.Add("@Password", model.OrgName);
-        //    parameters.Add("@Mode", "ADD");
-
-        //    var result = await Connection.QueryFirstOrDefaultAsync<string>("sp_SampleTest",
-        //        parameters,
-        //        transaction: Transaction,
-        //        commandType: CommandType.StoredProcedure);
-
-        //    return result == "Success" ? "1" : "0";
-        //}
-
         public async Task<string> UpdateOrganisation(int id, OrganisationModel model)
         {
             
@@ -337,29 +181,6 @@ namespace DataAccessLayer.Implementation
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
-                    //DynamicParameters parameters = new DynamicParameters();
-                    //parameters.Add("@OrgID", id);
-                    //parameters.Add("@OrgCode", model.OrgCode);
-                    //parameters.Add("@OrgName", model.OrgName);
-                    //parameters.Add("@OrgAddress", model.Address);
-                    //parameters.Add("@Country", model.Country);
-                    //parameters.Add("@PriContactNo", model.PriContactNo);
-                    //parameters.Add("@SecContactNo", model.SecContactNo);
-                    //parameters.Add("@PriEmailAddress", model.PriEmailAddress);
-                    //parameters.Add("@SecEmailAddress", model.SecEmailAddress);
-                    //parameters.Add("@CcEmailAddress", model.CcEmailAddress);
-                    //parameters.Add("@CompanyLogo", model.Logo);
-                    //parameters.Add("@UpdatedBy", model.UserID);
-                    //parameters.Add("@Active", model.Active);
-                    //parameters.Add("@Mode", "EDIT");
-                    //var multi = await connection.ExecuteAsync("sp_OrganisationConfiguration",
-                    //    parameters,
-                    //    transaction: Transaction,
-                    //    commandType: CommandType.StoredProcedure);
-                    //var res = multi > 0 ? true : false;
-
-                    //return res;
-
 
                     var parameters = new DynamicParameters();
                     parameters.Add("@OrgID", model.ID);
@@ -399,5 +220,63 @@ namespace DataAccessLayer.Implementation
             }
 
         }
+    
+        public async Task<List<OrganisationDeleteRecord>> DeleteOrganisation(List<DeleteRecord> dltOrg)
+        {
+            var res = new List<OrganisationDeleteRecord>();
+            try
+            {
+                using (var connection = new SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            var table = new DataTable();
+                            table.Columns.Add("ID", typeof(long));
+                            table.Columns.Add("FldInfo", typeof(string));
+
+                            foreach (var record in dltOrg)
+                            {
+                                table.Rows.Add(record.ID, record.FldInfo);
+                            }
+
+                            var parameters = new DynamicParameters();
+                            parameters.Add("@dtOrganisation", table.AsTableValuedParameter("utt_DeleteRecords"));
+
+                            parameters.Add("@Mode", "DELETE");
+
+                            var multi = await connection.QueryMultipleAsync(
+                                "sp_OrganisationConfiguration",
+                                parameters,
+                                transaction: transaction,
+                                commandType: CommandType.StoredProcedure);
+
+                            res = multi.Read<OrganisationDeleteRecord>().ToList();
+
+                            transaction.Commit();
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Error: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+
+            return res;
+        }
+
+
     }
 }
