@@ -1,4 +1,4 @@
-using DataAccessLayer.Uow.Implementation;
+﻿using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -32,8 +32,8 @@ builder.Services.AddScoped<IUowEmailTemplate>(sp => new UowEmailTemplate(connect
 builder.Services.AddScoped<EmailServices>();
 builder.Services.AddScoped<SessionService>();
 
-//Added ICS Services with DI
-builder.Services.AddScoped<ICS>();
+//Added Encryption and Decryption Services with DI
+builder.Services.AddScoped<EncryptedDecrypt>();
 // Register MailServer with DI
 builder.Services.AddScoped<MailServer>(sp => new MailServer(connectionString));
 
@@ -69,10 +69,6 @@ builder.Services.AddSingleton<AppGlobalVariableService>();
 // Register other required services
 builder.Services.AddSingleton<IDbConnection>(_ => new SqlConnection());
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
-// Note: Remove the middleware registration from DI.
-// builder.Services.AddScoped<ConnectionStringMiddleware>();
-
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
