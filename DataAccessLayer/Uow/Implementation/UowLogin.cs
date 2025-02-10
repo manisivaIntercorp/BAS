@@ -24,43 +24,22 @@ namespace DataAccessLayer.Uow.Implementation
         private readonly IDbConnection? connection = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
-        // Existing constructor that accepts connection string and IHttpContextAccessor.
-        public UowLogin(string connectionstring, IHttpContextAccessor httpContextAccessor)
+        public UowLogin(string connectionString, IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
 
-            if (_httpContextAccessor.HttpContext?.Session.GetString("DBName") != null)
+            if (!string.IsNullOrEmpty(connectionString))
             {
-                string dbName = _httpContextAccessor.HttpContext?.Session.GetString("DBName") ?? "";
-                string finalConnectionString = BuildConnectionString(connectionstring, dbName);
-                connection = new Microsoft.Data.SqlClient.SqlConnection(finalConnectionString);
-                connection.Open();
-                transaction = connection.BeginTransaction();
-            }
-            else if (_httpContextAccessor.HttpContext?.Session != null &&
-                     _httpContextAccessor.HttpContext?.Session.GetString("InstanceName") != null &&
-                     _httpContextAccessor.HttpContext?.Session.GetString("InstanceChange") == "Y" &&
-                     _httpContextAccessor.HttpContext?.Session.GetString("DataBaseUserName") != null &&
-                     _httpContextAccessor.HttpContext?.Session.GetString("DataBasePassword") != null)
-            {
-                string serverName = _httpContextAccessor.HttpContext?.Session?.GetString("InstanceName") ?? "";
-                string userId = _httpContextAccessor.HttpContext?.Session?.GetString("DataBaseUserName") ?? "";
-                string password = _httpContextAccessor.HttpContext?.Session?.GetString("DataBasePassword") ?? "";
-                string dbName = _httpContextAccessor.HttpContext?.Session?.GetString("DBName") ?? "";
-                string maxPoolSize = _httpContextAccessor.HttpContext?.Session?.GetString("MaxPoolSize") ?? "100";
-
-                string finalConnectionString = BuildConnectionString(connectionstring, serverName, userId, password, dbName, maxPoolSize);
-                connection = new SqlConnection(finalConnectionString);
+                connection = new SqlConnection(connectionString);
                 connection.Open();
                 transaction = connection.BeginTransaction();
             }
             else
             {
-                connection = new SqlConnection(connectionstring);
-                connection.Open();
-                transaction = connection.BeginTransaction();
+                throw new ArgumentException("Invalid connection string.");
             }
         }
+
 
         // Overloaded constructor that retrieves the connection string from HttpContext (set by your middleware)
         public UowLogin(IHttpContextAccessor httpContextAccessor): this(
