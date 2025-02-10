@@ -39,7 +39,14 @@ namespace DataAccessLayer.Model
         public List<FunctionConfiguration> FunctionConfigurations { get; set; } = new();
     }
 
-    
+    public class OrganisationDeleteRecord()
+    {
+        public int? SNo { get; set; }
+        public string? OrgCode { get; set; }
+        public string? OrgName { get; set; }
+        public string? Result { get; set; }
+        public string? Remarks { get; set; }
+    }
 
 
 
