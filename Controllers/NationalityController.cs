@@ -60,16 +60,15 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("getNationalityById/{code}")]
-        public async Task<IActionResult> GetNationalityById(int code)
+        [HttpGet("getNationalityById/{id}")]
+        public async Task<IActionResult> GetNationalityById(int id)
         {
             try
             {
-                int i = 0;
-                var j = 1 / i;
+               
                 using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
                 {
-                    var objNationalityModel = await _repo.NationalityDALRepo.GetNationalityById(code);
+                    var objNationalityModel = await _repo.NationalityDALRepo.GetNationalityById(id);
                     if (objNationalityModel != null)
                     {
                         return Ok(objNationalityModel);
@@ -95,17 +94,26 @@ namespace WebApi.Controllers
                 {
                     var result = await _repo.NationalityDALRepo.InsertUpdateNationality(objModel);
                     _repo.Commit();
-                    if (result)
+                    if (result.Insertnationality==true || result.Insertnationality == false)
                     {
-                        return Ok(result);
+                        switch (result.RetVal)
+                        {
+                            case 1://Success
+                                return Ok(result.Msg);
+                            case -2:// Failure in Nationality Name
+                                return Ok(result.Msg);
+                            case -1:// Failure in Nationality Name
+                                return Ok(result.Msg);
+                            default:
+                                _logger.LogError(Environment.NewLine);
+                                _logger.LogError("Bad Request occurred while accessing the InsertUpdateNationality function in Nationality api controller");
+                                return BadRequest();
+                        }
+                        
                     }
-                    else
-                    {
-                        _logger.LogError(Environment.NewLine);
-                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateNationality function in Nationality api controller");
-                        return BadRequest();
-                    }
+                    
                 }
+                return Ok();
             }
             catch (Exception ex )
             {
@@ -113,14 +121,50 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("deleteNationality/{code}")]
-        public async Task<IActionResult> DeleteNationality(int code)
+
+        [HttpPut("UpdateNationality")]
+        public async Task<IActionResult> UpdateNationality(NationalityModel objModel)
         {
             try
             {
                 using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
                 {
-                    var result = await _repo.NationalityDALRepo.DeleteNationality(code);
+                    var result = await _repo.NationalityDALRepo.UpdateNationality(objModel);
+                    _repo.Commit();
+                    if (result.Updatenationality == true || result.Updatenationality == false)
+                    {
+                        switch (result.RetVal)
+                        {
+                            case 1://Success
+                                return Ok(result.Msg);
+                            case -2:// Failure in Nationality Name
+                                return Ok(result.Msg);
+                            case -1:// Failure in Nationality Name
+                                return Ok(result.Msg);
+                            default:
+                                _logger.LogError(Environment.NewLine);
+                                _logger.LogError("Bad Request occurred while accessing the InsertUpdateNationality function in Nationality api controller");
+                                return BadRequest();
+                        }
+                    }
+
+                }
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+        [HttpDelete("deleteNationality/{id}")]
+        public async Task<IActionResult> DeleteNationality(int id)
+        {
+            try
+            {
+                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
+                {
+                    var result = await _repo.NationalityDALRepo.DeleteNationality(id);
                     _repo.Commit();
                     if (result)
                     {
