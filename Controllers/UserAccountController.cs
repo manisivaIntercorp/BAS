@@ -1,37 +1,27 @@
-﻿using Azure;
-using DataAccessLayer.Model;
+﻿using DataAccessLayer.Model;
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
 using System.Data;
-using System.Reflection;
 using WebApi.Services;
 using DataAccessLayer.Services;
-using System.Text.RegularExpressions;
-using MimeKit;
-using Microsoft.AspNetCore.Http;
-using Microsoft.SqlServer.Management.Smo;
-using System.Text;
+
 
 namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class UserAccountController:ApiBaseController
+    public class UserAccountController : ApiBaseController
     {
         private readonly ILogger<UserAccountController> _logger;
         private readonly EmailServices _emailService;
-        private readonly SessionService _SessionService;
+
         private readonly IHttpContextAccessor _httpContextAccessor;
-        
-        public UserAccountController(EmailServices emailServices, SessionService sessionService,ICS iCS, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : base(configuration)
+        public UserAccountController(EmailServices emailServices, ILogger<UserAccountController> logger, IHttpContextAccessor httpContextAccessor,IConfiguration configuration) : base(configuration)
         {
             _emailService = emailServices;
-            _SessionService = sessionService;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
-            
         }
         //List Page for User Creation
         [HttpGet("getAllUserAccount")]
@@ -118,19 +108,20 @@ namespace WebApi.Controllers
 
         public async Task<IActionResult> GetUserAccountById(int Userid)
         {
-            try {
+            try
+            {
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     var objuseraccountModel = await _repo.UserAccountDALRepo.GetUserAccountById(Userid);
                     var response = new UserAccountResponse();
-                    if (objuseraccountModel.userAccounts != null || objuseraccountModel.UserRoles!=null || objuseraccountModel.Org!=null)
+                    if (objuseraccountModel.userAccounts != null || objuseraccountModel.UserRoles != null || objuseraccountModel.Org != null)
                     {
-                        if (objuseraccountModel.userAccounts.UserID is not null and 0)
+                        if (objuseraccountModel.userAccounts?.UserID is not null and 0)
                         {
                             // Return 204 No Content
                             return NoContent();
                         }
-                        if (objuseraccountModel.userAccounts.UserID != null && objuseraccountModel.userAccounts.UserID!=0)
+                        if (objuseraccountModel.userAccounts?.UserID != null && objuseraccountModel.userAccounts.UserID != 0)
                         {
                             response = new UserAccountResponse
                             {
@@ -143,10 +134,11 @@ namespace WebApi.Controllers
                         return Ok(response);
 
                     }
-                    else {
+                    else
+                    {
                         return BadRequest();
                     }
-                    
+
                 }
             }
             catch (Exception ex)
@@ -162,7 +154,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                
+
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     var objuseraccountModel = await _repo.UserAccountDALRepo.GetOrgDetailsByUserId();
@@ -189,8 +181,8 @@ namespace WebApi.Controllers
         {
             try
             {
-                string responseMsg=string.Empty;
-                if (objModel == null || objModel.UserAccount == null || objModel.OrgDatatable == null ||  objModel.RoleNameList == null)
+                string responseMsg = string.Empty;
+                if (objModel == null || objModel.UserAccount == null || objModel.OrgDatatable == null || objModel.RoleNameList == null)
                 {
                     return BadRequest("Invalid input data.");
                 }
@@ -202,21 +194,26 @@ namespace WebApi.Controllers
                         DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, 0);
                         var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
                         _repo.Commit();
-                        if (result.insertroles != null)
+                        if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
                         {
-                            
+
                             switch (result.RetVal)
                             {
                                 case 0:
                                 case -1://Already Exists
-                                    responseMsg = result.Msg??string.Empty;
-                                    //Console.WriteLine(_ICS.Decrypt("tRocCPgzwP9Fj5Isbb60Ww=="));
-                                    break;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     
-                                case >=1:
-                                    responseMsg = result.Msg??string.Empty;
+                                    break;
 
-                                    await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED,-1,result.RetVal,objModel.UserAccount.UserPassword);
+                                case >= 1:
+                                    responseMsg = result.Msg ?? string.Empty;
+                                    await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1, result.RetVal, objModel.UserAccount.UserPassword);
+                                    _httpContextAccessor?.HttpContext?.Session.Remove("DBName");
+                                    _httpContextAccessor?.HttpContext?.Session.Remove("DBChange");
+                                    _httpContextAccessor?.HttpContext?.Session.Remove("InstanceChange");
+                                    _httpContextAccessor?.HttpContext?.Session.Remove("InstanceName");
+                                    _httpContextAccessor?.HttpContext?.Session.Remove("DataBaseUserName");
+                                    _httpContextAccessor?.HttpContext?.Session.Remove("DataBasePassword");
                                     break;
 
                                 default:
@@ -224,7 +221,7 @@ namespace WebApi.Controllers
                                     _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
                                     return NotFound("User Account Already Exists" + BadRequest());
                             }
-                            
+
                         }
                     }
                 }
@@ -252,33 +249,33 @@ namespace WebApi.Controllers
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         var result = await _repo.UserAccountDALRepo.AddRoleName(objModel);
-                        
+
                         _repo.Commit();
                         if (result.Roles != null)
                         {
                             switch (result.RetVal)
                             {
                                 case 0:// Already Exists
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
-                                
+
                                 case -4:// Null Value Return
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
                                 case 1://Success
-                                    responseMsg = result.Msg??string.Empty;
-                                    
+                                    responseMsg = result.Msg ?? string.Empty;
+
                                     break;
 
                                 case -1:// Effective Date Should not be greater than current date
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
 
                                 case -2:
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
                                 case -3: // There cannot be more than one role for the high level user!
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
 
                                 default:
@@ -316,25 +313,25 @@ namespace WebApi.Controllers
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         var result = await _repo.UserAccountDALRepo.ResetPasswordinUserAccount(objModel);
-                        
+
                         _repo.Commit();
-                        
+
                         if (result.PasswordReset != null)
                         {
                             switch (result.RetVal)
                             {
                                 case -4:// Null Value Return
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
                                 case 1:// Success
-                                    responseMsg = result.Msg??string.Empty;
-                                    _SessionService.SetSession("UserID", "1");
+                                    responseMsg = result.Msg ?? string.Empty;
+
                                     await _emailService.SendMailMessage(EmailTemplateCode.RESET_PASSWORD,
-                                                                            -1,Convert.ToInt32(_SessionService.GetSession("UserID")),objModel.Password);
+                                                                            -1, Convert.ToInt32(_httpContextAccessor?.HttpContext?.Session.GetString("UserID")), objModel.Password);
                                     break;
 
                                 case -1://
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
                                 default:
                                     _logger.LogError(Environment.NewLine);
@@ -358,11 +355,11 @@ namespace WebApi.Controllers
         [HttpPut("updateUserAccount/{id}")]
         public async Task<IActionResult> UpdateUserAccount(int id, [FromBody] UserAccountModel userAccount)
         {
-            if (userAccount == null ||id != userAccount.UserId)
+            if (userAccount == null || id != userAccount.UserId)
             {
                 return BadRequest("Invalid input data.");
             }
-            
+
             else
             {
                 try
@@ -370,15 +367,15 @@ namespace WebApi.Controllers
                     string responseMsg = string.Empty;
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
-                        
+
                         var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(id, userAccount);
                         _repo.Commit();
-                        if (result.updateuseraccount!=null)
+                        if (result.updateuseraccount != null)
                         {
                             switch (result.RetVal)
                             {
-                                case >=1:
-                                    responseMsg = result.Msg??string.Empty;
+                                case >= 1:
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
                                 case -1:
                                     return Ok(result.Msg);
@@ -386,10 +383,10 @@ namespace WebApi.Controllers
                                     _logger.LogError(Environment.NewLine);
                                     _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
                                     return BadRequest();
-                            }       
+                            }
 
                         }
-                        
+
                     }
                     return Ok(responseMsg);
                 }
@@ -417,17 +414,18 @@ namespace WebApi.Controllers
                     var responseMsg = string.Empty;
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
-                         DataTable? datatable = listofunlock.User?.ConvertToDataTable(listofunlock.Users ?? new List<UnlockUserList>()) ?? new DataTable();
+                        DataTable? datatable = listofunlock.User?.ConvertToDataTable(listofunlock.Users ?? new List<UnlockUserList>()) ?? new DataTable();
                         var result = await _repo.UserAccountDALRepo.UnlockUserAsync(listofunlock.User);
                         var msg = "Unlock User successfully.";
                         _repo.Commit();
                         if (result.unlockuser != null && result.RetVal == 1)
                         {
-                            switch (result.RetVal) { 
+                            switch (result.RetVal)
+                            {
                                 case 1:// Success
                                     responseMsg = msg;
                                     break;
-                                    
+
                                 case -1:// Failure or Not exists
                                     responseMsg = result.Msg;
                                     break;
@@ -436,10 +434,10 @@ namespace WebApi.Controllers
                                     _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
                                     return BadRequest();
                             }
-                            
+
                         }
-                        
-                        
+
+
                     }
                     return Ok(responseMsg);
                 }
@@ -457,7 +455,7 @@ namespace WebApi.Controllers
             try
             {
                 string responseMsg = string.Empty;
-                if (objModel == null  ||objModel.DeleteRoleName == null)
+                if (objModel == null || objModel.DeleteRoleName == null)
                 {
                     return BadRequest("Invalid input data.");
                 }
@@ -478,19 +476,19 @@ namespace WebApi.Controllers
                                     responseMsg = msg;
                                     break;
                                 case -1:// Failure
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
                                 case -4:// Null Value Return
-                                    responseMsg = result.Msg??string.Empty;
+                                    responseMsg = result.Msg ?? string.Empty;
                                     break;
                                 default:
                                     _logger.LogError(Environment.NewLine);
                                     _logger.LogError("Bad Request occurred while accessing the DeleteRoleinUserAccount function in User Account api controller");
                                     return NotFound(BadRequest());
                             }
-                            
+
                         }
-                       
+
                     }
                 }
                 return Ok(responseMsg);
