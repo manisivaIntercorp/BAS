@@ -96,7 +96,7 @@ namespace DataAccessLayer.Model
     }
     public class UserAccountOrgDatatable
     {
-        public Int64? OrgID { get; set; }
+        public string? OrgName { get; set; }
         public DateTime? EffectiveDateOrg { get; set; }
         public string? ActiveOrg { get; set; }
     }
