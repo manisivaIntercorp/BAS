@@ -220,49 +220,37 @@ namespace DataAccessLayer.Implementation
             }
 
         }
-    
+
+
         public async Task<List<OrganisationDeleteRecord>> DeleteOrganisation(List<DeleteRecord> dltOrg)
         {
             var res = new List<OrganisationDeleteRecord>();
+
             try
             {
                 using (var connection = new SqlConnection(_connectionString))
                 {
                     await connection.OpenAsync();
-                    using (var transaction = connection.BeginTransaction())
+
+                    var table = new DataTable();
+                    table.Columns.Add("ID", typeof(long));
+                    table.Columns.Add("FldInfo", typeof(string));
+
+                    foreach (var record in dltOrg)
                     {
-                        try
-                        {
-                            var table = new DataTable();
-                            table.Columns.Add("ID", typeof(long));
-                            table.Columns.Add("FldInfo", typeof(string));
-
-                            foreach (var record in dltOrg)
-                            {
-                                table.Rows.Add(record.ID, record.FldInfo);
-                            }
-
-                            var parameters = new DynamicParameters();
-                            parameters.Add("@dtOrganisation", table.AsTableValuedParameter("utt_DeleteRecords"));
-
-                            parameters.Add("@Mode", "DELETE");
-
-                            var multi = await connection.QueryMultipleAsync(
-                                "sp_OrganisationConfiguration",
-                                parameters,
-                                transaction: transaction,
-                                commandType: CommandType.StoredProcedure);
-
-                            res = multi.Read<OrganisationDeleteRecord>().ToList();
-
-                            transaction.Commit();
-                        }
-                        catch
-                        {
-                            transaction.Rollback();
-                            throw;
-                        }
+                        table.Rows.Add(record.ID, record.FldInfo);
                     }
+
+                    var parameters = new DynamicParameters();
+                    parameters.Add("@dtOrganisation", table.AsTableValuedParameter("utt_DeleteRecords"));
+                    parameters.Add("@Mode", "DELETE");
+
+                    var multi = await connection.QueryMultipleAsync(
+                        "sp_OrganisationConfiguration",
+                        parameters,
+                        commandType: CommandType.StoredProcedure);
+
+                    res = multi.Read<OrganisationDeleteRecord>().ToList();
                 }
             }
             catch (SqlException ex)
@@ -276,6 +264,8 @@ namespace DataAccessLayer.Implementation
 
             return res;
         }
+
+        
 
 
     }
