@@ -8,8 +8,7 @@ using DataAccessLayer.Services;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.OpenApi.Models;
-using WebApi.Services.Implementation;
-using WebApi.Services.Interface;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
