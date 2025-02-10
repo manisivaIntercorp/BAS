@@ -49,7 +49,8 @@ namespace DataAccessLayer.Implementation
             
                 DynamicParameters parameters = new DynamicParameters();
                  parameters.Add("@Id", Id);
-                var multi = await Connection.QueryMultipleAsync("sp_NationalityCreation",
+            parameters.Add("@Mode", "GET");
+            var multi = await Connection.QueryMultipleAsync("sp_NationalityCreation",
                     parameters,
                     transaction:Transaction,
                     commandType: CommandType.StoredProcedure);
