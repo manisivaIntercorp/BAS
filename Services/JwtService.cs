@@ -2,6 +2,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using WebApi.Services.Implementation;
 //using WebApi.Services.Interface;
 
 namespace WebApi.Services
@@ -9,14 +10,15 @@ namespace WebApi.Services
     public class JwtService
     {
         private readonly string _key;
-
-        public JwtService(string key)
+        private readonly TokenBlacklistService _tokenBlacklistService; // Logout
+        public JwtService(string key, TokenBlacklistService tokenBlacklistService)
         {
             if (key.Length < 32)
             {
                 throw new ArgumentException("The secret key must be at least 32 characters long.");
             }
             _key = key;
+            _tokenBlacklistService = tokenBlacklistService;
         }
 
         public string GenerateToken(string username)
@@ -62,6 +64,15 @@ namespace WebApi.Services
             {
                 Console.WriteLine($"Token validation failed: {ex.Message}");
             }
+        }
+
+        public void InvalidateToken(string token)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+            var expiration = jwtToken.ValidTo;
+
+            _tokenBlacklistService.RevokeToken(token, expiration);
         }
     }
 
