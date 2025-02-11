@@ -85,4 +85,9 @@ namespace DataAccessLayer.Model
         public string? ConUserName { get; set; }
         public string? ConPassword { get; set; }
     }
+    public class GetDropDownDataModel
+    {
+        public string Value { get; set; }
+        public string Text { get; set; }
+    }
 }
