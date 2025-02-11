@@ -98,13 +98,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddSingleton<AppGlobalVariableService>();
 //builder.Services.AddScoped<AppGlobalVariableService>();
 
-//builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();  //Logout
-//builder.Services.AddScoped<JwtService>(sp =>
-//{
-//    var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-//    var jwtKey = jwtSettings["Key"];  // Retrieves the JWT Key value
-//    return new JwtService(jwtKey);
-//});
 builder.Services.AddSingleton<TokenBlacklistService>(); // Logout
 builder.Services.AddScoped<JwtService>(provider =>
 {
