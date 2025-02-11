@@ -137,7 +137,7 @@ namespace DataAccessLayer.Implementation
                         try
                         {
                             var parameters = new DynamicParameters();
-                            parameters.Add("@UserId", Id);
+                            parameters.Add("@OrgID", Id);
                             parameters.Add("@Mode", "GET");
 
                             var multi = await connection.QueryMultipleAsync(
