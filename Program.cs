@@ -8,6 +8,7 @@ using DataAccessLayer.Services;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.OpenApi.Models;
+using WebApi.Services.Implementation;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -93,17 +94,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-//builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();  //Logout
+
 builder.Services.AddSingleton<AppGlobalVariableService>();
 //builder.Services.AddScoped<AppGlobalVariableService>();
 
-builder.Services.AddScoped<JwtService>(sp =>
+//builder.Services.AddSingleton<ITokenBlacklistService, TokenBlacklistService>();  //Logout
+//builder.Services.AddScoped<JwtService>(sp =>
+//{
+//    var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+//    var jwtKey = jwtSettings["Key"];  // Retrieves the JWT Key value
+//    return new JwtService(jwtKey);
+//});
+builder.Services.AddSingleton<TokenBlacklistService>(); // Logout
+builder.Services.AddScoped<JwtService>(provider =>
 {
-    var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-    var jwtKey = jwtSettings["Key"];  // Retrieves the JWT Key value
-    return new JwtService(jwtKey);
-});
+    var configuration = builder.Configuration.GetSection("JwtSettings");
+    var secretKey = configuration["Key"];
 
+    if (string.IsNullOrWhiteSpace(secretKey) || secretKey.Length < 32)
+    {
+        throw new ArgumentException("JWT Secret key must be at least 32 characters.");
+    }
+
+    var tokenBlacklistService = provider.GetRequiredService<TokenBlacklistService>();
+    return new JwtService(secretKey, tokenBlacklistService);
+});
 
 
 // Register other required services
