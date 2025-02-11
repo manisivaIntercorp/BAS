@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.SqlServer.Management.Smo;
 using Microsoft.SqlServer.Management.Smo.Agent;
 using Newtonsoft.Json;
 using System.Collections.Generic;
@@ -52,7 +53,7 @@ namespace WebApi.Controllers
             {
                 var objLogModel = new LoginModel { UserName = username, LanguageCode = Language };
 
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor))
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor,_configuration,_encryptedDecrypt))
                 {
                     var lstuser = await _repo.LoginDALRepo.GetUserID(objLogModel);
                     if (lstuser != null && lstuser[0].RetVal == 1)
@@ -84,7 +85,8 @@ namespace WebApi.Controllers
             var objLogModel = new LoginModel { UserName = username, Password = EncryptShaAlg.Encrypt(password) };
             try
             {
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor))
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
+
                 {
                     var lstLoginUser = await _repo.LoginDALRepo.UserLogin(objLogModel);
 
@@ -96,7 +98,7 @@ namespace WebApi.Controllers
                         {
                             
                             HttpContext.Session.SetString("UserName", username);
-                            HttpContext.Session.SetString("Password", password);
+                            HttpContext.Session.SetString("Password", EncryptShaAlg.Encrypt(password));
                             GetUserData(lstLoginUser, "GET");
                         }
 
@@ -221,7 +223,7 @@ namespace WebApi.Controllers
             var objLogModel = new LoginModel { UserName = username };
             try
             {
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor))
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
                 {
                     var lstOrgDetails = await _repo.LoginDALRepo.GetOrganisationWithDBDetails(objLogModel);
                     if (lstOrgDetails != null)
@@ -286,9 +288,8 @@ namespace WebApi.Controllers
                     Password = HttpContext.Session.GetString("Password"),
                     GlobalUser = HttpContext.Session.GetString("GlobalUser")
                 };
-
-                using var repo = new UowLogin(_httpContextAccessor);
-                var users = await repo.LoginDALRepo.UserLogin(loginModel);
+                using var repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt);
+                var users = await repo.LoginDALRepo.ClientUserLogin(loginModel);
 
                 if (users != null && users.Any())
                 {
@@ -314,14 +315,79 @@ namespace WebApi.Controllers
             }
         }
 
+        //}
         [HttpPost("Logout")]
-        public IActionResult Logout()
+        public IActionResult Logout(string token)
         {
-           // HttpContext.Session.Remove();
-            HttpContext.Session.Clear();
-         
-            return Ok("User logged out successfully.");
+            try
+            {
+                if (string.IsNullOrEmpty(token))
+                {
+                    return BadRequest("Token is required for logout.");
+                }
+
+                _jwtService.InvalidateToken(token);
+                // HttpContext.Session.Remove();
+                HttpContext.Session.Clear();
+                return Ok("Logout successful. Token revoked.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Logout error: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred during logout.");
+            }
         }
 
+        [HttpPost("DropDownLanguage")]
+        public async Task<IActionResult> GetDDlLanguage(string? RefID1, string? RefID2, string? RefID3)
+        {
+            try
+            {
+                // var objDDlModel = new GetDropDownDataModel { Mode = Mode, RefID1 = RefID1, RefID2 = RefID2, RefID3 = RefID3, RefID4 = RefID4 };
+                string Mode = "LANGUAGE";
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
+                {
+                    var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode,RefID1,RefID2,RefID3);
+                    if (lstuser != null)
+                    {
+                        return Ok(lstuser);
+                    }
+                    else
+                    {
+                        return Unauthorized("Invalid User Name.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Bad Request");
+            }
+        }
+
+        [HttpPost("DropDownModules")]
+        public async Task<IActionResult> GetDDlModules( string? RefID1, string? RefID2, string? RefID3)
+        {
+            try
+            {
+                // var objDDlModel = new GetDropDownDataModel { Mode = Mode, RefID1 = RefID1, RefID2 = RefID2, RefID3 = RefID3, RefID4 = RefID4 };
+                string Mode = "MODULEID";
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
+                {
+                    var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode, RefID1, RefID2, RefID3);
+                    if (lstuser != null)
+                    {
+                        return Ok(lstuser);
+                    }
+                    else
+                    {
+                        return Unauthorized("Invalid User Name.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest("Bad Request");
+            }
+        }
     }
 }
