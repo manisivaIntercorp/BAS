@@ -130,12 +130,11 @@ namespace WebApi.Controllers
         }
 
 
-        [HttpGet("Delete Organisation")]
-        public async Task<IActionResult> Deleterganisation(List<DeleteRecord> dltOrg)
+        [HttpPost("DeleteOrganisation")]
+        public async Task<IActionResult> Deleterganisation([FromBody] List<DeleteRecord> dltOrg)
         {
             try
             {
-
                 var objOrganisationModel = await _repository.OrganisationDALRepo.DeleteOrganisation(dltOrg);
                 if (objOrganisationModel != null)
                 {
@@ -152,5 +151,6 @@ namespace WebApi.Controllers
                 throw;
             }
         }
+
     }
 }
