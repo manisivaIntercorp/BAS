@@ -455,7 +455,7 @@ namespace DataAccessLayer.Implementation
         }
 
 
-        public async Task<(List<UserAccountModel> updateuseraccount, int RetVal, string Msg)> UpdateUserAccountAsync(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? model)
         {
             // To Check the DBName is in Default DB Name is Master DB
             var httpContext = _httpContextAccessor.HttpContext;
@@ -506,24 +506,21 @@ namespace DataAccessLayer.Implementation
                                                                         commandType: CommandType.StoredProcedure))
             {
                 // Process the first result set (roles)
-                var retVal = parameters.Get<int>("@RetVal");
-                var message = parameters.Get<string>("@Msg");
-
-
-                List<UserAccountModel> UserAccount = new List<UserAccountModel>();
-                
-
-                List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
-                if (retVal == -1 || retVal==null || retVal==0)
+                var UserAccount = result.Read<UserAccountModel?>().ToList();
+                // Ensure all result sets are consumed to retrieve the output parameters
+                while (!result.IsConsumed)
                 {
-                    result.Read<UserAccountModel?>().ToList();
-                    return (UserAccount, retVal, message);
+                    result.Read(); // Process remaining datasets
                 }
 
-                else if (retVal > 0)
+                // Access the output parameters after consuming all datasets
+                int retVal = parameters.Get<int?>("@RetVal") ?? -4;
+                string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+                List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
+                if (retVal >= 1)
                 {
-                    if (model?.Tenant != 0)
-                    {
+                    if (model?.Tenant != 0) {
                         // 🌟 Fetch Org Details and Change Connection
                         OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
                         if (OrgDetails != null && OrgDetails.Any())
@@ -550,14 +547,11 @@ namespace DataAccessLayer.Implementation
 
                         }
                     }// To Change the Client Connection
+                    
+
                 }
-                
-                // Ensure all result sets are consumed to retrieve the output parameters
-                while (!result.IsConsumed)
-                {
-                    result.Read(); // Process remaining datasets
-                }
-                return (UserAccount, retVal, message);
+                // Return the roles list along with output parameters
+                return (UserAccount, retVal, msg);
             }
 
         }
