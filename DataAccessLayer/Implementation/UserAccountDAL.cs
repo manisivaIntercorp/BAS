@@ -11,6 +11,8 @@ using Microsoft.SqlServer.Management.Smo;
 using System.Net.Http;
 using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.SqlServer.Management.XEvent;
+using System.Reflection;
 
 namespace DataAccessLayer.Implementation
 {
@@ -89,9 +91,34 @@ namespace DataAccessLayer.Implementation
             return orgDetails;
         }
 
+        public async Task<List<OrgDetails?>> GetOrgDetailsByUserName(string? username)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@UserName", username);
+            parameters.Add("@Mode", "GET_ORG");
+
+            var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+
+            var orgDetails = multi.Read<OrgDetails?>().ToList();
+            return orgDetails;
+        }
+
         // Insert or Update User, Then Change DB Connection
         public async Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, int? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? model)
         {
+            // To Check the DBName is in Default DB Name is Master DB
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                if(Connection.Database!="MasterData")// To Change the DB Name into Master DB
+                {
+                    string? masterConnection = _configuration.GetConnectionString("connection");
+                    Connection = new SqlConnection(masterConnection);
+                }
+                
+            }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserId", model?.UserId);
             parameters.Add("@UserName", model?.UserName);
@@ -143,8 +170,6 @@ namespace DataAccessLayer.Implementation
                
                 int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
                 model.UserId = (long?)parameters.Get<int?>("@RetVal") ?? -4;
-                
-
                 string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
                 List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
                 if (RetVal >= 1)
@@ -153,19 +178,27 @@ namespace DataAccessLayer.Implementation
                     OrgDetails = await GetOrgDetailsByUserId(Convert.ToInt32(RetVal));
                     if (OrgDetails != null && OrgDetails.Any())
                     {
-                        var firstOrg = OrgDetails.FirstOrDefault();
-                        UpdateConnectionString(firstOrg?.DBName, firstOrg?.InstanceName, firstOrg?.ConUserName, firstOrg?.ConPassword);
-                        var ClientResult = await InsertUpdateUserAccountClient(model);
-                        var httpContext = _httpContextAccessor.HttpContext;
-                        if (httpContext != null)
+                        var  strdbname= _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
+                        var strinstancename= _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
+                        var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
+                        var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
+
+                        foreach (var org in OrgDetails)
                         {
-                            httpContext.Session.Remove("DBName");
-                            httpContext.Session.Remove("InstanceName");
-                            httpContext.Session.Remove("DataBaseUserName");
-                            httpContext.Session.Remove("DataBasePassword");
+                            
+                            if (org != null)
+                            {
+                                UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
+                                var ClientResult = await InsertUpdateUserAccountClient(model);
+                                
+                            }
+
                         }
-                        
-                        return (ClientResult.InsertedClientUsers, ClientResult.OrgClientDetails, ClientResult.RetClientVal, ClientResult.ClientMsg);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname??string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
+
                     }
 
                 }
@@ -178,7 +211,7 @@ namespace DataAccessLayer.Implementation
                 throw;
             }
         }
-
+        // To Insert into Client Database
         public async Task<(List<UserAccountModel?> InsertedClientUsers,List<OrgDetails?> OrgClientDetails,int? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(UserAccountModel? model)
         {
             DynamicParameters clientParameters = new DynamicParameters();
@@ -224,20 +257,102 @@ namespace DataAccessLayer.Implementation
             int RetValClient = clientParameters.Get<int?>("@RetVal") ?? -4;
             string MsgClient = clientParameters.Get<string?>("@Msg") ?? "No Records Found";
             List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
-            //OrgDetails = await GetOrgDetailsByUserId(RetValClient);
+            
             return (InsertedUsersClient, OrgDetails,RetValClient, MsgClient);
         }
 
-        public async Task<bool> DeleteUserAccount(int? Id)
+        public async Task<(bool deleteuseraccount, List<DeleteResult> deleteResults)> DeleteUserAccount(int UpdatedBy, DeleteUserAccount deleteUserAccount)
         {
+            List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
+            if (deleteUserAccount.DeleteDatatable != null)
+            {
+                foreach (var DeleteResult in deleteUserAccount.DeleteDatatable)
+                {
+                    // 🌟 Fetch Org Details and Change Connection
+                    OrgDetails = await GetOrgDetailsByUserName(DeleteResult.UserName);
+                    if (OrgDetails != null && OrgDetails.Any())
+                    {
+                        var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
+                        var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
+                        var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
+                        var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
+
+                        foreach (var org in OrgDetails)
+                        {
+
+                            if (org != null)
+                            {
+                                UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
+                                var ClientResult = await DeleteClientUserAccount(UpdatedBy, deleteUserAccount);
+
+                            }
+
+                        }
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
+
+                    }
+
+                }
+            }
+                if (_httpContextAccessor?.HttpContext != null)
+                {
+                    if (Connection.Database != "MasterData")// To Change the DB Name into Master DB
+                    {
+                        string? masterConnection = _configuration.GetConnectionString("connection");
+                        Connection = new SqlConnection(masterConnection);
+                    }
+                }
+            
+                DynamicParameters parameters = new DynamicParameters();
+                parameters.Add("@tblDelete", JsonConvert.SerializeObject(deleteUserAccount.UserAccountDeleteTable));
+                parameters.Add("@UpdatedBy", UpdatedBy);
+                parameters.Add("@Mode", "DELETE");
+
+                var Result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                    parameters,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+                List<DeleteResult> DeleteUserAccount = (await Result.ReadAsync<DeleteResult>()).ToList();
+                while (!Result.IsConsumed)
+                {
+                    await Result.ReadAsync();
+                }
+
+                bool res = DeleteUserAccount.Any();
+
+
+
+                return (res, DeleteUserAccount.ToList());
+            }
+        
+
+        // To Delete Client Database
+        public async Task<(bool deleteuseraccount, List<DeleteResult>)> DeleteClientUserAccount(int UpdatedBy, DeleteUserAccount deleteUserAccount)
+        {
+
+            
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserId", Id);
+            parameters.Add("@tblDelete", JsonConvert.SerializeObject(deleteUserAccount.UserAccountDeleteTable));
+            parameters.Add("@UpdatedBy", UpdatedBy);
             parameters.Add("@Mode", "DELETE");
-            var Result = await Connection.ExecuteAsync("sp_UserAccountCreation",
+
+            var Result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return Result > 0 ? true : false;
+            var deleteuseraccount = (await Result.ReadAsync<DeleteResult>()).ToList();
+            while (!Result.IsConsumed)
+            {
+                await Result.ReadAsync();
+            }
+
+            bool res = deleteuseraccount.Any();
+           
+
+            return (res, deleteuseraccount.ToList());
         }
 
         public async Task<List<UserAccountModel?>> GetAllUserAccount()
@@ -290,6 +405,21 @@ namespace DataAccessLayer.Implementation
             return (UserAccount, RoleDetails, UserAccountOrg);
         }
 
+        //public async Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountByName(string? UserName)
+        //{
+        //    DynamicParameters parameters = new DynamicParameters();
+        //    parameters.Add("@UserName", UserName);
+        //    parameters.Add("@Mode", "GET_DETAIL");
+        //    var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+        //                                                     parameters,
+        //                                                     transaction: Transaction,
+        //                                                     commandType: CommandType.StoredProcedure);
+        //    var UserAccount = (await multi.ReadAsync<GetUserAccount>())?.FirstOrDefault();
+        //    var RoleDetails = (await multi.ReadAsync<GetUserAccountRole>())?.ToList();
+        //    var UserAccountOrg = (await multi.ReadAsync<GetUserAccountOrg>())?.ToList();
+        //    return (UserAccount, RoleDetails, UserAccountOrg);
+        //}
+
         public async Task<List<OrgDetails?>> GetOrgDetailsByUserId()
         {
             DynamicParameters parameters = new DynamicParameters();
@@ -306,10 +436,21 @@ namespace DataAccessLayer.Implementation
         }
 
 
-        public async Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> UpdateUserAccountAsync(int? id, UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? model)
         {
+            // To Check the DBName is in Default DB Name is Master DB
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                if (Connection.Database!= "MasterData")// To Change the DB Name into Master DB
+                {
+                    string? masterConnection = _configuration.GetConnectionString("connection");
+                    Connection = new SqlConnection(masterConnection);
+                }
+
+            }
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserId", id);
+            parameters.Add("@UserId", model?.UserId);
             parameters.Add("@UserName", model?.UserName);
             parameters.Add("@Password", model?.UserPassword);
             parameters.Add("@UserPolicy", model?.UserPolicy);
@@ -334,6 +475,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@EffectiveDate", model?.EffectiveDate);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            
             parameters.Add("@Mode", "EDIT");
             using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
@@ -352,6 +494,88 @@ namespace DataAccessLayer.Implementation
                 int retVal = parameters.Get<int?>("@RetVal") ?? -4;
                 string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
 
+                List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
+                if (retVal >= 1)
+                {
+                    // 🌟 Fetch Org Details and Change Connection
+                    OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
+                    if (OrgDetails != null && OrgDetails.Any())
+                    {
+                        var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
+                        var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
+                        var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
+                        var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
+
+                        foreach (var org in OrgDetails)
+                        {
+
+                            if (org != null)
+                            {
+                                UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
+                                var ClientResult = await UpdateClientUserAccountAsync(model?.UserName,model);   
+                            }
+
+                        }
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
+
+                    }
+
+                }
+                // Return the roles list along with output parameters
+                return (UserAccount, retVal, msg);
+            }
+
+        }
+        //To Edit the Data in Client DB
+        public async Task<(List<UserAccountModel?> updateClientuseraccount, int? RetValClient, string? MsgClient)> UpdateClientUserAccountAsync(string? username, UserAccountModel? model)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@UserId", model?.UserId);
+            parameters.Add("@UserName", username);
+            parameters.Add("@Password", model?.UserPassword);
+            parameters.Add("@UserPolicy", model?.UserPolicy);
+            parameters.Add("@Language", model?.LanguageID);
+            parameters.Add("@Vendor", model?.Vendor);
+            parameters.Add("@ContactNo", model?.ContactNo);
+            parameters.Add("@TimeZone", model?.TimeZoneID);
+            parameters.Add("@DisplayName", model?.DisplayName);
+            parameters.Add("@AccountLocked", model?.AccountLocked);
+            parameters.Add("@RoleID", model?.RoleID);
+            parameters.Add("@PasswordChange", model?.PasswordChange);
+            parameters.Add("@Active", model?.Active);
+            parameters.Add("@Tenant", model?.Tenant);
+            parameters.Add("@TempDeactive", model?.TempDeactive);
+            parameters.Add("@EmailID", model?.emailID);
+            parameters.Add("@SystemUser", model?.SystemUser);
+            parameters.Add("@ProfileUser", model?.ProfileUser);
+            parameters.Add("@PlatformUser", model?.PlatformUser);
+            parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
+            parameters.Add("@UpdatedBy", model?.CreatedBy);
+            parameters.Add("@ProfileID", model?.ProfileID);
+            parameters.Add("@EffectiveDate", model?.EffectiveDate);
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            parameters.Add("@ClientUserName", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            parameters.Add("@Mode", "EDIT");
+            using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                                                                        parameters,
+                                                                        transaction: Transaction,
+                                                                        commandType: CommandType.StoredProcedure))
+            {
+                // Process the first result set (roles)
+                var UserAccount = result.Read<UserAccountModel?>().ToList();
+                // Ensure all result sets are consumed to retrieve the output parameters
+                while (!result.IsConsumed)
+                {
+                    result.Read(); // Process remaining datasets
+                }
+
+                // Access the output parameters after consuming all datasets
+                int retVal = parameters.Get<int?>("@RetVal") ?? -4;
+                string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
                 // Return the roles list along with output parameters
                 return (UserAccount, retVal, msg);
             }
