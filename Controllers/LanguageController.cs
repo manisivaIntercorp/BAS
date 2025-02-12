@@ -22,57 +22,57 @@ namespace WebApi.Controllers
             _httpContextAccessor = httpContextAccessor;
             
         }
-        [HttpGet("getAllLanguageinDropdown")]
-        public async Task<IActionResult> GetAllLanguageinDropdown([FromQuery] LanguageNameEnum language)
-        {
-            try
-            {
-                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
-                {
-                    var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguageinDropdown();
-                    if (lstLanguageModel != null)
-                    {
-                        var languages = LanguageName.GetAllLanguages();
-                        return Ok(lstLanguageModel);
-                    }
-                    else
-                    {
-                        return BadRequest();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                throw;
-            }
-        }
+        //[HttpGet("getAllLanguageinDropdown")]
+        //public async Task<IActionResult> GetAllLanguageinDropdown([FromQuery] LanguageNameEnum language)
+        //{
+        //    try
+        //    {
+        //        using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
+        //        {
+        //            var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguageinDropdown();
+        //            if (lstLanguageModel != null)
+        //            {
+        //                var languages = LanguageName.GetAllLanguages();
+        //                return Ok(lstLanguageModel);
+        //            }
+        //            else
+        //            {
+        //                return BadRequest();
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex.Message + "  " + ex.StackTrace);
+        //        throw;
+        //    }
+        //}
 
-        [HttpPost("getAllLanguageinDropdown")]
-        public async Task<IActionResult> InsertAllLanguageinDropdown([FromQuery] LanguageNameEnum language)
-        {
-            try
-            {
-                using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
-                {
-                    var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguageinDropdown();
-                    if (lstLanguageModel != null)
-                    {
-                        var languages = LanguageName.GetAllLanguages();
-                        return Ok(lstLanguageModel);
-                    }
-                    else
-                    {
-                        return BadRequest();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                throw;
-            }
-        }
+        //[HttpPost("getAllLanguageinDropdown")]
+        //public async Task<IActionResult> InsertAllLanguageinDropdown([FromQuery] LanguageNameEnum language)
+        //{
+        //    try
+        //    {
+        //        using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
+        //        {
+        //            var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguageinDropdown();
+        //            if (lstLanguageModel != null)
+        //            {
+        //                var languages = LanguageName.GetAllLanguages();
+        //                return Ok(lstLanguageModel);
+        //            }
+        //            else
+        //            {
+        //                return BadRequest();
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex.Message + "  " + ex.StackTrace);
+        //        throw;
+        //    }
+        //}
 
         [HttpGet("getAllLanguage")]
         public async Task<IActionResult> GetAllLanguage()
