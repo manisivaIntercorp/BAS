@@ -56,19 +56,25 @@ namespace WebApi.Controllers
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor,_configuration,_encryptedDecrypt))
                 {
                     var lstuser = await _repo.LoginDALRepo.GetUserID(objLogModel);
-                    if (lstuser != null && lstuser[0].RetVal == 1)
-                    {
-                       
-                        if (lstuser != null)
-                        {
-                            GetUserData(lstuser, "GET");
-                        }
-                        return Ok(lstuser);
-                    }
-                    else
+
+                    if (lstuser == null || lstuser.Count == 0)
                     {
                         return Unauthorized("Invalid User Name.");
                     }
+
+                    switch (lstuser[0].RetVal)
+                    {
+                        case -1:
+                            return Unauthorized("Invalid User Name.");
+
+                        case 1:
+                            GetUserData(lstuser, "GET");
+                            return Ok(lstuser);
+
+                        default:
+                            return Unauthorized("Invalid User Name.");
+                    }
+                   
                 }
             }
             catch (Exception ex)
@@ -90,24 +96,31 @@ namespace WebApi.Controllers
                 {
                     var lstLoginUser = await _repo.LoginDALRepo.UserLogin(objLogModel);
 
-                    if (lstLoginUser != null && lstLoginUser.Any() && lstLoginUser[0].RetVal == 1)
+                    if (lstLoginUser == null || !lstLoginUser.Any())
                     {
-                        var loginDetail = lstLoginUser.First()?.lstLoginDetails?.FirstOrDefault();
-
-                        if (loginDetail != null )
-                        {
-                            
-                            HttpContext.Session.SetString("UserName", username);
-                            HttpContext.Session.SetString("Password", EncryptShaAlg.Encrypt(password));
-                            GetUserData(lstLoginUser, "GET");
-                        }
-
-                        var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "");
-                        return Ok(token);
+                        return Unauthorized("Invalid Password");
                     }
-                    else
+
+                    switch (lstLoginUser[0].RetVal)
                     {
-                        return Unauthorized("Invalid login.");
+                        case -1:
+                            return Unauthorized("Invalid Password");
+
+                        case 1:
+                            var loginDetail = lstLoginUser.First()?.lstLoginDetails?.FirstOrDefault();
+
+                            if (loginDetail != null)
+                            {
+                                HttpContext.Session.SetString("UserName", objLogModel.UserName);
+                                HttpContext.Session.SetString("Password", EncryptShaAlg.Encrypt(objLogModel.Password));
+                                GetUserData(lstLoginUser, "GET");
+                            }
+
+                            var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "");
+                            return Ok(token);
+
+                        default:
+                            return Unauthorized("Invalid login.");
                     }
                 }
             }
