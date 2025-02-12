@@ -120,7 +120,8 @@ namespace DataAccessLayer.Model
     public class DeleteRoleinUserAccount
     {
         public DeleteRoleName? DeleteRoleNamesingle { get; set; }
-        public List<DeleteRoleNameinList>? DeleteRoleName { get; set; }
+        public List<DeleteRoleNameinList> DeleteRoleName { get; set; }
+
     }
     public class GetRoleName
     {
@@ -153,6 +154,7 @@ namespace DataAccessLayer.Model
             return UserAccountDeleteRoleTable;
         }
         public long? CreatedBy { get; set; }
+        
     }
     public class DeleteRoleNameinList
     {
@@ -269,5 +271,49 @@ namespace DataAccessLayer.Model
         {
             get; set;
         }
+    }
+    public class DeleteUserAccount
+    {
+        public DataTable UserAccountDeleteTable = new DataTable();
+        
+        public DataTable ConvertToDataTable(List<DeleteUserAccountList> models)
+        {
+            // Define columns dynamically based on the model's properties
+            var properties = typeof(DeleteUserAccountList).GetProperties();
+            
+            foreach (var property in properties)
+            {
+
+                UserAccountDeleteTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+            }
+            // Add rows dynamically based on the model data
+            foreach (var model in models)
+            {
+                DataRow row = UserAccountDeleteTable.NewRow();
+                foreach (var property in properties)
+                {
+                   
+                    row[property.Name] = property.GetValue(model) ?? DBNull.Value;
+                }
+                UserAccountDeleteTable.Rows.Add(row);
+            }
+
+            return UserAccountDeleteTable;
+        }
+        
+        
+        public List<DeleteUserAccountList>? DeleteDatatable { get; set; }
+
+    }
+    public class DeleteUserAccountList
+    {
+        public string? UserName { get; set; }
+    }
+    public class DeleteResult
+    {
+        public long? SNo{get; set;}
+        public string? Result { get; set; }
+        public string? Remarks { get; set; }
+        public string? UserName { get; set; }
     }
 }
