@@ -208,12 +208,12 @@ namespace WebApi.Controllers
                                 case >= 1:
                                     responseMsg = result.Msg ?? string.Empty;
                                     await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1, result.RetVal, objModel.UserAccount.UserPassword);
-                                    _httpContextAccessor?.HttpContext?.Session.Remove("DBName");
-                                    _httpContextAccessor?.HttpContext?.Session.Remove("DBChange");
-                                    _httpContextAccessor?.HttpContext?.Session.Remove("InstanceChange");
-                                    _httpContextAccessor?.HttpContext?.Session.Remove("InstanceName");
-                                    _httpContextAccessor?.HttpContext?.Session.Remove("DataBaseUserName");
-                                    _httpContextAccessor?.HttpContext?.Session.Remove("DataBasePassword");
+                                    //_httpContextAccessor?.HttpContext?.Session.Remove("DBName");
+                                    //_httpContextAccessor?.HttpContext?.Session.Remove("DBChange");
+                                    //_httpContextAccessor?.HttpContext?.Session.Remove("InstanceChange");
+                                    //_httpContextAccessor?.HttpContext?.Session.Remove("InstanceName");
+                                    //_httpContextAccessor?.HttpContext?.Session.Remove("DataBaseUserName");
+                                    //_httpContextAccessor?.HttpContext?.Session.Remove("DataBasePassword");
                                     break;
 
                                 default:
@@ -327,7 +327,7 @@ namespace WebApi.Controllers
                                     responseMsg = result.Msg ?? string.Empty;
 
                                     await _emailService.SendMailMessage(EmailTemplateCode.RESET_PASSWORD,
-                                                                            -1, Convert.ToInt32(_httpContextAccessor?.HttpContext?.Session.GetString("UserID")), objModel.Password);
+                                                                            -1, Convert.ToInt32(_httpContextAccessor?.HttpContext?.Session.GetString("strUserID")), objModel.Password);
                                     break;
 
                                 case -1://
@@ -352,10 +352,10 @@ namespace WebApi.Controllers
 
 
         // Update User Based on UserID
-        [HttpPut("updateUserAccount/{id}")]
-        public async Task<IActionResult> UpdateUserAccount(int id, [FromBody] UserAccountModel userAccount)
+        [HttpPut("updateUserAccount/")]
+        public async Task<IActionResult> UpdateUserAccount([FromBody] UserAccountModel userAccount)
         {
-            if (userAccount == null || id != userAccount.UserId)
+            if (userAccount == null)
             {
                 return BadRequest("Invalid input data.");
             }
@@ -368,7 +368,7 @@ namespace WebApi.Controllers
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
 
-                        var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(id, userAccount);
+                        var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount);
                         _repo.Commit();
                         if (result.updateuseraccount != null)
                         {
@@ -499,19 +499,23 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("deleteUserAccount/{id}")]
-        public async Task<IActionResult> DeleteUserAccount(int id)
+        [HttpDelete("deleteUserAccount")]
+        public async Task<IActionResult> DeleteUserAccount(DeleteUserAccount deleteUserAccount)
         {
             try
             {
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
-                    var result = await _repo.UserAccountDALRepo.DeleteUserAccount(id);
-                    var msg = "User Account Deleted Successfully";
+                    var datatable = deleteUserAccount.ConvertToDataTable(deleteUserAccount.DeleteDatatable);
+                    var result = await _repo.UserAccountDALRepo.DeleteUserAccount(Convert.ToInt32(_httpContextAccessor?.HttpContext?.Session.GetString("strUserID")),deleteUserAccount);
+                    
                     _repo.Commit();
-                    if (result)
+                    if (result.deleteuseraccount ==true || result.deleteuseraccount ==false)
                     {
-                        return Ok(msg);
+                        if (result.deleteResults.Count > 0)
+                        {
+                            return Ok(result.deleteResults);
+                        }
                     }
                     else
                     {
