@@ -17,13 +17,14 @@ namespace DataAccessLayer.Interface
         Task<(List<RoleName?> Roles, int? RetVal, string? Msg)> AddRoleName(RoleName roleName);
         Task<(List<ResetPassword?> PasswordReset, int? RetVal, string? Msg)> ResetPasswordinUserAccount(ResetPassword PasswordReset);
 
-        Task<bool> DeleteUserAccount(int? Id);
+        Task<(bool deleteuseraccount, List<DeleteResult> deleteResults)> DeleteUserAccount(int UpdatedBy,DeleteUserAccount deleteUserAccount);
 
         Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountById(int? Id);
+        //Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountByName(string? UserName);
 
         Task<List<OrgDetails?>> GetOrgDetailsByUserId();
 
-        Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> UpdateUserAccountAsync(int? id, UserAccountModel? userAccount);
+        Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? userAccount);
 
         Task<(List<UnlockUser?> unlockuser, int? RetVal, string? Msg)> UnlockUserAsync(UnlockUser? model);
     }
