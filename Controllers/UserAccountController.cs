@@ -181,13 +181,30 @@ namespace WebApi.Controllers
         {
             try
             {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
                 string responseMsg = string.Empty;
                 if (objModel == null || objModel.UserAccount == null || objModel.OrgDatatable == null || objModel.RoleNameList == null)
                 {
                     return BadRequest("Invalid input data.");
                 }
-                else
+                else if (objModel?.UserAccount?.Active!="Y" || objModel?.UserAccount?.Active != "N")
                 {
+                    return BadRequest("UserAccount Active  invalid. Only 'Y' or 'N' are allowed.");
+                }
+                foreach (var org in objModel.OrgDatatable)
+                {
+                    // Check if ActiveOrg is neither "Y" nor "N" and is not null
+                    var activeOrg = org?.ActiveOrg;
+                    if (!string.IsNullOrEmpty(activeOrg) && activeOrg != "Y" && activeOrg != "N")
+                    {
+                        return BadRequest("OrgDatatable ActiveOrg is invalid. Only 'Y' or 'N' are allowed.");
+                    }
+                }
+                
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDatatable, 0);
@@ -224,7 +241,7 @@ namespace WebApi.Controllers
 
                         }
                     }
-                }
+                
                 return Ok(responseMsg);
             }
             catch (Exception ex)
@@ -351,15 +368,18 @@ namespace WebApi.Controllers
         }
 
 
-        // Update User Based on UserID
-        [HttpPut("updateUserAccount/")]
+        // Update User Based on UserName
+        [HttpPut("updateUserAccount")]
         public async Task<IActionResult> UpdateUserAccount([FromBody] UserAccountModel userAccount)
         {
             if (userAccount == null)
             {
                 return BadRequest("Invalid input data.");
             }
-
+            else if (userAccount?.Active != "Y" || userAccount?.Active != "N")
+            {
+                return BadRequest("Active  invalid. Only 'Y' or 'N' are allowed.");
+            }
             else
             {
                 try
