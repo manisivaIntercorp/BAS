@@ -112,12 +112,28 @@ namespace DataAccessLayer.Implementation
             // To Check the DBName is in Default DB Name is Master DB
             if (_httpContextAccessor.HttpContext != null)
             {
-                if(Connection.Database!="MasterData")// To Change the DB Name into Master DB
+                if(Connection.Database!="MasterData") // To Change the DB Name into Master DB
                 {
                     string? masterConnection = _configuration.GetConnectionString("connection");
                     Connection = new SqlConnection(masterConnection);
                 }
-                
+                else if(model?.Tenant==0)
+                {
+                    string? masterConnection = _configuration.GetConnectionString("connection");
+                    Connection = new SqlConnection(masterConnection);
+                }
+                if(model?.UserAccountOrgTable!=null)
+                {
+                    foreach(DataRow row in model?.UserAccountOrgTable.Rows)
+                    {
+                        var username = row["UserName"] != DBNull.Value ? row["UserName"]?.ToString() : null;
+                        if (string.IsNullOrEmpty(username) || row["UserName"]?.ToString() == "string")
+                        {
+                            string? masterConnection = _configuration.GetConnectionString("connection");
+                            Connection = new SqlConnection(masterConnection);
+                        }
+                    }
+                }
             }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserId", model?.UserId);
@@ -174,31 +190,34 @@ namespace DataAccessLayer.Implementation
                 List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
                 if (RetVal >= 1)
                 {
-                    // 🌟 Fetch Org Details and Change Connection
-                    OrgDetails = await GetOrgDetailsByUserId(Convert.ToInt32(RetVal));
-                    if (OrgDetails != null && OrgDetails.Any())
+                    if (model?.Tenant != 0)
                     {
-                        var  strdbname= _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
-                        var strinstancename= _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
-                        var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
-                        var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
-
-                        foreach (var org in OrgDetails)
+                        // 🌟 Fetch Org Details and Change Connection
+                        OrgDetails = await GetOrgDetailsByUserId(Convert.ToInt32(RetVal));
+                        if (OrgDetails != null && OrgDetails.Any())
                         {
-                            
-                            if (org != null)
+                            var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
+                            var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
+                            var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
+                            var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
+
+                            foreach (var org in OrgDetails)
                             {
-                                UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
-                                var ClientResult = await InsertUpdateUserAccountClient(model);
-                                
+
+                                if (org != null)
+                                {
+                                    UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
+                                    var ClientResult = await InsertUpdateUserAccountClient(model);
+
+                                }
+
                             }
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
 
                         }
-                        _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname??string.Empty);
-                        _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
-                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
-                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
-
                     }
 
                 }
@@ -447,12 +466,16 @@ namespace DataAccessLayer.Implementation
                     string? masterConnection = _configuration.GetConnectionString("connection");
                     Connection = new SqlConnection(masterConnection);
                 }
-
+                else if (model?.Tenant == 0)
+                {
+                    string? masterConnection = _configuration.GetConnectionString("connection");
+                    Connection = new SqlConnection(masterConnection);
+                }
             }
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserId", model?.UserId);
+            parameters.Add("@UserId", 0);
             parameters.Add("@UserName", model?.UserName);
-            parameters.Add("@Password", model?.UserPassword);
+            parameters.Add("@Password", EncryptShaAlg.Encrypt(model?.UserPassword));
             parameters.Add("@UserPolicy", model?.UserPolicy);
             parameters.Add("@Language", model?.LanguageID);
             parameters.Add("@Vendor", model?.Vendor);
@@ -497,31 +520,34 @@ namespace DataAccessLayer.Implementation
                 List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
                 if (retVal >= 1)
                 {
-                    // 🌟 Fetch Org Details and Change Connection
-                    OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
-                    if (OrgDetails != null && OrgDetails.Any())
-                    {
-                        var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
-                        var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
-                        var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
-                        var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
-
-                        foreach (var org in OrgDetails)
+                    if (model?.Tenant != 0) {
+                        // 🌟 Fetch Org Details and Change Connection
+                        OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
+                        if (OrgDetails != null && OrgDetails.Any())
                         {
+                            var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
+                            var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
+                            var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
+                            var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
 
-                            if (org != null)
+                            foreach (var org in OrgDetails)
                             {
-                                UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
-                                var ClientResult = await UpdateClientUserAccountAsync(model?.UserName,model);   
+
+                                if (org != null)
+                                {
+                                    UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
+                                    var ClientResult = await UpdateClientUserAccountAsync(model?.UserName, model);
+                                }
+
                             }
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
 
                         }
-                        _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
-                        _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
-                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
-                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
-
-                    }
+                    }// To Change the Client Connection
+                    
 
                 }
                 // Return the roles list along with output parameters
@@ -558,7 +584,6 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@EffectiveDate", model?.EffectiveDate);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
-            parameters.Add("@ClientUserName", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@Mode", "EDIT");
             using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
