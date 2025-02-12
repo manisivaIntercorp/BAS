@@ -524,6 +524,7 @@ namespace WebApi.Controllers
                         return BadRequest();
                     }
                 }
+                return Ok();
             }
             catch (Exception ex)
             {
