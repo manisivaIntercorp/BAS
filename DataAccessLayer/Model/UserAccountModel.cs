@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Text.Json.Serialization;
 
 namespace DataAccessLayer.Model
 {
@@ -69,6 +70,7 @@ namespace DataAccessLayer.Model
 
             return UserAccountOrgTable;
         }
+        [JsonIgnore]
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
@@ -87,6 +89,7 @@ namespace DataAccessLayer.Model
         public DateTime? PasswordExpiryDate { get; set; }
         public string? AccountLocked { get; set; }
         public int Tenant { get; set; }
+        
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
         public string? SystemUser { get; set; }
@@ -94,10 +97,12 @@ namespace DataAccessLayer.Model
         public int CreatedBy { get; set; }
         public int ProfileID { get; set; }
     }
+    
     public class UserAccountOrgDatatable
     {
         public string? OrgName { get; set; }
         public DateTime? EffectiveDateOrg { get; set; }
+        
         public string? ActiveOrg { get; set; }
     }
     public class OrgDetails
