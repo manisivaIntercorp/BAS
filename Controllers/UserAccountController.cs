@@ -191,7 +191,7 @@ namespace WebApi.Controllers
                 {
                     return BadRequest("Invalid input data.");
                 }
-                else if (objModel?.UserAccount?.Active!="Y" || objModel?.UserAccount?.Active != "N")
+                else if (objModel?.UserAccount?.Active!="Y" && objModel?.UserAccount?.Active != "N")
                 {
                     return BadRequest("UserAccount Active  invalid. Only 'Y' or 'N' are allowed.");
                 }
