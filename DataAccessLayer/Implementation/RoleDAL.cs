@@ -13,23 +13,31 @@ namespace DataAccessLayer.Implementation
         {
 
         }
-        public async Task<bool> DeleteRole(int Id)
+        public async Task<(bool DeleteRole, List<DeleteRoleInformation> deleteRoleInformation)> DeleteRole(int Id, int UserId)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@RoleId", Id);
+            parameters.Add("@UpdatedBy", UserId);
             parameters.Add("@Mode", "DELETE");
-            var Result = await Connection.ExecuteAsync("sp_RoleUserCreation",
+            var Result = await Connection.QueryMultipleAsync("sp_RoleUserCreation",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return Result > 0 ? true : false;
+            List<DeleteRoleInformation> DeleteRoleInfo = (await Result.ReadAsync<DeleteRoleInformation>()).ToList();
+            while (!Result.IsConsumed)
+            {
+                await Result.ReadAsync();
+            }
+            bool res = DeleteRoleInfo.Any();
+            return (res, DeleteRoleInfo);
         }
 
-        public async Task<List<RoleModel>> GetAllRole()
+        public async Task<List<RoleModel>> GetAllRole(int UserId)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@RoleId", 0);
             parameters.Add("@Mode", "GET");
+            parameters.Add("@UpdatedBy", UserId);
             var multi = await Connection.QueryMultipleAsync("sp_RoleUserCreation",
                 parameters,
                 transaction: Transaction,
