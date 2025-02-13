@@ -11,11 +11,11 @@ namespace DataAccessLayer.Interface
     {
         Task<List<OrganisationModel>> GetAllOrganisation();
 
-        Task<OrganisationModel> GetOrganisationById(int Id);
+        Task<OrganisationModel> GetOrganisationById(string Guid);
 
 
         Task<string> InsertOrganisation(OrganisationModel OrganisationModel);
-        Task<string> UpdateOrganisation(int id, OrganisationModel OrganisationModel);
+        Task<string> UpdateOrganisation(OrganisationModel OrganisationModel);
 
         Task<List<OrganisationDeleteRecord>> DeleteOrganisation(List<DeleteRecord> dltOrg);
     }
