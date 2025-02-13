@@ -52,7 +52,7 @@ namespace DataAccessLayer.Model
 
     public class DeleteRecord
     {
-        public long? ID { get; set; }
+        public string? Guid { get; set; }
         public string? FldInfo { get; set; }
     }
 
