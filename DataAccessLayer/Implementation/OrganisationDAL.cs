@@ -124,7 +124,7 @@ namespace DataAccessLayer.Implementation
             }
 
         }
-        public async Task<OrganisationModel> GetOrganisationById(int Id)
+        public async Task<OrganisationModel> GetOrganisationById(string strGuid)
         {
             OrganisationModel Rst = new OrganisationModel();
             try
@@ -137,7 +137,8 @@ namespace DataAccessLayer.Implementation
                         try
                         {
                             var parameters = new DynamicParameters();
-                            parameters.Add("@OrgID", Id);
+                            //parameters.Add("@OrgID", Id);
+                            parameters.Add("@Guid", strGuid);
                             parameters.Add("@Mode", "GET");
 
                             var multi = await connection.QueryMultipleAsync(
@@ -173,7 +174,7 @@ namespace DataAccessLayer.Implementation
             }
         }
 
-        public async Task<string> UpdateOrganisation(int id, OrganisationModel model)
+        public async Task<string> UpdateOrganisation(OrganisationModel model)
         {
             
             try
@@ -196,6 +197,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@CompanyLogo", model.Logo);
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@Active", model.Active);
+                    parameters.Add("@Guid", model.CustomerGuid);
                     parameters.Add("@Mode", "EDIT");
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
@@ -233,12 +235,13 @@ namespace DataAccessLayer.Implementation
                     await connection.OpenAsync();
 
                     var table = new DataTable();
-                    table.Columns.Add("ID", typeof(long));
+                    table.Columns.Add("Guid", typeof(string));
                     table.Columns.Add("FldInfo", typeof(string));
 
                     foreach (var record in dltOrg)
                     {
-                        table.Rows.Add(record.ID, record.FldInfo);
+                        // Ensure null values don't cause issues
+                        table.Rows.Add(record.Guid ?? DBNull.Value.ToString(), record.FldInfo ?? DBNull.Value.ToString());
                     }
 
                     var parameters = new DynamicParameters();
