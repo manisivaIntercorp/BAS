@@ -69,13 +69,13 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpGet("getOrganisationById/{id}")]
-        public async Task<IActionResult> GetOrganisationById(int id)
+        [HttpGet("getOrganisationById/{Guid}")]
+        public async Task<IActionResult> GetOrganisationById(string Guid)
         {
             try
             {
                 
-                var objOrganisationModel = await _repository.OrganisationDALRepo.GetOrganisationById(id);
+                var objOrganisationModel = await _repository.OrganisationDALRepo.GetOrganisationById(Guid);
                 if (objOrganisationModel != null)
                 {
                     return Ok(objOrganisationModel);
@@ -93,11 +93,11 @@ namespace WebApi.Controllers
         }
 
 
-        [HttpPut("UpdateOrganisation/{id}")]
-        public async Task<IActionResult> UpdateOrganisation(int id, [FromBody] OrganisationModel Org)
+        [HttpPut("UpdateOrganisation")]
+        public async Task<IActionResult> UpdateOrganisation(string Guid, [FromBody] OrganisationModel Org)
         {
 
-            if (Org == null || id != Org.ID)
+            if (Guid == null || Guid != Org.CustomerGuid)
             {
                 return BadRequest("Invalid data.");
             }
@@ -105,7 +105,7 @@ namespace WebApi.Controllers
             try
             {
 
-                var result = await _repository.OrganisationDALRepo.UpdateOrganisation(id, Org);
+                var result = await _repository.OrganisationDALRepo.UpdateOrganisation(Org);
                 var msg = "User account updated successfully.";
                 if (result == "1")
                 {
