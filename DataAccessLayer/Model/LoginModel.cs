@@ -41,6 +41,7 @@ namespace DataAccessLayer.Model
         public string? SetPassword { get; set; }
         public string? ValidateOTP { get; set; }
 
+        public string? Guid { get; set; }
 
     }
 
@@ -61,8 +62,9 @@ namespace DataAccessLayer.Model
         public string? BrowserName { get; set; }
         public string? GlobalUser { get; set; }
         public string? LanguageCode { get; set; }
+        public string? Guid { get; set; }
 
-        
+
 
     }
     public class ResultModel
