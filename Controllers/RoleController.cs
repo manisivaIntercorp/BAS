@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Data;
 using System.Diagnostics.Eventing.Reader;
+using WebApi.Services;
 
 namespace WebApi.Controllers
 {
@@ -16,10 +17,13 @@ namespace WebApi.Controllers
     {
         private readonly ILogger<RoleController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public RoleController(ILogger<RoleController> logger, IConfiguration configuration,IHttpContextAccessor httpContextAccessor) : base(configuration)
+        private SessionService _sessionService;
+
+        public RoleController(ILogger<RoleController> logger, IConfiguration configuration,IHttpContextAccessor httpContextAccessor, SessionService sessionService) : base(configuration)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
+            _sessionService = sessionService;
             //var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
             //NLog.GlobalDiagnosticsContext.Set("LoggingDirectory", logPath);
         }
@@ -30,7 +34,9 @@ namespace WebApi.Controllers
             {
                 using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
-                    var lstRoleModel = await _repo.RoleDALRepo.GetAllRole();
+                    string userIdStr = _sessionService.GetSession("strUserID");
+                    int userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt32(userIdStr) : 0;
+                    var lstRoleModel = await _repo.RoleDALRepo.GetAllRole(userId);
                     if (lstRoleModel != null)
                     {
                         return Ok(lstRoleModel);
@@ -181,18 +187,21 @@ namespace WebApi.Controllers
                 }
             }
         }
-        [HttpGet("deleteRole/{id}")]
+        [HttpDelete("deleteRole/{id}")]
         public async Task<IActionResult> DeleteRole(int id)
         {
             try
             {
                 using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
-                    var result = await _repo.RoleDALRepo.DeleteRole(id);
+                    string userIdStr = _sessionService.GetSession("strUserID");
+                    int userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt32(userIdStr) : 0;
+
+                    var result = await _repo.RoleDALRepo.DeleteRole(id, userId);
                     _repo.Commit();
-                    if (result)
+                    if (result.DeleteRole==true || result.DeleteRole==false)
                     {
-                        return Ok(result);
+                        return Ok(result.deleteRoleInformation);
                     }
                     else
                     {

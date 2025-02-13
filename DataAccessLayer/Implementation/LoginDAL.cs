@@ -50,11 +50,21 @@ namespace DataAccessLayer.Implementation
 
             var res = multi.Read<ResultModel>().ToList();
 
-            if (res.Any() && res[0].RetVal == 1) // Compare with integer
+            if (res is { Count: > 0 })
             {
-                var details = multi.Read<LoginDetailModel>().ToList();
-                res[0].lstLoginDetails = details;
+                switch (res[0].RetVal)
+                {
+                    case -1:
+                        return res;
+
+                    case 1:
+                        var details = multi.Read<LoginDetailModel>().ToList();
+                        res[0].lstLoginDetails = details;
+                        break;
+                }
             }
+
+
 
             return res;
         }
@@ -169,12 +179,21 @@ namespace DataAccessLayer.Implementation
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
             var res = multi.Read<ResultModel>().ToList();
-            var details = multi.Read<LoginDetailModel>().ToList();
-
-            if (res.Any())
+            if (res is { Count: > 0 })
             {
-                res[0].lstLoginDetails = details;
+                switch (res[0].RetVal)
+                {
+                    case -1:
+                        return res;
+
+                    case 1:
+                        var details = multi.Read<LoginDetailModel>().ToList();
+                        res[0].lstLoginDetails = details;
+                        break;
+                }
             }
+
+
             return res;
         }
 
