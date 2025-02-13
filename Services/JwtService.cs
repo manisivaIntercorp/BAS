@@ -21,18 +21,21 @@ namespace WebApi.Services
             _tokenBlacklistService = tokenBlacklistService;
         }
 
-        public string GenerateToken(string username)
+        public string GenerateToken(string username,string Guid,string Password)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var keyBytes = Encoding.UTF8.GetBytes(_key);
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
-                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, username) }),
+                Subject = new ClaimsIdentity(new[] { new Claim(ClaimTypes.Name, username,Guid,Password) }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(keyBytes), SecurityAlgorithms.HmacSha256
                 )
+
+
+
             };
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
