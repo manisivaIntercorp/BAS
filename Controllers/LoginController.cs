@@ -244,9 +244,7 @@ namespace WebApi.Controllers
                     {
                         // Serialize the list to a JSON string
                         var orgDetailsJson = System.Text.Json.JsonSerializer.Serialize(lstOrgDetails);
-
                         HttpContext.Session.SetString("OrgDetails", orgDetailsJson);
-
                         return Ok(lstOrgDetails);
                     }
                     else
