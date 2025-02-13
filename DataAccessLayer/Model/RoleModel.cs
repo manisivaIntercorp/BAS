@@ -73,5 +73,10 @@ namespace DataAccessLayer.Model
         public RoleModel? RoleModel { get; set; }
         public List<Modules?> ModuleDatatable { get; set; }
     }
+    public class DeleteRoleInformation
+    {
+        public string Message { get; set; }
+        public string status { get; set; }
+    }
 
 }
