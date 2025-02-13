@@ -1,4 +1,4 @@
-﻿using Dapper;
+using Dapper;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Model;
 using Microsoft.AspNetCore.Http;

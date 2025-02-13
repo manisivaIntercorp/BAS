@@ -108,15 +108,16 @@ namespace WebApi.Controllers
 
                         case 1:
                             var loginDetail = lstLoginUser.First()?.lstLoginDetails?.FirstOrDefault();
-
+                            var vGuid ="";
                             if (loginDetail != null)
                             {
                                 HttpContext.Session.SetString("UserName", objLogModel.UserName);
                                 HttpContext.Session.SetString("Password", EncryptShaAlg.Encrypt(objLogModel.Password));
                                 GetUserData(lstLoginUser, "GET");
+                                vGuid = loginDetail?.Guid;
                             }
 
-                            var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "");
+                            var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "",Convert.ToString(vGuid), objLogModel?.Password ?? "");
                             return Ok(token);
 
                         default:
@@ -307,12 +308,14 @@ namespace WebApi.Controllers
                 if (users != null && users.Any())
                 {
                     var loginDetail = users.First()?.lstLoginDetails?.FirstOrDefault();
+                    var vGuid = "";
                     if (loginDetail != null)
                     {
                         GetUserData(users, "GET");
+                        vGuid = loginDetail?.Guid;
                     }
+                    var token = _jwtService.GenerateToken(loginModel?.UserName ?? "", Convert.ToString(vGuid), loginModel?.Password ?? "");
 
-                    var token = _jwtService.GenerateToken(loginModel.UserName ?? "");
                     return Ok(token);
                 }
 
