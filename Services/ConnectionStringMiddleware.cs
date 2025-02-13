@@ -78,8 +78,8 @@ namespace WebApi.Services
 
         private string BuildConnectionString(string? serverName, string? userID, string? password, string? dbName)
         {
-            var config = _httpContextAccessor.HttpContext.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
-            var connectionString = config.GetConnectionString("connection");
+            var config = _httpContextAccessor?.HttpContext?.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
+            var connectionString = config?.GetConnectionString("connection");
             var builder = new SqlConnectionStringBuilder(connectionString)
             {
                 DataSource = serverName,
