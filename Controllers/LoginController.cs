@@ -12,6 +12,7 @@ using Microsoft.SqlServer.Management.Smo.Agent;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.SqlTypes;
 using System.Diagnostics.Eventing.Reader;
 using System.IdentityModel.Tokens.Jwt;
 using System.Runtime.Serialization;
@@ -88,9 +89,17 @@ namespace WebApi.Controllers
         [HttpGet("UserLogin")]
         public async Task<IActionResult> UserLogin(string username, string password)
         {
-            var objLogModel = new LoginModel { UserName = username, Password = EncryptShaAlg.Encrypt(password) };
+
+          
             try
             {
+                string strGuid = string.Empty;
+                if(HttpContext?.Session?.GetString("Guid") != null)
+                {
+                    strGuid = Convert.ToString(HttpContext?.Session?.GetString("Guid"));
+                }
+                var objLogModel = new LoginModel { UserName = username, Password = EncryptShaAlg.Encrypt(password + strGuid) };
+
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
 
                 {
@@ -112,7 +121,7 @@ namespace WebApi.Controllers
                             if (loginDetail != null)
                             {
                                 HttpContext.Session.SetString("UserName", objLogModel.UserName);
-                                HttpContext.Session.SetString("Password", EncryptShaAlg.Encrypt(objLogModel.Password));
+                                HttpContext.Session.SetString("Password", EncryptShaAlg.Encrypt(objLogModel.Password + strGuid));
                                 GetUserData(lstLoginUser, "GET");
                                 vGuid = loginDetail?.Guid;
                             }
@@ -161,9 +170,10 @@ namespace WebApi.Controllers
                         string strIsProfileUser = "N";
                         string strIsSystemUser = "N";
                         string strUserImgPath = lstUserDetails[0]?.ImagePath?.Trim() ?? string.Empty;
-                       
+                        string strGuid = lstUserDetails[0]?.Guid?.Trim() ?? string.Empty;
 
-                       
+
+
                         HttpContext.Session.SetString("strUserID", strUserID);
                         HttpContext.Session.SetString("strUserName", strUserName);
                         HttpContext.Session.SetString("strUserDisplayName", strUserDisplayName);
@@ -179,6 +189,7 @@ namespace WebApi.Controllers
                         HttpContext.Session.SetString("strIsProfileUser", strIsProfileUser);
                         HttpContext.Session.SetString("strIsSystemUser", strIsSystemUser);
                         HttpContext.Session.SetString("strUserImgPath", strUserImgPath);
+                        HttpContext.Session.SetString("Guid", strGuid);
                     }
 
                     if (string.IsNullOrWhiteSpace(strDBName))
