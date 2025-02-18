@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using DataAccessLayer.Interface;
-using DataAccessLayer.Implementation;
-using DataAccessLayer.Uow.Interface;
-
+﻿
 using System;
 using System.Data;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +11,10 @@ using Microsoft.SqlServer.Management.XEvent;
 using Microsoft.SqlServer.Management.Smo;
 using System.Xml.Linq;
 using DataAccessLayer.Services;
+using System.Collections.Generic;
+using DataAccessLayer.Interface;
+using DataAccessLayer.Implementation;
+using DataAccessLayer.Uow.Interface;
 
 namespace DataAccessLayer.Uow.Implementation
 {
