@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SqlServer.Management.Smo;
 using Microsoft.SqlServer.Management.Smo.Agent;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
@@ -20,6 +21,9 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Xml.Linq;
 using WebApi.Services;
+using WebApi.Services.Implementation;
+using WebApi.Services.Interface;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 
 namespace WebApi.Controllers
@@ -34,10 +38,11 @@ namespace WebApi.Controllers
         private readonly JwtService _jwtService;
         //private readonly AppGlobalVariableService _appGlobalVariableService;
         private readonly EncryptedDecrypt  _encryptedDecrypt;
+        private readonly IAuditLogService _auditLogService;
      
 
         public LoginController(ILogger<LoginController> logger, EncryptedDecrypt encryptedDecrypt,
-        JwtService jwtService,IConfiguration configuration,IHttpContextAccessor httpContextAccessor)
+        JwtService jwtService,IConfiguration configuration,IHttpContextAccessor httpContextAccessor, IAuditLogService auditLogService)
         : base(configuration)
         {
             _logger = logger;
@@ -45,6 +50,7 @@ namespace WebApi.Controllers
             _jwtService = jwtService;  // Now injected
             //_appGlobalVariableService = appGlobalVariableService;
             _encryptedDecrypt = encryptedDecrypt;
+            _auditLogService = auditLogService;
         }
 
         [HttpPost("Get UserID")]
@@ -62,7 +68,7 @@ namespace WebApi.Controllers
                     {
                         return Unauthorized("Invalid User Name.");
                     }
-
+                    await _auditLogService.LogAction("", "LOGIN-UserName", "");
                     switch (lstuser[0].RetVal)
                     {
                         case -1:
@@ -125,8 +131,11 @@ namespace WebApi.Controllers
                                 GetUserData(lstLoginUser, "GET");
                                 vGuid = loginDetail?.Guid;
                             }
-
                             var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "",Convert.ToString(vGuid), objLogModel?.Password ?? "");
+                           var result = LogLoginDetails("LOGOUT", vGuid, token);
+                            HttpContext.Session.SetString("token", token);
+                            await _auditLogService.LogAction(objLogModel.Guid, "LOGIN", token);
+
                             return Ok(token);
 
                         default:
@@ -248,6 +257,17 @@ namespace WebApi.Controllers
             var objLogModel = new LoginModel { UserName = username };
             try
             {
+                if (HttpContext?.Session != null)
+                {
+                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
+                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
+
+                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
+                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+
+                    await _auditLogService.LogAction(userGuid, "GetOrganisationWithDBDetails", token);
+                }
+
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
                 {
                     var lstOrgDetails = await _repo.LoginDALRepo.GetOrganisationWithDBDetails(objLogModel);
@@ -278,9 +298,20 @@ namespace WebApi.Controllers
         {
             if (orgID <= 0)
                 return BadRequest("Invalid Organisation ID.");
-
             try
             {
+
+                if (HttpContext?.Session != null)
+                {
+                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
+                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
+
+                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
+                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+
+                    await _auditLogService.LogAction(userGuid, "SelectedOrganisation", token);
+                }
+
                 var dbDetailsJson = HttpContext.Session.GetString("OrgDetails");
                 if (string.IsNullOrWhiteSpace(dbDetailsJson))
                     return NotFound("Organisation details not found.");
@@ -346,6 +377,7 @@ namespace WebApi.Controllers
         {
             try
             {
+                
                 if (string.IsNullOrEmpty(token))
                 {
                     return BadRequest("Token is required for logout.");
@@ -353,7 +385,13 @@ namespace WebApi.Controllers
 
                 _jwtService.InvalidateToken(token);
                 // HttpContext.Session.Remove();
-                HttpContext.Session.Clear();
+                if (HttpContext?.Session != null)
+                {
+                    var vGuid = HttpContext.Session.GetString("Guid");
+                    var vtoken = HttpContext.Session.GetString("token");
+                    var result = LogLoginDetails("LOGIN", vGuid, vtoken);
+                }
+                    HttpContext.Session.Clear();
                 return Ok("Logout successful. Token revoked.");
             }
             catch (Exception ex)
@@ -368,6 +406,17 @@ namespace WebApi.Controllers
         {
             try
             {
+                if (HttpContext?.Session != null)
+                {
+                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
+                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
+
+                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
+                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+
+                    await _auditLogService.LogAction(userGuid, "GetDDlLanguage", token);
+                }
+               
                 // var objDDlModel = new GetDropDownDataModel { Mode = Mode, RefID1 = RefID1, RefID2 = RefID2, RefID3 = RefID3, RefID4 = RefID4 };
                 string Mode = "LANGUAGE";
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
@@ -394,6 +443,16 @@ namespace WebApi.Controllers
         {
             try
             {
+                if (HttpContext?.Session != null)
+                {
+                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
+                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
+
+                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
+                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+
+                    await _auditLogService.LogAction(userGuid, "GetDDlModules", token);
+                }
                 // var objDDlModel = new GetDropDownDataModel { Mode = Mode, RefID1 = RefID1, RefID2 = RefID2, RefID3 = RefID3, RefID4 = RefID4 };
                 string Mode = "MODULEID";
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
@@ -414,5 +473,30 @@ namespace WebApi.Controllers
                 return BadRequest("Bad Request");
             }
         }
+
+        private async Task LogLoginDetails(string Mode, string userGuid, string token)
+        {
+            var loginDetails = new LoginDetails
+            {
+                //UserId = userId,
+                Mode = Mode,
+                UserGuid = userGuid,
+                Token = token,
+                LoginAt = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddHours(1), // Example expiration time
+                //LogOut = false,
+                IPAddress = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString(),
+                DeviceInfo = _httpContextAccessor.HttpContext?.Request?.Headers["User-Agent"].ToString(),
+                CreatedBy = userGuid,
+                CreatedDateTime = DateTime.UtcNow,
+                UTCCreatedDateTime = DateTime.UtcNow
+            };
+
+            using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
+            {
+               var reslt = await _repo.LoginDALRepo.InsertLoginDetails(loginDetails);
+            }
+        }
+
     }
 }
