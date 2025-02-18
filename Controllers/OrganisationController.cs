@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using System.Diagnostics.Eventing.Reader;
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
+using WebApi.Services.Interface;
+using Newtonsoft.Json.Linq;
 
 namespace WebApi.Controllers
 {
@@ -16,11 +18,12 @@ namespace WebApi.Controllers
     {
         private readonly IUowOrganisation _repository;
         private readonly ILogger<OrganisationController> _logger;
-
-        public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration,IUowOrganisation repository) : base(configuration)
+        private readonly IAuditLogService _auditLogService;
+        public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration,IUowOrganisation repository, IAuditLogService auditLogService) : base(configuration)
         {
             _logger = logger;
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _auditLogService = auditLogService;
         }
 
         [HttpPost("InsertOrganisation")]
@@ -28,6 +31,17 @@ namespace WebApi.Controllers
         {
             try
             {
+                if (HttpContext?.Session != null)
+                {
+                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
+                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
+
+                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
+                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+
+                    await _auditLogService.LogAction(userGuid, "GetDDlModules", token);
+                }
+
                 var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
                 var msg = "Organisation Inserted Successfully";
 
@@ -52,7 +66,18 @@ namespace WebApi.Controllers
         {
             try
             {
-                    var lsOrganisation = await _repository.OrganisationDALRepo.GetAllOrganisation();
+                if (HttpContext?.Session != null)
+                {
+                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
+                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
+
+                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
+                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+
+                    await _auditLogService.LogAction(userGuid, "GetAllOrganisaion", token);
+                }
+
+                var lsOrganisation = await _repository.OrganisationDALRepo.GetAllOrganisation();
                     if (lsOrganisation != null)
                     {
                         return Ok(lsOrganisation);
