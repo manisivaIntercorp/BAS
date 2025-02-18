@@ -9,6 +9,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.OpenApi.Models;
 using WebApi.Services.Implementation;
+using WebApi.Services.Interface;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -117,6 +118,12 @@ builder.Services.AddScoped<JwtService>(provider =>
 // Register other required services
 builder.Services.AddSingleton<IDbConnection>(_ => new SqlConnection());
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+//AuditLog start
+builder.Services.AddScoped<IUowAuditLog, UowAuditLog>();
+builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+builder.Services.AddHttpContextAccessor();
+//AuditLog End
 var app = builder.Build();
 
 
