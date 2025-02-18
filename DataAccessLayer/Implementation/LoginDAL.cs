@@ -10,6 +10,9 @@ using Microsoft.SqlServer.Management.XEvent;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Net.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
+using System.Data.Common;
+using System.Transactions;
 
 
 namespace DataAccessLayer.Implementation
@@ -247,6 +250,77 @@ namespace DataAccessLayer.Implementation
                 commandType: CommandType.StoredProcedure);
             var res = multi.Read<GetDropDownDataModel>().ToList();
             return res;
+        }
+
+        public async Task<bool> UpdateLoginDetails(LoginDetails loginDetails)
+        {
+            DynamicParameters dynamicParameters = new DynamicParameters();
+            dynamicParameters.Add("@Mode", loginDetails.Mode);
+            dynamicParameters.Add("@UserId", loginDetails.UserId);
+            dynamicParameters.Add("@UserGuid", loginDetails.UserGuid);
+            dynamicParameters.Add("@Token", loginDetails.Token);
+            dynamicParameters.Add("@IPAddress", loginDetails.IPAddress);
+            dynamicParameters.Add("@DeviceInfo", loginDetails.DeviceInfo);
+            dynamicParameters.Add("@DeviceInfo", loginDetails.DeviceInfo);
+            if (Connection == null)
+                throw new ArgumentException(nameof(Connection), "The database connection cannot be null.");
+
+            var multi = await Connection.QueryMultipleAsync("sp_LoginDetails",
+                dynamicParameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            var result = await multi.ReadFirstOrDefaultAsync<int>();
+            return result > 0 ? true : false;
+        }
+
+        public async Task<bool> InsertLoginDetails(LoginDetails loginDetails)
+        {
+
+            try
+            {
+                DynamicParameters dynamicParameters = new DynamicParameters();
+                dynamicParameters.Add("@Mode", loginDetails.Mode);
+                dynamicParameters.Add("@UserId", loginDetails.UserId);
+                dynamicParameters.Add("@UserGuid", loginDetails.UserGuid);
+                dynamicParameters.Add("@Token", loginDetails.Token);
+                dynamicParameters.Add("@IPAddress", loginDetails.IPAddress);
+                dynamicParameters.Add("@DeviceInfo", loginDetails.DeviceInfo);
+                // Adding Output Parameters
+                dynamicParameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                dynamicParameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
+
+                if (Connection == null)
+                    throw new ArgumentException(nameof(Connection), "The database connection cannot be null.");
+
+                // Execute stored procedure using existing transaction
+                await Connection.ExecuteAsync(
+                   "sp_LoginDetails",
+                dynamicParameters,
+                   transaction: Transaction,
+                   commandType: CommandType.StoredProcedure
+               );
+
+                int result = dynamicParameters.Get<int>("@RetVal");
+                string message = dynamicParameters.Get<string>("@Msg");
+
+                if (result > 0)
+                {
+                    Transaction.Commit(); // Commit the transaction
+                    return true;
+                }
+                else
+                {
+                    Transaction.Rollback(); // Rollback on failure
+                    Console.WriteLine($"Audit Log Error: {message}");
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return false;
+            }
         }
     }
 }
