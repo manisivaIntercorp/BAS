@@ -92,4 +92,25 @@ namespace DataAccessLayer.Model
         public string Value { get; set; }
         public string Text { get; set; }
     }
+
+    public class LoginDetails
+    {
+        public long ID { get; set; }
+        public long UserId { get; set; }
+        public string? UserGuid { get; set; }
+        public string? Mode { get; set; }
+        public string? Token { get; set; }
+        public DateTime? LoginAt { get; set; }
+        public DateTime ExpiresAt { get; set; }
+        public string? LogOut { get; set; }
+        public DateTime? LogOutAt { get; set; }
+        public string? IPAddress { get; set; }
+        public string? DeviceInfo { get; set; }
+        public string? CreatedBy { get; set; }
+        public DateTime? CreatedDateTime { get; set; }
+        public string? ModifiedBy { get; set; }
+        public DateTime? ModifiedDateTime { get; set; }
+        public DateTime? UTCCreatedDateTime { get; set; }
+        public DateTime? UTCModifiedDateTime { get; set; }
+    }
 }
