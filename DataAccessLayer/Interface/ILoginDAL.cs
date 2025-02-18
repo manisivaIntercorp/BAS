@@ -18,5 +18,9 @@ namespace DataAccessLayer.Interface
 
         Task<List<GetDropDownDataModel>> GetDDlLanguage(string Mode, string RefID1, string RefID2, string RefID3);
         Task<List<GetDropDownDataModel>> GetDDlModule(string Mode, string RefID1, string RefID2, string RefID3);
+
+        Task<bool> InsertLoginDetails(LoginDetails loginDetails);
+        Task<bool> UpdateLoginDetails(LoginDetails loginDetails);
+
     }
 }
