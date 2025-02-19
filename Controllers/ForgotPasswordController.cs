@@ -57,7 +57,7 @@ namespace WebApi.Controllers
                                     
                                     await _emailService.SendMailMessage(EmailTemplateCode.FORGOT_PASSWORD,
                                                                         Convert.ToInt32(result.RetVal.ToString()),
-                                                                        Convert.ToInt32(result.Msg.ToString()),
+                                                                        Convert.ToInt64(result.Msg.ToString()),
                                                                         string.Empty);
                                     return Ok();
                                     
