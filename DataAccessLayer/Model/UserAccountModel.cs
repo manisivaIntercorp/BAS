@@ -8,16 +8,17 @@ namespace DataAccessLayer.Model
     {
         public DataTable UserAccountOrgTable = new DataTable();
         public DataTable UserAccountRoleTable = new DataTable();
-        public DataTable ConvertToDataTable(List<RoleName> models, int id)
+        public DataTable ConvertToDataTable(List<RoleNameInUserAccount> models, long CreatedBy,int id)
         {
             // Define columns dynamically based on the model's properties
-            var properties = typeof(RoleName).GetProperties();
+            var properties = typeof(RoleNameInUserAccount).GetProperties();
             UserAccountRoleTable.Columns.Add("UserID", typeof(Int64));
             foreach (var property in properties)
             {
 
                 UserAccountRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
             }
+            UserAccountRoleTable.Columns.Add("CreatedBy", typeof(Int64));
             // Add rows dynamically based on the model data
             foreach (var model in models)
             {
@@ -32,7 +33,10 @@ namespace DataAccessLayer.Model
                     {
                         row["UserID"] = id;
                     }
+                    
                     row[property.Name] = property.GetValue(model) ?? DBNull.Value;
+                    row["CreatedBy"] = CreatedBy;
+
                 }
                 UserAccountRoleTable.Rows.Add(row);
             }
@@ -74,6 +78,8 @@ namespace DataAccessLayer.Model
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
+        [JsonIgnore]
+        public string? Guid { get; set; }
         public string? PlatformUser { get; set; }
         public DateTime? EffectiveDate { get; set; }
         public string? Vendor { get; set; }
@@ -89,20 +95,54 @@ namespace DataAccessLayer.Model
         public DateTime? PasswordExpiryDate { get; set; }
         public string? AccountLocked { get; set; }
         public int Tenant { get; set; }
-        
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
         public string? SystemUser { get; set; }
         public string? ProfileUser { get; set; }
-        public int CreatedBy { get; set; }
-        public int ProfileID { get; set; }
+        [JsonIgnore]
+        public long CreatedBy { get; set; }
+        public long ProfileID { get; set; }
+        public DateOnly? UserExpiryDate { get; set; }
     }
-    
+
+
+    public class GetUserAccountModel
+    {
+        public long? UserId { get; set; }
+        public string? UserName { get; set; }
+        public string? UserPassword { get; set; }
+        
+        public string? MasterGuid { get; set; }
+        public string? PlatformUser { get; set; }
+        public DateTime? EffectiveDate { get; set; }
+        public string? Vendor { get; set; }
+        public string? DisplayName { get; set; }
+        public long LanguageID { get; set; }
+        public string? TimeZoneID { get; set; }
+        [EmailAddress]
+        public string? emailID { get; set; }
+        public string? ContactNo { get; set; }
+        public int RoleID { get; set; }
+        public long UserPolicy { get; set; }
+        public string? PasswordChange { get; set; }
+        public DateTime? PasswordExpiryDate { get; set; }
+        public string? AccountLocked { get; set; }
+        public int Tenant { get; set; }
+        public string? Active { get; set; }
+        public string? TempDeactive { get; set; }
+        public string? SystemUser { get; set; }
+        public string? ProfileUser { get; set; }
+        
+        public string? CreatedBy { get; set; }
+        public long ProfileID { get; set; }
+        public DateOnly? UserExpiryDate { get; set; }
+    }
+
     public class UserAccountOrgDatatable
     {
         public string? OrgName { get; set; }
         public DateTime? EffectiveDateOrg { get; set; }
-        
+
         public string? ActiveOrg { get; set; }
     }
     public class OrgDetails
@@ -119,27 +159,24 @@ namespace DataAccessLayer.Model
     public class UserAccountUpdateRequest
     {
         public UserAccountModel? UserAccount { get; set; }
-        public List<RoleName>? RoleNameList { get; set; } = new List<RoleName>();
-        public List<UserAccountOrgDatatable>? OrgDatatable { get; set; }
+        public List<RoleNameInUserAccount?> RoleNameList { get; set; } = new List<RoleNameInUserAccount?>();
+        public List<UserAccountOrgDatatable?> OrgDataTable { get; set; } = new List<UserAccountOrgDatatable?>();
     }
-    public class DeleteRoleinUserAccount
-    {
-        public DeleteRoleName? DeleteRoleNamesingle { get; set; }
-        public List<DeleteRoleNameinList> DeleteRoleName { get; set; }
-
-    }
+    
     public class GetRoleName
     {
         public long Value { get; set; }
+        
         public string? Text { get; set; }
     }
     public class DeleteRoleName
     {
+        public List<DeleteRoleNameInList> DeleteRoleNames { get; set; } = new List<DeleteRoleNameInList>();
         public DataTable UserAccountDeleteRoleTable = new DataTable();
-        public DataTable ConvertToDataTable(List<DeleteRoleNameinList> models)
+        public DataTable ConvertToDataTable(List<DeleteRoleNameInList> models)
         {
             // Define columns dynamically based on the model's properties
-            var properties = typeof(DeleteRoleNameinList).GetProperties();
+            var properties = typeof(DeleteRoleNameInList).GetProperties();
             foreach (var property in properties)
             {
                 UserAccountDeleteRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
@@ -158,44 +195,51 @@ namespace DataAccessLayer.Model
 
             return UserAccountDeleteRoleTable;
         }
+        [JsonIgnore]
         public long? CreatedBy { get; set; }
-        
     }
-    public class DeleteRoleNameinList
+    public class DeleteRoleNameInList
     {
-        public long? id { get; set; }
+        public string? UserAccountRoleGuid { get; set; }
     }
-    public class GetRoleNameDetails
-    {
-        public long Value { get; set; }
-        public string? Text { get; set; }
-    }
-
     public class RoleName
+    {
+        [JsonIgnore]
+        public long? RoleID {  get; set; }
+        public string? RoleGUID { get; set; }
+        public DateOnly? RoleNameEffectiveDate { get; set; }
+        public string? UserGUID { get; set; }
+        [JsonIgnore]
+        public long? CreatedBy { get; set; }
+    }
+    public class RoleNameInUserAccount
     {
         public long? RoleID { get; set; }
         public DateOnly? RoleNameEffectiveDate { get; set; }
-        public long CreatedBy { get; set; }
+        
     }
 
     public class ResetPassword
     {
+        [JsonIgnore]
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? Password { get; set; }
         public long? CreatedBy { get; set; }
         public long? LevelID { get; set; }
         public long? LevelDetailID { get; set; }
-        public string? TimeZoneID { get; internal set; }
+        public string? TimeZoneID { get; set; }
+        [JsonIgnore]
+        public string? Guid { get; set; }
     }
     public class UserPolicyName
     {
-        public long Value { get; set; }
+        public string? Value { get; set; }
         public string? Text { get; set; }
     }
     public class GetUserAccountRole
     {
-        public long? ID { get; set; }
+        public string? UserAccountRoleGuid { get; set; }
         public long? RoleID { get; set; }
         public DateTime? EffectiveDate { get; set; }
         public string? AccessToAllClient { get; set; }
@@ -236,6 +280,11 @@ namespace DataAccessLayer.Model
     }
     public class UnlockUser
     {
+        public List<UnlockUserList>? Users
+        {
+            get; set;
+        }
+        [JsonIgnore]
         public long? UpdatedBy { get; set; }
         public DataTable UnlockTable = new DataTable();
         public DataTable ConvertToDataTable(List<UnlockUserList> models)
@@ -263,29 +312,19 @@ namespace DataAccessLayer.Model
     }
     public class UnlockUserList
     {
-        public long? UserID { get; set; }
+        public string? UserGuId { get; set; }
         public string? UserName { get; set; }
     }
-    public class ListofUnlock
-    {
-        public List<UnlockUserList>? Users
-        {
-            get; set;
-        }
-        public UnlockUser? User
-        {
-            get; set;
-        }
-    }
+    
     public class DeleteUserAccount
     {
         public DataTable UserAccountDeleteTable = new DataTable();
-        
+
         public DataTable ConvertToDataTable(List<DeleteUserAccountList> models)
         {
             // Define columns dynamically based on the model's properties
             var properties = typeof(DeleteUserAccountList).GetProperties();
-            
+
             foreach (var property in properties)
             {
 
@@ -297,7 +336,7 @@ namespace DataAccessLayer.Model
                 DataRow row = UserAccountDeleteTable.NewRow();
                 foreach (var property in properties)
                 {
-                   
+
                     row[property.Name] = property.GetValue(model) ?? DBNull.Value;
                 }
                 UserAccountDeleteTable.Rows.Add(row);
@@ -305,9 +344,9 @@ namespace DataAccessLayer.Model
 
             return UserAccountDeleteTable;
         }
-        
-        
-        public List<DeleteUserAccountList>? DeleteDatatable { get; set; }
+
+
+        public List<DeleteUserAccountList>? DeleteDataTable { get; set; }
 
     }
     public class DeleteUserAccountList
@@ -316,9 +355,10 @@ namespace DataAccessLayer.Model
     }
     public class DeleteResult
     {
-        public long? SNo{get; set;}
+        public long? SNo { get; set; }
         public string? Result { get; set; }
         public string? Remarks { get; set; }
         public string? UserName { get; set; }
     }
+    
 }
