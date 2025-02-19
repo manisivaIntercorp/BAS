@@ -85,7 +85,7 @@
             set;
         }
 
-        public int? UserID
+        public long? UserID
         {
             get;
             set;
