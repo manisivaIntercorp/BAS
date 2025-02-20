@@ -24,6 +24,21 @@ namespace WebApi.Services.Implementation
 
 
             var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null && httpContext.Session != null)
+            {
+                if (String.IsNullOrEmpty(token))
+                {
+                    httpContext.Session.TryGetValue(Common.SessionVariables.Token, out var tokenBytes);
+                    token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : null;
+                }
+                if (String.IsNullOrEmpty(UserGuid))
+                {
+                    httpContext.Session.TryGetValue(Common.SessionVariables.Guid, out var guidBytes);
+                    UserGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+                }
+            }
+
+
             var auditLog = new AuditLog
             {
                 UserGuid = UserGuid,
