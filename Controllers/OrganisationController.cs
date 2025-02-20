@@ -33,18 +33,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                //if (HttpContext?.Session != null)
-                //{
-                //    HttpContext.Session.TryGetValue(Common.SessionVariables.Token, out var tokenBytes);
-                //    HttpContext.Session.TryGetValue(Common.SessionVariables.Guid, out var guidBytes);
-
-                //    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
-                //    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
-
-                //    await _auditLogService.LogAction(userGuid, "GetDDlModules", token);
-                //}
-
-                var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
+               var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
                 await _auditLogService.LogAction(userGuid, "InsertOrganisation", token);
 
                 var msg = "Organisation Inserted Successfully";
@@ -106,7 +95,7 @@ namespace WebApi.Controllers
 
                 var objOrganisationModel = await _repository.OrganisationDALRepo.GetOrganisationById(Guid);
                 // Log the action before returning response
-                await _auditLogService.LogAction(userGuid, "GetAllOrganisation", token);
+                await _auditLogService.LogAction(userGuid, "GetOrganisationById", token);
                 if (objOrganisationModel != null)
                 {
                     return Ok(objOrganisationModel);
