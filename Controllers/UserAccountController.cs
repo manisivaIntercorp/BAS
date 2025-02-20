@@ -272,28 +272,77 @@ namespace WebApi.Controllers
                         _repo.Commit();
                         if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
                         {
-
-                            switch (result.RetVal)
+                            if(objModel.UserAccount.Tenant!=0)
                             {
-                                case 0:
-                                case -1://Already Exists
-                                    responseMsg = result.Msg ?? string.Empty;
+                                if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) &&
+                               (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                {
+                                    switch (result.RetVal)
+                                    {
+                                        case 0:
+                                        case -1://Already Exists
+                                            responseMsg = result.Msg ?? string.Empty;
 
-                                    break;
+                                            break;
 
-                                case >= 1:
-                                    responseMsg = result.Msg ?? string.Empty;
-                                    await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1, 
-                                                                        result.RetVal, 
-                                                                        objModel.UserAccount.UserPassword);
+                                        case >= 1:
+                                            responseMsg = result.Msg ?? string.Empty;
+                                            await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
+                                                                                result.RetVal,
+                                                                                objModel.UserAccount.UserPassword);
 
-                                    break;
+                                            break;
 
-                                default:
-                                    _logger.LogError(Environment.NewLine);
-                                    _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                    return NotFound("User Account Already Exists" + BadRequest());
+                                        default:
+                                            _logger.LogError(Environment.NewLine);
+                                            _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                            return NotFound("User Account Already Exists" + BadRequest());
+                                    }
+
+                                }
+                                else
+                                {
+                                    _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                    return BadRequest("Please Check Organization Name");
+                                }
+
                             }
+                            else if (objModel.UserAccount.Tenant == 0)
+                            {
+                                if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) ||
+                               (result.OrgDetails != null && result.OrgDetails.Count == 0))
+                                {
+                                    switch (result.RetVal)
+                                    {
+                                        case 0:
+                                        case -1://Already Exists
+                                            responseMsg = result.Msg ?? string.Empty;
+
+                                            break;
+
+                                        case >= 1:
+                                            responseMsg = result.Msg ?? string.Empty;
+                                            await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
+                                                                                result.RetVal,
+                                                                                objModel.UserAccount.UserPassword);
+
+                                            break;
+
+                                        default:
+                                            _logger.LogError(Environment.NewLine);
+                                            _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                            return NotFound("User Account Already Exists" + BadRequest());
+                                    }
+
+                                }
+                                else
+                                {
+                                    _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                    return BadRequest("Please Check Organization Name");
+                                }
+
+                            }
+
 
                         }
                     }
@@ -393,20 +442,78 @@ namespace WebApi.Controllers
                         {
                             var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
                             _repo.Commit();
-                            if (result.updateuseraccount != null)
+                            if (result.updateuseraccount != null || result.OrgDetails == null || result.OrgDetails != null)
                             {
-                                switch (result.RetVal)
+                                if (userAccount?.UserAccount.Tenant != 0)
                                 {
-                                    case >= 1:
-                                        responseMsg = result.Msg ?? string.Empty;
-                                        break;
-                                    case -1:
-                                        return Ok(result.Msg);
-                                    default:
-                                        _logger.LogError(Environment.NewLine);
-                                        _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
-                                        return BadRequest();
+                                    if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) &&
+                                   (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                    {
+                                        switch (result.RetVal)
+                                        {
+                                            case 0:
+                                            case -1://Already Exists
+                                                responseMsg = result.Msg ?? string.Empty;
+                                                break;
+
+                                            case >= 1:
+                                                responseMsg = result.Msg ?? string.Empty;
+                                                await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
+                                                                                    result.RetVal,
+                                                                                    userAccount?.UserAccount.UserPassword);
+
+                                                break;
+
+                                            default:
+                                                _logger.LogError(Environment.NewLine);
+                                                _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                                return NotFound("User Account Already Exists" + BadRequest());
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                        return BadRequest("Please Check Organization Name");
+                                    }
+
                                 }
+                                else if (userAccount.UserAccount.Tenant == 0)
+                                {
+                                    if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) ||
+                                   (result.OrgDetails != null && result.OrgDetails.Count == 0))
+                                    {
+                                        switch (result.RetVal)
+                                        {
+                                            case 0:
+                                            case -1://Already Exists
+                                                responseMsg = result.Msg ?? string.Empty;
+
+                                                break;
+
+                                            case >= 1:
+                                                responseMsg = result.Msg ?? string.Empty;
+                                                await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
+                                                                                    result.RetVal,
+                                                                                    userAccount?.UserAccount.UserPassword);
+
+                                                break;
+
+                                            default:
+                                                _logger.LogError(Environment.NewLine);
+                                                _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                                return NotFound("User Account Already Exists" + BadRequest());
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                        return BadRequest("Please Check Organization Name");
+                                    }
+
+                                }
+
 
                             }
                         }
@@ -647,8 +754,8 @@ namespace WebApi.Controllers
 
                                         await _emailService.SendMailMessage(EmailTemplateCode.RESET_PASSWORD,
                                             -1,
-                    Convert.ToInt64(_sessionService.GetSession("strUserID")),
-                    objModel.Password);
+                                            Convert.ToInt64(_sessionService.GetSession("strUserID")),
+                                            objModel.Password);
                                         break;
 
                                     case -1://
