@@ -22,7 +22,7 @@ namespace DataAccessLayer.Interface
         Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountByGUId(string? GUId);
         Task<List<OrgDetails?>> GetOrgDetailsByUserGUId();
 
-        Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? userAccount);
+        Task<(List<UserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? userAccount);
 
 
         Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> EditUpdateUserAccountAsync(UserAccountModel? userAccount);
