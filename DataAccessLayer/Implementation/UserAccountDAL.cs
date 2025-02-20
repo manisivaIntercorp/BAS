@@ -13,6 +13,9 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.SqlServer.Management.XEvent;
 using System.Reflection;
+using System;
+using Microsoft.AspNetCore.Routing;
+
 
 namespace DataAccessLayer.Implementation
 {
@@ -24,7 +27,7 @@ namespace DataAccessLayer.Implementation
         public UserAccountDAL(IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
             : base(new SqlConnection(configuration.GetConnectionString("connection"))) // ✅ Always Start with Master DB
         {
-            _httpContextAccessor = httpContextAccessor?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _encryptedDecrypt = new EncryptedDecrypt(configuration);
             SetDynamicConnection();
@@ -49,7 +52,7 @@ namespace DataAccessLayer.Implementation
         // 🔹 Method to Change Connection Dynamically (if Needed)
         private void UpdateConnectionString(string? dbName, string? server, string? user, string? password)
         {
-            
+
             string? masterConnection = _configuration.GetConnectionString("connection");
 
             var builder = new SqlConnectionStringBuilder(masterConnection)
@@ -68,15 +71,15 @@ namespace DataAccessLayer.Implementation
             if (httpContext != null)
             {
                 httpContext.Items["connection"] = builder.ToString();
-                httpContext.Session.SetString("DBName", dbName??string.Empty);
-                httpContext.Session.SetString("InstanceName", server??string.Empty);
-                httpContext.Session.SetString("DataBaseUserName", user??string.Empty);
-                httpContext.Session.SetString("DataBasePassword", password??string.Empty);
+                httpContext.Session.SetString("DBName", dbName ?? string.Empty);
+                httpContext.Session.SetString("InstanceName", server ?? string.Empty);
+                httpContext.Session.SetString("DataBaseUserName", user ?? string.Empty);
+                httpContext.Session.SetString("DataBasePassword", password ?? string.Empty);
             }
         }
 
         // 🔹 Fetch Org Details and Update Connection String
-        public async Task<List<OrgDetails?>> GetOrgDetailsByUserId(int? userId)
+        public async Task<List<OrgDetails?>> GetOrgDetailsByUserId(long? userId)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserId", userId);
@@ -112,19 +115,19 @@ namespace DataAccessLayer.Implementation
             // To Check the DBName is in Default DB Name is Master DB
             if (_httpContextAccessor.HttpContext != null)
             {
-                if(Connection.Database!="MasterData") // To Change the DB Name into Master DB
+                if (Connection.Database != "MasterData") // To Change the DB Name into Master DB
                 {
                     string? masterConnection = _configuration.GetConnectionString("connection");
                     Connection = new SqlConnection(masterConnection);
                 }
-                else if(model?.Tenant==0)
+                else if (model?.Tenant == 0)
                 {
                     string? masterConnection = _configuration.GetConnectionString("connection");
                     Connection = new SqlConnection(masterConnection);
                 }
-                if(model?.UserAccountOrgTable!=null)
+                if (model?.UserAccountOrgTable != null)
                 {
-                    foreach(DataRow row in model?.UserAccountOrgTable.Rows)
+                    foreach (DataRow row in model?.UserAccountOrgTable.Rows)
                     {
                         var orgname = row["OrgName"] != DBNull.Value ? row["OrgName"]?.ToString() : null;
                         if (string.IsNullOrEmpty(orgname) || row["OrgName"]?.ToString() == "string")
@@ -163,6 +166,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@dtOrgRole", JsonConvert.SerializeObject(model?.UserAccountRoleTable), DbType.String);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@Mode", "ADD");
 
             try
@@ -183,7 +187,27 @@ namespace DataAccessLayer.Implementation
                 {
                     result.Read();
                 }
-               
+                var UserGuid = parameters.Get<string?>("@UserGuid");
+                var vPassword = model?.UserPassword + UserGuid;
+
+
+                DynamicParameters parameterPassword = new DynamicParameters();
+
+                parameterPassword.Add("@UserId", model?.UserId);
+                parameterPassword.Add("@UserName", model?.UserName);
+                parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
+                parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
+                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                using var vPasswordUpdate = await Connection.QueryMultipleAsync(
+                    "sp_UserAccountCreation",
+                    parameterPassword,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+
+                model.UserPassword = EncryptShaAlg.Encrypt(vPassword);
+                model.Guid = UserGuid;
+
                 int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
                 model.UserId = (long?)parameters.Get<int?>("@RetVal") ?? -4;
                 string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
@@ -221,8 +245,8 @@ namespace DataAccessLayer.Implementation
                     }
 
                 }
-                
-                return (InsertedUsers??new List<UserAccountModel?>(), OrgDetails ?? new List<OrgDetails?>(), RetVal, Msg);
+
+                return (InsertedUsers ?? new List<UserAccountModel?>(), OrgDetails ?? new List<OrgDetails?>(), RetVal, Msg);
             }
             catch (Exception ex)
             {
@@ -231,12 +255,12 @@ namespace DataAccessLayer.Implementation
             }
         }
         // To Insert into Client Database
-        public async Task<(List<UserAccountModel?> InsertedClientUsers,List<OrgDetails?> OrgClientDetails,int? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> InsertedClientUsers, List<OrgDetails?> OrgClientDetails, int? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(UserAccountModel? model)
         {
             DynamicParameters clientParameters = new DynamicParameters();
             clientParameters.Add("@UserId", model?.UserId);
             clientParameters.Add("@UserName", model?.UserName);
-            clientParameters.Add("@Password", EncryptShaAlg.Encrypt(model?.UserPassword));
+            clientParameters.Add("@Password", model?.UserPassword);
             clientParameters.Add("@UserPolicy", model?.UserPolicy);
             clientParameters.Add("@Language", model?.LanguageID);
             clientParameters.Add("@Vendor", model?.Vendor);
@@ -251,6 +275,7 @@ namespace DataAccessLayer.Implementation
             clientParameters.Add("@TempDeactive", model?.TempDeactive);
             clientParameters.Add("@EmailID", model?.emailID);
             clientParameters.Add("@SystemUser", model?.SystemUser);
+            clientParameters.Add("@UserGuid", model?.Guid);
             clientParameters.Add("@ProfileUser", model?.ProfileUser);
             clientParameters.Add("@PlatformUser", model?.PlatformUser);
             clientParameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
@@ -276,16 +301,35 @@ namespace DataAccessLayer.Implementation
             int RetValClient = clientParameters.Get<int?>("@RetVal") ?? -4;
             string MsgClient = clientParameters.Get<string?>("@Msg") ?? "No Records Found";
             List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
-            
-            return (InsertedUsersClient, OrgDetails,RetValClient, MsgClient);
+
+
+            var UserGuid = clientParameters.Get<string?>("@UserGuid");
+            var vPassword = model?.UserPassword + UserGuid;
+
+
+            //DynamicParameters parameterPassword = new DynamicParameters();
+
+            //parameterPassword.Add("@UserId", model?.UserId);
+            //parameterPassword.Add("@UserName", model?.UserName);
+            //parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
+            //parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
+            //parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+            //using var vPasswordUpdate = await Connection.QueryMultipleAsync(
+            //    "sp_UserAccountCreation",
+            //    parameterPassword,
+            //    transaction: Transaction,
+            //    commandType: CommandType.StoredProcedure);
+
+            return (InsertedUsersClient, OrgDetails, RetValClient, MsgClient);
         }
 
-        public async Task<(bool deleteuseraccount, List<DeleteResult> deleteResults)> DeleteUserAccount(int UpdatedBy, DeleteUserAccount deleteUserAccount)
+        public async Task<(bool deleteuseraccount, List<DeleteResult> deleteResults)> DeleteUserAccount(long UpdatedBy, DeleteUserAccount deleteUserAccount)
         {
             List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
-            if (deleteUserAccount.DeleteDatatable != null)
+            if (deleteUserAccount.DeleteDataTable != null)
             {
-                foreach (var DeleteResult in deleteUserAccount.DeleteDatatable)
+                foreach (var DeleteResult in deleteUserAccount.DeleteDataTable)
                 {
                     // 🌟 Fetch Org Details and Change Connection
                     OrgDetails = await GetOrgDetailsByUserName(DeleteResult.UserName);
@@ -316,43 +360,43 @@ namespace DataAccessLayer.Implementation
 
                 }
             }
-                if (_httpContextAccessor?.HttpContext != null)
+            if (_httpContextAccessor?.HttpContext != null)
+            {
+                if (Connection.Database != "MasterData")// To Change the DB Name into Master DB
                 {
-                    if (Connection.Database != "MasterData")// To Change the DB Name into Master DB
-                    {
-                        string? masterConnection = _configuration.GetConnectionString("connection");
-                        Connection = new SqlConnection(masterConnection);
-                    }
+                    string? masterConnection = _configuration.GetConnectionString("connection");
+                    Connection = new SqlConnection(masterConnection);
                 }
-            
-                DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("@tblDelete", JsonConvert.SerializeObject(deleteUserAccount.UserAccountDeleteTable));
-                parameters.Add("@UpdatedBy", UpdatedBy);
-                parameters.Add("@Mode", "DELETE");
-
-                var Result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
-                    parameters,
-                    transaction: Transaction,
-                    commandType: CommandType.StoredProcedure);
-                List<DeleteResult> DeleteUserAccount = (await Result.ReadAsync<DeleteResult>()).ToList();
-                while (!Result.IsConsumed)
-                {
-                    await Result.ReadAsync();
-                }
-
-                bool res = DeleteUserAccount.Any();
-
-
-
-                return (res, DeleteUserAccount.ToList());
             }
-        
+
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@tblDelete", JsonConvert.SerializeObject(deleteUserAccount.UserAccountDeleteTable));
+            parameters.Add("@UpdatedBy", UpdatedBy);
+            parameters.Add("@Mode", "DELETE");
+
+            var Result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+            List<DeleteResult> DeleteUserAccount = (await Result.ReadAsync<DeleteResult>()).ToList();
+            while (!Result.IsConsumed)
+            {
+                await Result.ReadAsync();
+            }
+
+            bool res = DeleteUserAccount.Any();
+
+
+
+            return (res, DeleteUserAccount.ToList());
+        }
+
 
         // To Delete Client Database
-        public async Task<(bool deleteuseraccount, List<DeleteResult>)> DeleteClientUserAccount(int UpdatedBy, DeleteUserAccount deleteUserAccount)
+        public async Task<(bool deleteuseraccount, List<DeleteResult>)> DeleteClientUserAccount(long UpdatedBy, DeleteUserAccount deleteUserAccount)
         {
 
-            
+
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@tblDelete", JsonConvert.SerializeObject(deleteUserAccount.UserAccountDeleteTable));
             parameters.Add("@UpdatedBy", UpdatedBy);
@@ -369,24 +413,24 @@ namespace DataAccessLayer.Implementation
             }
 
             bool res = deleteuseraccount.Any();
-           
+
 
             return (res, deleteuseraccount.ToList());
         }
 
-        public async Task<List<UserAccountModel?>> GetAllUserAccount()
+        public async Task<List<GetUserAccountModel?>> GetAllUserAccount()
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "GET");
-            parameters.Add("@UserId", 0);
+            parameters.Add("@UserGuid", string.Empty);
             var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return multi.Read<UserAccountModel?>().ToList();
+            return multi.Read<GetUserAccountModel?>().ToList();
         }
 
-        public async Task<List<UserPolicyName?>> getAllUserPolicyinDropdown()
+        public async Task<List<UserPolicyName?>> getAllUserPolicyInDropdown()
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "USER_GROUP");
@@ -398,7 +442,7 @@ namespace DataAccessLayer.Implementation
             return multi.Read<UserPolicyName?>().ToList();
         }
 
-        public async Task<List<GetRoleName?>> getAllUserRoleinDropdown()
+        public async Task<List<GetRoleName?>> getAllUserRoleInDropdown()
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "USER_ROLE");
@@ -409,10 +453,10 @@ namespace DataAccessLayer.Implementation
             return multi.Read<GetRoleName?>().ToList();
         }
 
-        public async Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountById(int? Id)
+        public async Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountByGUId(string? GUId)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserId", Id);
+            parameters.Add("@UserGuid", GUId);
             parameters.Add("@Mode", "GET_DETAIL");
             var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                              parameters,
@@ -424,22 +468,9 @@ namespace DataAccessLayer.Implementation
             return (UserAccount, RoleDetails, UserAccountOrg);
         }
 
-        //public async Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountByName(string? UserName)
-        //{
-        //    DynamicParameters parameters = new DynamicParameters();
-        //    parameters.Add("@UserName", UserName);
-        //    parameters.Add("@Mode", "GET_DETAIL");
-        //    var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
-        //                                                     parameters,
-        //                                                     transaction: Transaction,
-        //                                                     commandType: CommandType.StoredProcedure);
-        //    var UserAccount = (await multi.ReadAsync<GetUserAccount>())?.FirstOrDefault();
-        //    var RoleDetails = (await multi.ReadAsync<GetUserAccountRole>())?.ToList();
-        //    var UserAccountOrg = (await multi.ReadAsync<GetUserAccountOrg>())?.ToList();
-        //    return (UserAccount, RoleDetails, UserAccountOrg);
-        //}
+        
 
-        public async Task<List<OrgDetails?>> GetOrgDetailsByUserId()
+        public async Task<List<OrgDetails?>> GetOrgDetailsByUserGUId()
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserId", 0);
@@ -455,13 +486,13 @@ namespace DataAccessLayer.Implementation
         }
 
 
-        public async Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? model)
         {
             // To Check the DBName is in Default DB Name is Master DB
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext != null)
             {
-                if (Connection.Database!= "MasterData")// To Change the DB Name into Master DB
+                if (Connection.Database != "MasterData")// To Change the DB Name into Master DB
                 {
                     string? masterConnection = _configuration.GetConnectionString("connection");
                     Connection = new SqlConnection(masterConnection);
@@ -497,8 +528,10 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@ProfileID", model?.ProfileID);
             parameters.Add("@EffectiveDate", model?.EffectiveDate);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
-            
+
             parameters.Add("@Mode", "EDIT");
             using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
@@ -516,11 +549,31 @@ namespace DataAccessLayer.Implementation
                 // Access the output parameters after consuming all datasets
                 int retVal = parameters.Get<int?>("@RetVal") ?? -4;
                 string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+                var UserGuid = parameters.Get<string?>("@UserGuid");
+                var vPassword = model?.UserPassword + UserGuid;
 
+
+                DynamicParameters parameterPassword = new DynamicParameters();
+
+                parameterPassword.Add("@UserId", model?.UserId);
+                parameterPassword.Add("@UserName", model?.UserName);
+                parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
+                parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
+                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                using var vPasswordUpdate = await Connection.QueryMultipleAsync(
+                    "sp_UserAccountCreation",
+                    parameterPassword,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+
+                model.UserPassword = EncryptShaAlg.Encrypt(vPassword);
+                model.Guid = UserGuid;
                 List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
                 if (retVal >= 1)
                 {
-                    if (model?.Tenant != 0) {
+                    if (model?.Tenant != 0)
+                    {
                         // 🌟 Fetch Org Details and Change Connection
                         OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
                         if (OrgDetails != null && OrgDetails.Any())
@@ -538,22 +591,133 @@ namespace DataAccessLayer.Implementation
                                     UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
                                     var ClientResult = await UpdateClientUserAccountAsync(model?.UserName, model);
                                 }
-
                             }
                             _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
                             _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
                             _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
                             _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
-
                         }
-                    }// To Change the Client Connection
-                    
+                    }
+                }
+                // Return the roles list along with output parameters
+                return (UserAccount??new List<UserAccountModel?>(),OrgDetails ?? new List<OrgDetails?>(), retVal, msg);
+            }
+        }
 
+        public async Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> EditUpdateUserAccountAsync(UserAccountModel? model)
+        {
+            // To Check the DBName is in Default DB Name is Master DB
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                if (Connection.Database != "MasterData")// To Change the DB Name into Master DB
+                {
+                    string? masterConnection = _configuration.GetConnectionString("connection");
+                    Connection = new SqlConnection(masterConnection);
+                }
+                
+            }
+            DateOnly? date = (DateOnly?)model?.UserExpiryDate;
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@UserId", 0);
+            parameters.Add("@UserName", model?.UserName);
+            parameters.Add("@Password", EncryptShaAlg.Encrypt(model?.UserPassword));
+            parameters.Add("@UserPolicy", model?.UserPolicy);
+            parameters.Add("@Language", model?.LanguageID);
+            parameters.Add("@Vendor", model?.Vendor);
+            parameters.Add("@ContactNo", model?.ContactNo);
+            parameters.Add("@TimeZone", model?.TimeZoneID);
+            parameters.Add("@DisplayName", model?.DisplayName);
+            parameters.Add("@AccountLocked", model?.AccountLocked);
+            parameters.Add("@RoleID", model?.RoleID);
+            parameters.Add("@PasswordChange", model?.PasswordChange);
+            parameters.Add("@Active", model?.Active);
+            parameters.Add("@Tenant", model?.Tenant);
+            parameters.Add("@TempDeactive", model?.TempDeactive);
+            parameters.Add("@EmailID", model?.emailID);
+            parameters.Add("@SystemUser", model?.SystemUser);
+            parameters.Add("@ProfileUser", model?.ProfileUser);
+            parameters.Add("@PlatformUser", model?.PlatformUser);
+            parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
+            parameters.Add("@UpdatedBy", model?.CreatedBy);
+            parameters.Add("@ProfileID", model?.ProfileID);
+            parameters.Add("@EffectiveDate", model?.EffectiveDate);
+            parameters.Add("@LastActiveDate",date?.ToString("yyyy-MM-dd"));
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+
+            parameters.Add("@Mode", "EDIT");
+            using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                                                                        parameters,
+                                                                        transaction: Transaction,
+                                                                        commandType: CommandType.StoredProcedure))
+            {
+                // Process the first result set (roles)
+                var UserAccount = result.Read<UserAccountModel?>().ToList();
+                // Ensure all result sets are consumed to retrieve the output parameters
+                while (!result.IsConsumed)
+                {
+                    result.Read(); // Process remaining datasets
+                }
+                var UserGuid = parameters.Get<string?>("@UserGuid");
+                var vPassword = model?.UserPassword + UserGuid;
+
+
+                DynamicParameters parameterPassword = new DynamicParameters();
+
+                parameterPassword.Add("@UserId", model?.UserId);
+                parameterPassword.Add("@UserName", model?.UserName);
+                parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
+                parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
+                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                using var vPasswordUpdate = await Connection.QueryMultipleAsync(
+                    "sp_UserAccountCreation",
+                    parameterPassword,
+                    transaction: Transaction,
+                    commandType: CommandType.StoredProcedure);
+
+                model.UserPassword = EncryptShaAlg.Encrypt(vPassword);
+                model.Guid = UserGuid;
+                // Access the output parameters after consuming all datasets
+                int retVal = parameters.Get<int?>("@RetVal") ?? -4;
+                string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+                List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
+                if (retVal >= 1)
+                {
+                    if (model?.Tenant != 0)
+                    {
+                        // 🌟 Fetch Org Details and Change Connection
+                        OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
+                        if (OrgDetails != null && OrgDetails.Any())
+                        {
+                            var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
+                            var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
+                            var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
+                            var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
+
+                            foreach (var org in OrgDetails)
+                            {
+
+                                if (org != null)
+                                {
+                                    UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
+                                    var ClientResult = await UpdateClientUserAccountAsync(model?.UserName, model);
+                                }
+                            }
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
+                            _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
+                        }
+                    }
                 }
                 // Return the roles list along with output parameters
                 return (UserAccount, retVal, msg);
             }
-
         }
         //To Edit the Data in Client DB
         public async Task<(List<UserAccountModel?> updateClientuseraccount, int? RetValClient, string? MsgClient)> UpdateClientUserAccountAsync(string? username, UserAccountModel? model)
@@ -586,9 +750,9 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@Mode", "EDIT");
             using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
-                                                                        parameters,
-                                                                        transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure))
+                                                                     parameters,
+                                                                     transaction: Transaction,
+                                                                     commandType: CommandType.StoredProcedure))
             {
                 // Process the first result set (roles)
                 var UserAccount = result.Read<UserAccountModel?>().ToList();
@@ -636,11 +800,9 @@ namespace DataAccessLayer.Implementation
                 // Return the roles list along with output parameters
                 return (useraccount, retVal, msg);
             }
-
-
         }
 
-        public async Task<(List<DeleteRoleName?> deleteroles, int? RetVal, string? Msg)> DeleteRoleinUserAccount(DeleteRoleName model)
+        public async Task<(List<DeleteRoleName?> deleteroles, int? RetVal, string? Msg)> DeleteRoleInUserAccount(DeleteRoleName model)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UpdatedBy", model.CreatedBy);
@@ -686,12 +848,21 @@ namespace DataAccessLayer.Implementation
 
         public async Task<(List<RoleName?> Roles, int? RetVal, string? Msg)> AddRoleName(RoleName model)
         {
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                if (Connection.Database != "MasterData") // To Change the DB Name into Master DB
+                {
+                    string? masterConnection = _configuration.GetConnectionString("connection");
+                    Connection = new SqlConnection(masterConnection);
+                }
+            }
             DynamicParameters parameters = new DynamicParameters();
             DateOnly? date = (DateOnly?)model.RoleNameEffectiveDate;
-            parameters.Add("@UserID", model.CreatedBy);
+            
+            parameters.Add("@GUID", model.UserGUID);
 
             parameters.Add("@EffectiveDate", date?.ToString("yyyy-MM-dd"));
-            parameters.Add("@RoleID", model.RoleID);
+            parameters.Add("@RoleGUID", model.RoleGUID);
             parameters.Add("@Mode", "ADD_ROLE");
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
@@ -718,8 +889,9 @@ namespace DataAccessLayer.Implementation
 
                     // Access the output parameters after consuming all datasets
                     int retVal = parameters.Get<int?>("@RetVal") ?? -4;
+                    model.RoleID = (long?)parameters.Get<int?>("@RetVal") ?? -4;
                     string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
-
+                    
                     // Return the roles list along with output parameters
                     return (roles, retVal, msg);
                 }
@@ -733,20 +905,28 @@ namespace DataAccessLayer.Implementation
             }
 
         }
-
-        public async Task<(List<ResetPassword?> PasswordReset, int? RetVal, string? Msg)> ResetPasswordinUserAccount(ResetPassword model)
+        public async Task<(List<ResetPassword?> PasswordReset, int? RetVal, string? Msg)> ResetPasswordInUserAccount(ResetPassword model)
         {
+            if (_httpContextAccessor.HttpContext != null)
+            {
+                if (Connection.Database != "MasterData") // To Change the DB Name into Master DB
+                {
+                    string? masterConnection = _configuration.GetConnectionString("connection");
+                    Connection = new SqlConnection(masterConnection);
+                }
+            }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserID", model.UserId);
             parameters.Add("@UserName", model.UserName);
             parameters.Add("@Password", EncryptShaAlg.Encrypt(model.Password));
             parameters.Add("@UpdatedBy", model.CreatedBy);
             parameters.Add("@Mode", "RESET_PWD_MASTER");
-            parameters.Add("@TimeZoneID", model.TimeZoneID);
+            parameters.Add("@TimeZone", model.TimeZoneID);
             parameters.Add("@LevelID", model.LevelID);
             parameters.Add("@LevelDetailID", model.LevelDetailID);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
             try
             {
@@ -770,9 +950,113 @@ namespace DataAccessLayer.Implementation
 
                     // Access the output parameters after consuming all datasets
                     int retVal = parameters.Get<int?>("@RetVal") ?? -4;
+                    model.UserId = (long?)parameters.Get<int?>("@RetVal") ?? -4;
                     string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+                    var UserGuid = parameters.Get<string?>("@UserGuid");
+                    var vPassword = model?.Password + UserGuid;
 
-                    // Return the Password Reset list along with output parameters
+
+                    DynamicParameters parameterPassword = new DynamicParameters();
+
+                    parameterPassword.Add("@UserId", model?.UserId);
+                    parameterPassword.Add("@UserName", model?.UserName);
+                    parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
+                    parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
+                    parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+
+                    using var vPasswordUpdate = await Connection.QueryMultipleAsync(
+                        "sp_UserAccountCreation",
+                        parameterPassword,
+                        transaction: Transaction,
+                        commandType: CommandType.StoredProcedure);
+
+                    model.Password = EncryptShaAlg.Encrypt(vPassword);
+                    model.Guid = UserGuid;
+                    List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
+                    if (retVal >= 1)
+                    {
+                        // 🌟 Fetch Org Details and Change Connection
+                            OrgDetails = await GetOrgDetailsByUserName(model.UserName);
+                            if (OrgDetails != null && OrgDetails.Any())
+                            {
+                                var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
+                                var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
+                                var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
+                                var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
+
+                                foreach (var org in OrgDetails)
+                                {
+
+                                    if (org != null)
+                                    {
+                                        UpdateConnectionString(org.DBName, org.InstanceName, org.ConUserName, org.ConPassword);
+                                        var ClientResult = await ResetPasswordInClientUserAccount(model);
+
+                                    }
+
+                                }
+                                _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
+                                _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
+                                _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
+                                _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
+
+                            }
+                        }
+                // Return the Password Reset list along with output parameters
+                    return (PasswordReset, retVal, msg);
+                }
+
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("There is already an open DataReader"))
+            {
+                // Log the exception or handle it
+                Console.WriteLine("An open DataReader was detected. Ensure proper disposal.");
+                throw;
+            }
+
+        }
+
+        //To Update Password in Reset Password User Account
+        public async Task<(List<ResetPassword?> PasswordReset, int? RetVal, string? Msg)> ResetPasswordInClientUserAccount(ResetPassword model)
+        {
+            DynamicParameters clientparameters = new DynamicParameters();
+            clientparameters.Add("@UserID", model.UserId);
+            clientparameters.Add("@UserName", model.UserName);
+            clientparameters.Add("@Password", model.Password);
+            clientparameters.Add("@UpdatedBy", model.CreatedBy);
+            clientparameters.Add("@Mode", "RESET_PWD_MASTER");
+            clientparameters.Add("@TimeZone", model.TimeZoneID);
+            clientparameters.Add("@LevelID", model.LevelID);
+            clientparameters.Add("@LevelDetailID", model.LevelDetailID);
+            clientparameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            clientparameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            clientparameters.Add("@UserGuid", model.Guid);
+
+            try
+            {
+                if (Connection.State == ConnectionState.Closed)
+                {
+                    Connection.Open();
+                }
+                using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                                                                         clientparameters,
+                                                                        transaction: Transaction,
+                                                                        commandType: CommandType.StoredProcedure))
+                {
+                    // Process the first result set (Passwordreset)
+                    var PasswordReset = result.Read<ResetPassword?>().ToList();
+
+                    // Ensure all result sets are consumed to retrieve the output parameters
+                    while (!result.IsConsumed)
+                    {
+                        result.Read(); // Process remaining datasets
+                    }
+
+                    // Access the output parameters after consuming all datasets
+                    int retVal = clientparameters.Get<int?>("@RetVal") ?? -4;
+                    model.UserId = (long?)clientparameters.Get<int?>("@RetVal") ?? -4;
+                    string msg = clientparameters.Get<string?>("@Msg") ?? "No Records Found";
+                    
                     return (PasswordReset, retVal, msg);
                 }
 

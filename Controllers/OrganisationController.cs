@@ -19,6 +19,8 @@ namespace WebApi.Controllers
         private readonly IUowOrganisation _repository;
         private readonly ILogger<OrganisationController> _logger;
         private readonly IAuditLogService _auditLogService;
+        string token = string.Empty;
+        string userGuid = string.Empty;
         public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration,IUowOrganisation repository, IAuditLogService auditLogService) : base(configuration)
         {
             _logger = logger;
@@ -31,18 +33,20 @@ namespace WebApi.Controllers
         {
             try
             {
-                if (HttpContext?.Session != null)
-                {
-                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
-                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
+                //if (HttpContext?.Session != null)
+                //{
+                //    HttpContext.Session.TryGetValue(Common.SessionVariables.Token, out var tokenBytes);
+                //    HttpContext.Session.TryGetValue(Common.SessionVariables.Guid, out var guidBytes);
 
-                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
-                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+                //    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
+                //    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
 
-                    await _auditLogService.LogAction(userGuid, "GetDDlModules", token);
-                }
+                //    await _auditLogService.LogAction(userGuid, "GetDDlModules", token);
+                //}
 
                 var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
+                await _auditLogService.LogAction(userGuid, "InsertOrganisation", token);
+
                 var msg = "Organisation Inserted Successfully";
 
                 if (result == "1")
@@ -66,19 +70,17 @@ namespace WebApi.Controllers
         {
             try
             {
-                if (HttpContext?.Session != null)
-                {
-                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
-                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
 
-                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
-                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
+                string token = string.Empty;
+                string userGuid = string.Empty;
 
-                    await _auditLogService.LogAction(userGuid, "GetAllOrganisaion", token);
-                }
-
+                // Retrieve session values if session exists
+         
                 var lsOrganisation = await _repository.OrganisationDALRepo.GetAllOrganisation();
-                    if (lsOrganisation != null)
+
+                await _auditLogService.LogAction(userGuid, "GetAllOrganisaion", token);
+
+                if (lsOrganisation != null)
                     {
                         return Ok(lsOrganisation);
                     }
@@ -86,6 +88,7 @@ namespace WebApi.Controllers
                     {
                         return BadRequest();
                     }
+
             }
             catch (Exception ex)
             {
@@ -100,7 +103,10 @@ namespace WebApi.Controllers
             try
             {
                 
+
                 var objOrganisationModel = await _repository.OrganisationDALRepo.GetOrganisationById(Guid);
+                // Log the action before returning response
+                await _auditLogService.LogAction(userGuid, "GetAllOrganisation", token);
                 if (objOrganisationModel != null)
                 {
                     return Ok(objOrganisationModel);
@@ -131,6 +137,7 @@ namespace WebApi.Controllers
             {
 
                 var result = await _repository.OrganisationDALRepo.UpdateOrganisation(Org);
+                await _auditLogService.LogAction(userGuid, "UpdateOrganisation", token);
                 var msg = "User account updated successfully.";
                 if (result == "1")
                 {
@@ -161,6 +168,8 @@ namespace WebApi.Controllers
             try
             {
                 var objOrganisationModel = await _repository.OrganisationDALRepo.DeleteOrganisation(dltOrg);
+                await _auditLogService.LogAction(userGuid, "Deleterganisation", token);
+
                 if (objOrganisationModel != null)
                 {
                     return Ok(objOrganisationModel);

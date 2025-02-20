@@ -99,7 +99,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-
+builder.Services.AddScoped<GUID>();
 builder.Services.AddSingleton<AppGlobalVariableService>();
 //builder.Services.AddScoped<AppGlobalVariableService>();
 
