@@ -486,7 +486,7 @@ namespace DataAccessLayer.Implementation
         }
 
 
-        public async Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? model)
         {
             // To Check the DBName is in Default DB Name is Master DB
             var httpContext = _httpContextAccessor.HttpContext;
@@ -600,7 +600,7 @@ namespace DataAccessLayer.Implementation
                     }
                 }
                 // Return the roles list along with output parameters
-                return (UserAccount, retVal, msg);
+                return (UserAccount??new List<UserAccountModel?>(),OrgDetails ?? new List<OrgDetails?>(), retVal, msg);
             }
         }
 
