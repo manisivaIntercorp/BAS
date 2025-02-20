@@ -4,7 +4,9 @@ using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SqlServer.Management.Smo;
@@ -15,11 +17,13 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlTypes;
 using System.Diagnostics.Eventing.Reader;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Runtime.Serialization;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Xml.Linq;
+using WebApi.Resources;
 using WebApi.Services;
 using WebApi.Services.Implementation;
 using WebApi.Services.Interface;
@@ -37,12 +41,25 @@ namespace WebApi.Controllers
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JwtService _jwtService;
         //private readonly AppGlobalVariableService _appGlobalVariableService;
-        private readonly EncryptedDecrypt  _encryptedDecrypt;
+        private readonly EncryptedDecrypt _encryptedDecrypt;
         private readonly IAuditLogService _auditLogService;
-     
+        private readonly IStringLocalizer _localizer;
+        string token = string.Empty;
+        string userGuid = string.Empty;
+        /// <summary>
+        /// private readonly ICommon _common;
+        /// </summary>
+        /// <param name="logger"></param>
+        /// <param name="encryptedDecrypt"></param>
+        /// <param name="jwtService"></param>
+        /// <param name="configuration"></param>
+        /// <param name="httpContextAccessor"></param>
+        /// <param name="auditLogService"></param>
+        /// <param name="localizer"></param>
 
         public LoginController(ILogger<LoginController> logger, EncryptedDecrypt encryptedDecrypt,
-        JwtService jwtService,IConfiguration configuration,IHttpContextAccessor httpContextAccessor, IAuditLogService auditLogService)
+        JwtService jwtService, IConfiguration configuration, IHttpContextAccessor httpContextAccessor,
+        IAuditLogService auditLogService, IStringLocalizer<SharedResources> localizer)
         : base(configuration)
         {
             _logger = logger;
@@ -51,7 +68,61 @@ namespace WebApi.Controllers
             //_appGlobalVariableService = appGlobalVariableService;
             _encryptedDecrypt = encryptedDecrypt;
             _auditLogService = auditLogService;
+            _localizer = localizer;
+            // _common = common;
         }
+
+        [HttpPost("change")]
+        public IActionResult ChangeLanguage([FromQuery] string culture)
+        {
+            try
+            {
+                var supportedCultures = new[] { "en", "fr", "es" };
+                if (!supportedCultures.Contains(culture))
+                {
+                    return BadRequest("Culture not supported.");
+                }
+
+                var cultureInfo = new CultureInfo(culture);
+                CultureInfo.CurrentCulture = cultureInfo;
+                CultureInfo.CurrentUICulture = cultureInfo;
+
+                Response.Cookies.Append(
+                    CookieRequestCultureProvider.DefaultCookieName,
+                    CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
+                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
+                );
+
+                return Ok(new { message = $"Language changed to {culture}", currentCulture = CultureInfo.CurrentCulture.Name });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+
+        [HttpGet("Greeting")]
+        public IActionResult GetHello()
+        {
+            try
+            {
+                var requestCulture = HttpContext.Features.Get<IRequestCultureFeature>();
+                var currentCulture = requestCulture?.RequestCulture.Culture.Name ?? CultureInfo.CurrentCulture.Name;
+                var greeting = _localizer["Greeting"];
+                return Ok(new { greeting.Value, greeting.ResourceNotFound });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+
+        }
+
+
+
+
 
         [HttpPost("Get UserID")]
         public async Task<IActionResult> GetUserID(string username, string? Language)
@@ -60,7 +131,7 @@ namespace WebApi.Controllers
             {
                 var objLogModel = new LoginModel { UserName = username, LanguageCode = Language };
 
-                using (IUowLogin _repo = new UowLogin(_httpContextAccessor,_configuration,_encryptedDecrypt))
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
                 {
                     var lstuser = await _repo.LoginDALRepo.GetUserID(objLogModel);
 
@@ -81,7 +152,7 @@ namespace WebApi.Controllers
                         default:
                             return Unauthorized("Invalid User Name.");
                     }
-                   
+
                 }
             }
             catch (Exception ex)
@@ -96,13 +167,13 @@ namespace WebApi.Controllers
         public async Task<IActionResult> UserLogin(string username, string password)
         {
 
-          
+
             try
             {
                 string strGuid = string.Empty;
-                if(HttpContext?.Session?.GetString("Guid") != null)
+                if (HttpContext?.Session?.GetString("Guid") != null)
                 {
-                    strGuid = Convert.ToString(HttpContext?.Session?.GetString("Guid"));
+                    strGuid = Convert.ToString(HttpContext?.Session?.GetString("Guid") ?? "");
                 }
                 var objLogModel = new LoginModel { UserName = username, Password = EncryptShaAlg.Encrypt(password + strGuid) };
 
@@ -123,18 +194,24 @@ namespace WebApi.Controllers
 
                         case 1:
                             var loginDetail = lstLoginUser.First()?.lstLoginDetails?.FirstOrDefault();
-                            var vGuid ="";
+                            var vGuid = "";
                             if (loginDetail != null)
                             {
-                                HttpContext.Session.SetString("UserName", objLogModel.UserName);
-                                HttpContext.Session.SetString("Password", EncryptShaAlg.Encrypt(objLogModel.Password + strGuid));
+
+
+                                HttpContext?.Session?.SetString(DataAccessLayer.Model.Common.SessionVariables.UserName, objLogModel.UserName);
+                                HttpContext?.Session?.SetString(
+                                    DataAccessLayer.Model.Common.SessionVariables.Password,
+                                    EncryptShaAlg.Encrypt((objLogModel?.Password ?? "") + strGuid) ?? "");
+                                //HttpContext?.Session?.SetString(DataAccessLayer.Model.Common.SessionVariables.Password, EncryptShaAlg.Encrypt(objLogModel?.Password + strGuid));
                                 GetUserData(lstLoginUser, "GET");
                                 vGuid = loginDetail?.Guid;
                             }
-                            var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "",Convert.ToString(vGuid), objLogModel?.Password ?? "");
-                           var result = LogLoginDetails("LOGOUT", vGuid, token);
-                            HttpContext.Session.SetString("token", token);
-                            await _auditLogService.LogAction(objLogModel.Guid, "LOGIN", token);
+                            var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "", Convert.ToString(vGuid) ?? "", objLogModel?.Password ?? "");
+                            var result = LogLoginDetails("LOGOUT", vGuid?.ToString() ?? "", token);
+
+                            HttpContext?.Session?.SetString(Common.SessionVariables.Token, token);
+                            await _auditLogService.LogAction(objLogModel?.Guid ?? "", "LOGIN", token);
 
                             return Ok(token);
 
@@ -181,48 +258,46 @@ namespace WebApi.Controllers
                         string strUserImgPath = lstUserDetails[0]?.ImagePath?.Trim() ?? string.Empty;
                         string strGuid = lstUserDetails[0]?.Guid?.Trim() ?? string.Empty;
 
-
-
-                        HttpContext.Session.SetString("strUserID", strUserID);
-                        HttpContext.Session.SetString("strUserName", strUserName);
-                        HttpContext.Session.SetString("strUserDisplayName", strUserDisplayName);
-                        HttpContext.Session.SetString("strUserRoleID", strUserRoleID);
-                        HttpContext.Session.SetString("strUserRoleName", strUserRoleName);
-                        HttpContext.Session.SetString("strUserRoleType", strUserRoleType);
-                        HttpContext.Session.SetString("strDisplayPDPA", strDisplayPDPA);
-                        HttpContext.Session.SetString("strPayrollAccessible", strPayrollAccessible);
-                        HttpContext.Session.SetString("strUserAccessRightsCount", strUserAccessRightsCount);
-                        HttpContext.Session.SetString("strSetPassword", strSetPassword);
-                        HttpContext.Session.SetString("strPasswordExpiry", strPasswordExpiry);
-                        HttpContext.Session.SetString("strValidateOTP", strValidateOTP);
-                        HttpContext.Session.SetString("strIsProfileUser", strIsProfileUser);
-                        HttpContext.Session.SetString("strIsSystemUser", strIsSystemUser);
-                        HttpContext.Session.SetString("strUserImgPath", strUserImgPath);
-                        HttpContext.Session.SetString("Guid", strGuid);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserID, strUserID);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserName, strUserName);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserDisplayName, strUserDisplayName);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserRoleID, strUserRoleID);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserRoleName, strUserRoleName);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserRoleType, strUserRoleType);
+                        HttpContext.Session.SetString(Common.SessionVariables.DisplayPDPA, strDisplayPDPA);
+                        HttpContext.Session.SetString(Common.SessionVariables.PayrollAccessible, strPayrollAccessible);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserAccessRightsCount, strUserAccessRightsCount);
+                        HttpContext.Session.SetString(Common.SessionVariables.SetPassword, strSetPassword);
+                        HttpContext.Session.SetString(Common.SessionVariables.PasswordExpiry, strPasswordExpiry);
+                        HttpContext.Session.SetString(Common.SessionVariables.ValidateOTP, strValidateOTP);
+                        HttpContext.Session.SetString(Common.SessionVariables.IsProfileUser, strIsProfileUser);
+                        HttpContext.Session.SetString(Common.SessionVariables.IsSystemUser, strIsSystemUser);
+                        HttpContext.Session.SetString(Common.SessionVariables.UserImgPath, strUserImgPath);
+                        HttpContext.Session.SetString(Common.SessionVariables.Guid, strGuid);
                     }
 
                     if (string.IsNullOrWhiteSpace(strDBName))
                     {
-                        HttpContext.Session.SetString("DBName", strDBName);
-                        HttpContext.Session.SetString("DBChange", "N");
-                        HttpContext.Session.SetString("GlobalUser", "Y");
-                        HttpContext.Session.SetString("InstanceChange", "N");
-                        HttpContext.Session.SetString("InstanceName", string.Empty);
-                        HttpContext.Session.SetString("DataBaseUserName", string.Empty);
-                        HttpContext.Session.SetString("DataBasePassword", string.Empty);
+                        HttpContext.Session.SetString(Common.SessionVariables.DBName, strDBName);
+                        HttpContext.Session.SetString(Common.SessionVariables.DBChange, "N");
+                        HttpContext.Session.SetString(Common.SessionVariables.GlobalUser, "Y");
+                        HttpContext.Session.SetString(Common.SessionVariables.InstanceChange, "N");
+                        HttpContext.Session.SetString(Common.SessionVariables.InstanceName, string.Empty);
+                        HttpContext.Session.SetString(Common.SessionVariables.DataBaseUserName, string.Empty);
+                        HttpContext.Session.SetString(Common.SessionVariables.DataBasePassword, string.Empty);
 
 
                     }
                     else
                     {
-                        HttpContext.Session.SetString("DBName", strDBName);
-                        HttpContext.Session.SetString("DBChange", "Y");
-                        HttpContext.Session.SetString("GlobalUser", "N");
+                        HttpContext.Session.SetString(Common.SessionVariables.DBName, strDBName);
+                        HttpContext.Session.SetString(Common.SessionVariables.DBChange, "Y");
+                        HttpContext.Session.SetString(Common.SessionVariables.GlobalUser, "N");
                         if (lstUserDetails != null && lstUserDetails.Count > 0)
                         {
-                            HttpContext.Session.SetString("TimeOffset", Convert.ToString(lstUserDetails[0]?.TimeOffset?.Trim() ?? string.Empty));
-                            HttpContext.Session.SetString("TimeZoneID", Convert.ToString(lstUserDetails[0]?.TimeZoneID?.Trim() ?? string.Empty));
-                            HttpContext.Session.SetString("IsAppuserTimeZone", Convert.ToString(lstUserDetails[0]?.IsAppuserTimeZone?.Trim() ?? string.Empty));
+                            HttpContext.Session.SetString(Common.SessionVariables.TimeOffset, Convert.ToString(lstUserDetails[0]?.TimeOffset?.Trim() ?? string.Empty));
+                            HttpContext.Session.SetString(Common.SessionVariables.TimeZoneID, Convert.ToString(lstUserDetails[0]?.TimeZoneID?.Trim() ?? string.Empty));
+                            HttpContext.Session.SetString(Common.SessionVariables.IsAppuserTimeZone, Convert.ToString(lstUserDetails[0]?.IsAppuserTimeZone?.Trim() ?? string.Empty));
                         }
 
 
@@ -232,19 +307,19 @@ namespace WebApi.Controllers
                     {
                         if (!String.IsNullOrWhiteSpace(Convert.ToString(lstUserDetails[0]?.IsProfileUser?.Trim() ?? string.Empty)))
                         {
-                             HttpContext.Session.SetString("IsProfileUser", Convert.ToString(lstUserDetails[0]?.IsProfileUser?.Trim() ?? string.Empty));
+                            HttpContext.Session.SetString(Common.SessionVariables.IsProfileUser, Convert.ToString(lstUserDetails[0]?.IsProfileUser?.Trim() ?? string.Empty));
                         }
                         else if (!String.IsNullOrWhiteSpace(Convert.ToString(lstUserDetails[0]?.IsSystemUser?.Trim() ?? string.Empty)))
                         {
 
-                            HttpContext.Session.SetString("IsSystemUser", Convert.ToString(lstUserDetails[0]?.IsSystemUser?.Trim() ?? string.Empty));
+                            HttpContext.Session.SetString(Common.SessionVariables.IsSystemUser, Convert.ToString(lstUserDetails[0]?.IsSystemUser?.Trim() ?? string.Empty));
                         }
                     }
                     else if (strMode == "" && lstUserDetails != null)
                     {
                         if (!String.IsNullOrWhiteSpace(Convert.ToString(lstUserDetails[0]?.LanguageCode?.Trim() ?? string.Empty)))
                         {
-                             HttpContext.Session.SetString("LanguageCode", Convert.ToString(lstUserDetails[0]?.LanguageCode?.Trim() ?? string.Empty));
+                            HttpContext.Session.SetString(Common.SessionVariables.LanguageCode, Convert.ToString(lstUserDetails[0]?.LanguageCode?.Trim() ?? string.Empty));
                         }
                     }
                 }
@@ -257,25 +332,17 @@ namespace WebApi.Controllers
             var objLogModel = new LoginModel { UserName = username };
             try
             {
-                if (HttpContext?.Session != null)
-                {
-                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
-                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
-
-                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
-                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
-
-                    await _auditLogService.LogAction(userGuid, "GetOrganisationWithDBDetails", token);
-                }
+               
 
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
                 {
                     var lstOrgDetails = await _repo.LoginDALRepo.GetOrganisationWithDBDetails(objLogModel);
+                    await _auditLogService.LogAction(userGuid, "GetOrganisationWithDBDetails", token);
                     if (lstOrgDetails != null)
                     {
                         // Serialize the list to a JSON string
                         var orgDetailsJson = System.Text.Json.JsonSerializer.Serialize(lstOrgDetails);
-                        HttpContext.Session.SetString("OrgDetails", orgDetailsJson);
+                        HttpContext?.Session.SetString(Common.SessionVariables.OrgDetails, orgDetailsJson);
                         return Ok(lstOrgDetails);
                     }
                     else
@@ -294,17 +361,17 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("SelectOrganisation")]
-        public async Task<IActionResult> SelectedOrganisation(int orgID, string? orgCode)
+        public async Task<IActionResult> SelectedOrganisation(string? Guid)
         {
-            if (orgID <= 0)
+            if (String.IsNullOrEmpty(Guid))
                 return BadRequest("Invalid Organisation ID.");
             try
             {
 
                 if (HttpContext?.Session != null)
                 {
-                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
-                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
+                    HttpContext.Session.TryGetValue(Common.SessionVariables.Token, out var tokenBytes);
+                    HttpContext.Session.TryGetValue(Common.SessionVariables.Guid, out var guidBytes);
 
                     string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
                     string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
@@ -312,35 +379,38 @@ namespace WebApi.Controllers
                     await _auditLogService.LogAction(userGuid, "SelectedOrganisation", token);
                 }
 
-                var dbDetailsJson = HttpContext.Session.GetString("OrgDetails");
+                var dbDetailsJson = HttpContext?.Session.GetString(Common.SessionVariables.OrgDetails);
                 if (string.IsNullOrWhiteSpace(dbDetailsJson))
                     return NotFound("Organisation details not found.");
 
                 var dbDetails = JsonConvert.DeserializeObject<DataTable>(dbDetailsJson);
                 var dbRow = dbDetails?.AsEnumerable()
-                    .FirstOrDefault(row => row.Field<long>("ID") == orgID);
+                    .FirstOrDefault(row => row.Field<string>("Guid") == Guid);
 
                 if (dbRow == null)
                 {
-                    return NotFound($"No organisation found with ID: {orgID}.");
+                    return NotFound($"No organisation found with ID: {Guid}.");
                 }
                 else
                 {
-                    HttpContext.Session.SetString("DBChange","Y");
-                    HttpContext.Session.SetString("InstanceChange", "Y");
-                    HttpContext.Session.SetString("DBName", dbRow.ItemArray[4].ToString());
-                    HttpContext.Session.SetString("InstanceName", dbRow.ItemArray[6].ToString());
-                    HttpContext.Session.SetString("DataBaseUserName", dbRow.ItemArray[7].ToString());
-                    HttpContext.Session.SetString("DataBasePassword", dbRow.ItemArray[8].ToString());
+                    HttpContext?.Session.SetString(Common.SessionVariables.DBChange, "Y");
+                    HttpContext?.Session.SetString(Common.SessionVariables.InstanceChange, "Y");
+                    if (dbRow != null)
+                    {
+                        HttpContext?.Session.SetString(Common.SessionVariables.DBName, dbRow?.Field<string>(TableVariables.Organisation.DBName) ?? "");
+                        HttpContext?.Session.SetString(Common.SessionVariables.InstanceName, dbRow?.Field<string>(TableVariables.Organisation.InstanceName) ?? "");
+                        HttpContext?.Session.SetString(Common.SessionVariables.DataBaseUserName, dbRow?.Field<string>(TableVariables.Organisation.conUserName) ?? "");
+                        HttpContext?.Session.SetString(Common.SessionVariables.DataBasePassword, dbRow?.Field<string>(TableVariables.Organisation.conPassword) ?? "");
+                    }
                 }
 
-                
+
 
                 var loginModel = new LoginModel
                 {
-                    UserName = HttpContext.Session.GetString("strUserName"),
-                    Password = HttpContext.Session.GetString("Password"),
-                    GlobalUser = HttpContext.Session.GetString("GlobalUser")
+                    UserName = HttpContext?.Session.GetString(Common.SessionVariables.UserName),
+                    Password = HttpContext?.Session.GetString(Common.SessionVariables.Password),
+                    GlobalUser = HttpContext?.Session.GetString(Common.SessionVariables.GlobalUser)
                 };
                 using var repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt);
                 var users = await repo.LoginDALRepo.ClientUserLogin(loginModel);
@@ -354,19 +424,21 @@ namespace WebApi.Controllers
                         GetUserData(users, "GET");
                         vGuid = loginDetail?.Guid;
                     }
-                    var token = _jwtService.GenerateToken(loginModel?.UserName ?? "", Convert.ToString(vGuid), loginModel?.Password ?? "");
+                    var token = _jwtService.GenerateToken(loginModel?.UserName ?? "", Convert.ToString(vGuid) ?? "", loginModel?.Password ?? "");
 
                     return Ok(token);
                 }
 
                 return Unauthorized("Invalid login.");
             }
-            catch (ObjectDisposedException)
+            catch (ObjectDisposedException ex)
             {
+                _logger.LogError($"{ex.Message} {ex.StackTrace}");
                 return StatusCode(500, "A data reader was accessed after disposal.");
             }
             catch (Exception ex)
             {
+                _logger.LogError($"{ex.Message} {ex.StackTrace}");
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
@@ -377,7 +449,7 @@ namespace WebApi.Controllers
         {
             try
             {
-                
+
                 if (string.IsNullOrEmpty(token))
                 {
                     return BadRequest("Token is required for logout.");
@@ -387,11 +459,11 @@ namespace WebApi.Controllers
                 // HttpContext.Session.Remove();
                 if (HttpContext?.Session != null)
                 {
-                    var vGuid = HttpContext.Session.GetString("Guid");
-                    var vtoken = HttpContext.Session.GetString("token");
-                    var result = LogLoginDetails("LOGIN", vGuid, vtoken);
+                    var vGuid = HttpContext.Session.GetString(Common.SessionVariables.Guid);
+                    var vtoken = HttpContext.Session.GetString(Common.SessionVariables.Token);
+                    var result = LogLoginDetails("LOGIN", vGuid?.ToString() ?? "", vtoken?.ToString() ?? "");
                 }
-                    HttpContext.Session.Clear();
+                HttpContext?.Session.Clear();
                 return Ok("Logout successful. Token revoked.");
             }
             catch (Exception ex)
@@ -406,22 +478,13 @@ namespace WebApi.Controllers
         {
             try
             {
-                if (HttpContext?.Session != null)
-                {
-                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
-                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
-
-                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
-                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
-
-                    await _auditLogService.LogAction(userGuid, "GetDDlLanguage", token);
-                }
-               
                 // var objDDlModel = new GetDropDownDataModel { Mode = Mode, RefID1 = RefID1, RefID2 = RefID2, RefID3 = RefID3, RefID4 = RefID4 };
                 string Mode = "LANGUAGE";
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
                 {
-                    var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode,RefID1,RefID2,RefID3);
+                    var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode, RefID1 ?? "", RefID2 ?? "", RefID3 ?? "");
+                    await _auditLogService.LogAction(userGuid, "GetDDlLanguage", token);
+
                     if (lstuser != null)
                     {
                         return Ok(lstuser);
@@ -434,30 +497,21 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError($"{ex.Message} {ex.StackTrace}");
                 return BadRequest("Bad Request");
             }
         }
 
         [HttpPost("DropDownModules")]
-        public async Task<IActionResult> GetDDlModules( string? RefID1, string? RefID2, string? RefID3)
+        public async Task<IActionResult> GetDDlModules(string? RefID1, string? RefID2, string? RefID3)
         {
             try
             {
-                if (HttpContext?.Session != null)
-                {
-                    HttpContext.Session.TryGetValue("token", out var tokenBytes);
-                    HttpContext.Session.TryGetValue("Guid", out var guidBytes);
-
-                    string token = tokenBytes != null ? System.Text.Encoding.UTF8.GetString(tokenBytes) : string.Empty;
-                    string userGuid = guidBytes != null ? System.Text.Encoding.UTF8.GetString(guidBytes) : string.Empty;
-
-                    await _auditLogService.LogAction(userGuid, "GetDDlModules", token);
-                }
-                // var objDDlModel = new GetDropDownDataModel { Mode = Mode, RefID1 = RefID1, RefID2 = RefID2, RefID3 = RefID3, RefID4 = RefID4 };
                 string Mode = "MODULEID";
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
                 {
-                    var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode, RefID1, RefID2, RefID3);
+                    var lstuser = await _repo.LoginDALRepo.GetDDlLanguage(Mode, RefID1 ?? "", RefID2 ?? "", RefID3 ?? "");
+                    await _auditLogService.LogAction(userGuid, "GetAllOrganisaion", token);
                     if (lstuser != null)
                     {
                         return Ok(lstuser);
@@ -470,33 +524,43 @@ namespace WebApi.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError($"{ex.Message} {ex.StackTrace}");
                 return BadRequest("Bad Request");
             }
         }
 
         private async Task LogLoginDetails(string Mode, string userGuid, string token)
         {
-            var loginDetails = new LoginDetails
+            try
             {
-                //UserId = userId,
-                Mode = Mode,
-                UserGuid = userGuid,
-                Token = token,
-                LoginAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddHours(1), // Example expiration time
-                //LogOut = false,
-                IPAddress = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString(),
-                DeviceInfo = _httpContextAccessor.HttpContext?.Request?.Headers["User-Agent"].ToString(),
-                CreatedBy = userGuid,
-                CreatedDateTime = DateTime.UtcNow,
-                UTCCreatedDateTime = DateTime.UtcNow
-            };
+                var loginDetails = new LoginDetails
+                {
+                    //UserId = userId,
+                    Mode = Mode,
+                    UserGuid = userGuid,
+                    Token = token,
+                    LoginAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddHours(1), // Example expiration time
+                                                             //LogOut = false,
+                    IPAddress = _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString(),
+                    DeviceInfo = _httpContextAccessor.HttpContext?.Request?.Headers["User-Agent"].ToString(),
+                    CreatedBy = userGuid,
+                    CreatedDateTime = DateTime.UtcNow,
+                    UTCCreatedDateTime = DateTime.UtcNow
+                };
 
-            using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
-            {
-               var reslt = await _repo.LoginDALRepo.InsertLoginDetails(loginDetails);
+                using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
+                {
+                    var reslt = await _repo.LoginDALRepo.InsertLoginDetails(loginDetails);
+                }
+           
             }
-        }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+}
 
     }
 }
