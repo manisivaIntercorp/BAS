@@ -10,6 +10,10 @@ using Microsoft.Data.SqlClient;
 using Microsoft.OpenApi.Models;
 using WebApi.Services.Implementation;
 using WebApi.Services.Interface;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Localization;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -79,7 +83,7 @@ builder.Services.AddSwaggerGen(c =>
 // JWT Authentication setup
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var jwtKey = jwtSettings["Key"];  // Retrieves the Key value
-var keyBytes = Encoding.ASCII.GetBytes(jwtKey);
+var keyBytes = Encoding.ASCII.GetBytes(jwtKey?.ToString()??"");
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -124,10 +128,38 @@ builder.Services.AddScoped<IUowAuditLog, UowAuditLog>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddHttpContextAccessor();
 //AuditLog End
+
+// Add Localization
+builder.Services.AddLocalization(options => options.ResourcesPath = "");
+
+// Configure Supported Cultures
+var supportedCultures = new[]
+{
+    new CultureInfo("en"),
+    new CultureInfo("fr"),
+    new CultureInfo("ta"),
+    new CultureInfo("zh-CN")
+};
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture("en");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+});
+
+builder.Services.AddControllers();
+// Localization END
+
 var app = builder.Build();
 
-
-
+// Enable Localization Middleware
+var localizationOptions = app.Services.GetService<IOptions<RequestLocalizationOptions>>()?.Value;
+if (localizationOptions != null)
+{
+    app.UseRequestLocalization(localizationOptions);
+}
+// Localization END
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -141,7 +173,7 @@ if (app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
-
+app.UseRequestLocalization();
 // Make sure session is available before invoking middleware that relies on it.
 app.UseSession();
 
