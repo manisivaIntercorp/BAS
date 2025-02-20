@@ -108,7 +108,7 @@ namespace DataAccessLayer.Implementation
         private string GetConnectionString(string OldConnectionstring)
         {
             string? connectionString = string.Empty;
-            var session = _httpContextAccessor.HttpContext.Session;
+            var session = _httpContextAccessor?.HttpContext?.Session;
 
             if (session != null && !string.IsNullOrEmpty(session.GetString("DBName")) &&
                 session.GetString("InstanceChange") != "Y")
@@ -122,9 +122,9 @@ namespace DataAccessLayer.Implementation
                      session.GetString("DataBasePassword") != null)
             {
                 connectionString = BuildConnectionString(
-                    _encryptedDecrypt.Decrypt(session.GetString("InstanceName")),
-                    _encryptedDecrypt.Decrypt(session.GetString("DataBaseUserName")),
-                    _encryptedDecrypt.Decrypt(session.GetString("DataBasePassword")),
+                    _encryptedDecrypt?.Decrypt(session.GetString("InstanceName")),
+                    _encryptedDecrypt?.Decrypt(session.GetString("DataBaseUserName")),
+                    _encryptedDecrypt?.Decrypt(session.GetString("DataBasePassword")),
                     session.GetString("DBName"));
             }
             else
@@ -151,8 +151,8 @@ namespace DataAccessLayer.Implementation
 
         private string BuildConnectionString(string? serverName, string? userID, string? password, string? dbName)
         {
-            var config = _httpContextAccessor.HttpContext.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
-            var connectionString = config.GetConnectionString("connection");
+            var config = _httpContextAccessor?.HttpContext?.RequestServices.GetService(typeof(IConfiguration)) as IConfiguration;
+            var connectionString = config?.GetConnectionString("connection");
             var builder = new SqlConnectionStringBuilder(connectionString)
             {
                 DataSource = serverName,
@@ -305,12 +305,12 @@ namespace DataAccessLayer.Implementation
 
                 if (result > 0)
                 {
-                    Transaction.Commit(); // Commit the transaction
+                    Transaction?.Commit(); // Commit the transaction
                     return true;
                 }
                 else
                 {
-                    Transaction.Rollback(); // Rollback on failure
+                    Transaction?.Rollback(); // Rollback on failure
                     Console.WriteLine($"Audit Log Error: {message}");
                     return false;
                 }
