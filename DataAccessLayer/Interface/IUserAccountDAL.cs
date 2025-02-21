@@ -10,7 +10,7 @@ namespace DataAccessLayer.Interface
 
         Task<List<GetRoleName?>> getAllUserRoleInDropdown();
 
-        Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, int? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? UM);
+        Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? UM);
 
         Task<(List<DeleteRoleName?> deleteroles, int? RetVal, string? Msg)> DeleteRoleInUserAccount(DeleteRoleName RM);
 
@@ -22,7 +22,7 @@ namespace DataAccessLayer.Interface
         Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountByGUId(string? GUId);
         Task<List<OrgDetails?>> GetOrgDetailsByUserGUId();
 
-        Task<(List<UserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? userAccount);
+        Task<(List<UserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? userAccount);
 
 
         Task<(List<UserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> EditUpdateUserAccountAsync(UserAccountModel? userAccount);
