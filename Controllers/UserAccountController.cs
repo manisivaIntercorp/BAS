@@ -6,8 +6,6 @@ using System.Data;
 using WebApi.Services;
 using DataAccessLayer.Services;
 using System;
-using static WebApi.Services.Implementation.Common;
-
 
 namespace WebApi.Controllers
 {
@@ -78,7 +76,7 @@ namespace WebApi.Controllers
                     if (!string.IsNullOrEmpty(response))
                     {
                         var lstUserPolicyModel = await _repo.UserAccountDALRepo.getAllUserPolicyInDropdown();
-                        if (lstUserPolicyModel != null)
+                        if (lstUserPolicyModel != null && lstUserPolicyModel.Count>0)
                         {
                             return Ok(lstUserPolicyModel);
                         }
@@ -206,13 +204,13 @@ namespace WebApi.Controllers
                     if (!string.IsNullOrEmpty(response))
                     {
                         var objuseraccountModel = await _repo.UserAccountDALRepo.GetOrgDetailsByUserGUId();
-                        if (objuseraccountModel != null)
+                        if (objuseraccountModel != null && objuseraccountModel.Count > 0)
                         {
                             return Ok(objuseraccountModel);
                         }
                         else
                         {
-                            return BadRequest();
+                            return BadRequest("No Records Found");
                         }
                     }
                     else
@@ -538,12 +536,13 @@ namespace WebApi.Controllers
             {
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
-                    
+                    string userIdStr = _sessionService.GetSession("strUserID");
+                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                     string response = _sessionService.GetSession("Guid");
                     if (!string.IsNullOrEmpty(response))
                     {
                         var datatable = deleteUserAccount.ConvertToDataTable(deleteUserAccount.DeleteDataTable);
-                        var result = await _repo.UserAccountDALRepo.DeleteUserAccount(Convert.ToInt64(_sessionService.GetSession("strUserID")), deleteUserAccount);
+                        var result = await _repo.UserAccountDALRepo.DeleteUserAccount(Convert.ToInt64(userId), deleteUserAccount);
 
                         _repo.Commit();
                         if (result.deleteuseraccount == true || result.deleteuseraccount == false)
@@ -588,7 +587,7 @@ namespace WebApi.Controllers
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString("strUserID");
-                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt32(userIdStr) : 0;
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         string response = _sessionService.GetSession("Guid");
                         if(!string.IsNullOrEmpty(response))
                         {
@@ -663,7 +662,7 @@ namespace WebApi.Controllers
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         string? userIdStr = _sessionService.GetSession("strUserID");
-                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt32(userIdStr) : 0;
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         objModel.CreatedBy = userId;
                         string response = _sessionService.GetSession("Guid");
                         if (!string.IsNullOrEmpty(response))
@@ -736,7 +735,7 @@ namespace WebApi.Controllers
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
                         string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString("strUserID");
-                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt32(userIdStr) : 0;
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         string response = _sessionService.GetSession("Guid");
                         if (!string.IsNullOrEmpty(response))
                         {
@@ -754,7 +753,7 @@ namespace WebApi.Controllers
 
                                         await _emailService.SendMailMessage(EmailTemplateCode.RESET_PASSWORD,
                                             -1,
-                                            Convert.ToInt64(_sessionService.GetSession("strUserID")),
+                                            userId,
                                             objModel.Password);
                                         break;
 
@@ -772,7 +771,6 @@ namespace WebApi.Controllers
                         {
                             return BadRequest("Try to Login");
                         }
-
                     }
                 }
                 return Ok(responseMsg);
