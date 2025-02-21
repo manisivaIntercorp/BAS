@@ -110,7 +110,7 @@ namespace DataAccessLayer.Implementation
         }
 
         // Insert or Update User, Then Change DB Connection
-        public async Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, int? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? model)
         {
             // To Check the DBName is in Default DB Name is Master DB
             if (_httpContextAccessor.HttpContext != null)
@@ -164,7 +164,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@EffectiveDate", model?.EffectiveDate);
             parameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
             parameters.Add("@dtOrgRole", JsonConvert.SerializeObject(model?.UserAccountRoleTable), DbType.String);
-            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@Mode", "ADD");
@@ -208,8 +208,8 @@ namespace DataAccessLayer.Implementation
                 model.UserPassword = EncryptShaAlg.Encrypt(vPassword);
                 model.Guid = UserGuid;
 
-                int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
-                model.UserId = (long?)parameters.Get<int?>("@RetVal") ?? -4;
+                long RetVal = parameters.Get<long?>("@RetVal") ?? -4;
+                model.UserId = (long?)parameters.Get<long?>("@RetVal") ?? -4;
                 string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
                 List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
                 if (RetVal >= 1)
@@ -255,7 +255,7 @@ namespace DataAccessLayer.Implementation
             }
         }
         // To Insert into Client Database
-        public async Task<(List<UserAccountModel?> InsertedClientUsers, List<OrgDetails?> OrgClientDetails, int? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> InsertedClientUsers, List<OrgDetails?> OrgClientDetails, long? RetClientVal, string? ClientMsg)> InsertUpdateUserAccountClient(UserAccountModel? model)
         {
             DynamicParameters clientParameters = new DynamicParameters();
             clientParameters.Add("@UserId", model?.UserId);
@@ -284,7 +284,7 @@ namespace DataAccessLayer.Implementation
             clientParameters.Add("@EffectiveDate", model?.EffectiveDate);
             clientParameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
             clientParameters.Add("@dtOrgRole", JsonConvert.SerializeObject(model?.UserAccountRoleTable), DbType.String);
-            clientParameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            clientParameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             clientParameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             clientParameters.Add("@Mode", "ADD");
             using var resultClient = await Connection.QueryMultipleAsync(
@@ -298,7 +298,7 @@ namespace DataAccessLayer.Implementation
             {
                 resultClient.Read();
             }
-            int RetValClient = clientParameters.Get<int?>("@RetVal") ?? -4;
+            long RetValClient = clientParameters.Get<long?>("@RetVal") ?? -4;
             string MsgClient = clientParameters.Get<string?>("@Msg") ?? "No Records Found";
             List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
 
@@ -313,7 +313,7 @@ namespace DataAccessLayer.Implementation
             //parameterPassword.Add("@UserName", model?.UserName);
             //parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
             //parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
-            //parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            //parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
 
             //using var vPasswordUpdate = await Connection.QueryMultipleAsync(
             //    "sp_UserAccountCreation",
@@ -486,7 +486,7 @@ namespace DataAccessLayer.Implementation
         }
 
 
-        public async Task<(List<UserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, int? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? model)
+        public async Task<(List<UserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UserAccountModel? model)
         {
             // To Check the DBName is in Default DB Name is Master DB
             var httpContext = _httpContextAccessor.HttpContext;
@@ -527,7 +527,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@UpdatedBy", model?.CreatedBy);
             parameters.Add("@ProfileID", model?.ProfileID);
             parameters.Add("@EffectiveDate", model?.EffectiveDate);
-            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
@@ -559,7 +559,7 @@ namespace DataAccessLayer.Implementation
                 parameterPassword.Add("@UserName", model?.UserName);
                 parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
                 parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
-                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
 
                 using var vPasswordUpdate = await Connection.QueryMultipleAsync(
                     "sp_UserAccountCreation",
@@ -671,7 +671,7 @@ namespace DataAccessLayer.Implementation
                 parameterPassword.Add("@UserName", model?.UserName);
                 parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
                 parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
-                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
 
                 using var vPasswordUpdate = await Connection.QueryMultipleAsync(
                     "sp_UserAccountCreation",
@@ -962,7 +962,7 @@ namespace DataAccessLayer.Implementation
                     parameterPassword.Add("@UserName", model?.UserName);
                     parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
                     parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
-                    parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+                    parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
 
                     using var vPasswordUpdate = await Connection.QueryMultipleAsync(
                         "sp_UserAccountCreation",
