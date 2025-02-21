@@ -18,7 +18,7 @@ namespace WebApi.Services
             _logger = logger;
             _SessionService = sessionService;
         }
-        public async Task SendMailMessage(string? TemplateCode, int? RefID, int? UserID, string? Password, ForgotPasswordRequest? forgotPasswordRequest = null)
+        public async Task SendMailMessage(string? TemplateCode, int? RefID, long? UserID, string? Password, ForgotPasswordRequest? forgotPasswordRequest = null)
         {
             
             try
