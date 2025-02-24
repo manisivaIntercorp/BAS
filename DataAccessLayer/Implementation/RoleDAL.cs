@@ -8,51 +8,50 @@ namespace DataAccessLayer.Implementation
 {
     public class RoleDAL: RepositoryBase, IRoleDAL
     {
-        
         public RoleDAL(IDbTransaction _transaction) : base(_transaction)
         {
 
         }
-        public async Task<(bool DeleteRole, List<DeleteRoleInformation> deleteRoleInformation)> DeleteRole(int Id, int UserId)
+    public async Task<(bool? DeleteRole, List<DeleteRoleInformation?> deleteRoleInformation)> DeleteRole(RolesDelete rolesdelete,long UserId)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@RoleId", Id);
+            parameters.Add("@tblDelete", JsonConvert.SerializeObject(rolesdelete.DeleteRoleTable));
             parameters.Add("@UpdatedBy", UserId);
             parameters.Add("@Mode", "DELETE");
-            var Result = await Connection.QueryMultipleAsync("sp_RoleUserCreation",
+            var Result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            List<DeleteRoleInformation> DeleteRoleInfo = (await Result.ReadAsync<DeleteRoleInformation>()).ToList();
+            List<DeleteRoleInformation?> DeleteRoleInfo = (await Result.ReadAsync<DeleteRoleInformation?>()).ToList();
             while (!Result.IsConsumed)
             {
                 await Result.ReadAsync();
             }
-            bool res = DeleteRoleInfo.Any();
+            bool? res = DeleteRoleInfo.Any();
             return (res, DeleteRoleInfo);
         }
 
-        public async Task<List<RoleModel>> GetAllRole(int UserId)
+        public async Task<List<GetRoleModel>> GetAllRole(long UpdatedBy)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@RoleId", 0);
+            parameters.Add("@RoleGUID", string.Empty);
             parameters.Add("@Mode", "GET");
-            parameters.Add("@UpdatedBy", UserId);
-            var multi = await Connection.QueryMultipleAsync("sp_RoleUserCreation",
+            parameters.Add("@UpdatedBy", UpdatedBy);
+            var multi = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return multi.Read<RoleModel>().ToList();
+            return multi.Read<GetRoleModel>().ToList();
         }
 
-        public async Task<(RoleModel? rolemodel,List<Modules?> ModuleDatatable)> getModulesBasedonRole(long? RoleId, string? IsPayrollAccessible, long? updatedby)
+        public async Task<(RoleModel? rolemodel,List<Modules?> ModuleDatatable)> getModulesBasedOnRole(string? RoleGUID, string? IsPayrollAccessible, long? updatedBy)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@RoleId", RoleId);
+            parameters.Add("@RoleGUID", RoleGUID);
             parameters.Add("@IsPayrollAccessible", IsPayrollAccessible);
-            parameters.Add("@UpdatedBy", updatedby);
+            parameters.Add("@UpdatedBy", updatedBy);
             parameters.Add("@Mode", "GET_MODULE_INFORMATION");
-            var multi = await Connection.QueryMultipleAsync("sp_RoleUserCreation",
+            var multi = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                                                              parameters,
                                                              transaction: Transaction,
                                                              commandType: CommandType.StoredProcedure);
@@ -62,7 +61,7 @@ namespace DataAccessLayer.Implementation
             return (Roles, Moduleinfo);
         }
 
-        public async Task<(List<RoleModel?> roleModels, int? RetVal, string? Msg)> InsertUpdateRole(RoleModel? model)
+        public async Task<(List<RoleModel?> roleModels, long? RetVal, string? Msg)> InsertUpdateRole(RoleModel? model)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@RoleId", model?.RoleId);
@@ -78,9 +77,11 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model?.ModuleTable), DbType.String);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
             parameters.Add("@Mode", "ADD");
-            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
-            var result = await Connection.QueryMultipleAsync("sp_RoleUserCreation",
+
+            parameters.Add("@RoleGUID", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                                                               parameters,
                                                               transaction: Transaction,
                                                               commandType: CommandType.StoredProcedure);
@@ -94,17 +95,63 @@ namespace DataAccessLayer.Implementation
             }
 
             // Access the output parameters after consuming all datasets
-            int retVal = parameters.Get<int?>("@RetVal") ?? -4;
+            long retVal = parameters.Get<long?>("@RetVal") ?? -4;
             string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+            string RoleGuid = parameters.Get<string?>("@RoleGUID") ??string.Empty;
+
 
             // Return the roles list along with output parameters
             return (roles, retVal, msg);
         }
 
-        public async Task<(List<RoleModel?> roleModels, int? RetVal, string? Msg)> UpdateRoleAsync(int id,RoleModel model)
+
+        public async Task<(List<GetRoleModel?> roleModels, long? RetVal, string? Msg)> UpdateRole(GetRoleModel? model)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@RoleId", model.RoleId);
+            parameters.Add("@RoleId", model?.RoleId);
+            parameters.Add("@RoleDesc", model?.RoleName);
+            parameters.Add("@IsAdmin", model?.IsAdmin);
+            parameters.Add("@IsEntityAdmin", model?.IsEntityAdmin);
+            parameters.Add("@DisplayPDPAData", model?.DisplayPDPAData);
+            parameters.Add("@Active", model?.Active);
+            parameters.Add("@AccessToAllClient", model?.AccessToAllClient);
+            parameters.Add("@IsPayrollAccessible", model?.IsPayrollAccessible);
+            parameters.Add("@LevelDetailID", model?.LevelDetailsID);
+            parameters.Add("@LevelID", model?.LevelID);
+            parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model?.ModuleTable), DbType.String);
+            parameters.Add("@UpdatedBy", model?.CreatedBy);
+            parameters.Add("@Mode", "ADD");
+            parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+
+            parameters.Add("@RoleGUID", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
+                                                              parameters,
+                                                              transaction: Transaction,
+                                                              commandType: CommandType.StoredProcedure);
+
+            var roles = result.Read<GetRoleModel?>().ToList();
+
+            // Ensure all result sets are consumed to retrieve the output parameters
+            while (!result.IsConsumed)
+            {
+                result.Read(); // Process remaining datasets
+            }
+
+            // Access the output parameters after consuming all datasets
+            long retVal = parameters.Get<long?>("@RetVal") ?? -4;
+            string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+            string RoleGuid = parameters.Get<string?>("@RoleGUID") ?? string.Empty;
+
+
+            // Return the roles list along with output parameters
+            return (roles, retVal, msg);
+        }
+
+        public async Task<(List<GetRoleModel?> roleModels, long? RetVal, string? Msg)> EditUpdateRoleAsync(GetRoleModel model)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@RoleID", model.RoleId);
             parameters.Add("@RoleDesc", model.RoleName);
             parameters.Add("@IsAdmin", model.IsAdmin);
             parameters.Add("@IsEntityAdmin", model.IsEntityAdmin);
@@ -117,14 +164,14 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model.ModuleTable), DbType.String);
             parameters.Add("@UpdatedBy", model.CreatedBy);
             parameters.Add("@Mode", "EDIT");
-            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
-            var result = await Connection.QueryMultipleAsync("sp_RoleUserCreation",
+            var result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                                                               parameters,
                                                               transaction: Transaction,
                                                               commandType: CommandType.StoredProcedure);
 
-            var roles = result.Read<RoleModel?>().ToList();
+            var roles = result.Read<GetRoleModel?>().ToList();
 
             // Ensure all result sets are consumed to retrieve the output parameters
             while (!result.IsConsumed)
@@ -133,7 +180,7 @@ namespace DataAccessLayer.Implementation
             }
 
             // Access the output parameters after consuming all datasets
-            int retVal = parameters.Get<int?>("@RetVal") ?? -4;
+            long retVal = parameters.Get<long?>("@RetVal") ?? -4;
             string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
 
             // Return the roles list along with output parameters
