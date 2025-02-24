@@ -5,6 +5,7 @@ using DataAccessLayer.Uow.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Data;
 using System.Diagnostics.Eventing.Reader;
 using WebApi.Services;
@@ -18,12 +19,15 @@ namespace WebApi.Controllers
         private readonly ILogger<RoleController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private SessionService _sessionService;
-
-        public RoleController(ILogger<RoleController> logger, IConfiguration configuration,IHttpContextAccessor httpContextAccessor, SessionService sessionService) : base(configuration)
+        private GUID _guid;
+        
+        public RoleController(ILogger<RoleController> logger, IConfiguration configuration,IHttpContextAccessor httpContextAccessor, SessionService sessionService, GUID guid) : base(configuration)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _sessionService = sessionService;
+            _guid = guid;
+            
             //var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
             //NLog.GlobalDiagnosticsContext.Set("LoggingDirectory", logPath);
         }
@@ -34,16 +38,24 @@ namespace WebApi.Controllers
             {
                 using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
-                    string userIdStr = _sessionService.GetSession("strUserID");
-                    int userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt32(userIdStr) : 0;
-                    var lstRoleModel = await _repo.RoleDALRepo.GetAllRole(userId);
-                    if (lstRoleModel != null)
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response))
                     {
-                        return Ok(lstRoleModel);
+                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                        var lstRoleModel = await _repo.RoleDALRepo.GetAllRole(userId);
+                        if (lstRoleModel != null && lstRoleModel.Count>0)
+                        {
+                            return Ok(lstRoleModel);
+                        }
+                        else
+                        {
+                            return BadRequest("No Records Found");
+                        }
                     }
                     else
                     {
-                        return BadRequest();
+                        return NotFound("Try to Login");
                     }
                 }
             }
@@ -55,29 +67,49 @@ namespace WebApi.Controllers
         }
        
         // This Method while Showing the Module Records Based UserID
-        [HttpGet("getModulesBasedonRole/{Roleid}/{IsPayrollAccessible}/{UserID}")]
-        public async Task<IActionResult> getModulesBasedonRole(long Roleid,string IsPayrollAccessible, long UserID )
+        [HttpGet("getModulesBasedOnRole/{RoleGUID}/{IsPayrollAccessible}")]
+        public async Task<IActionResult> getModulesBasedOnRole(string RoleGUID,string IsPayrollAccessible)
         {
             try
             {
                 using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
-                    var objRoleModel = await _repo.RoleDALRepo.getModulesBasedonRole(Roleid, IsPayrollAccessible, UserID);
-                    if (objRoleModel.ModuleDatatable == null || objRoleModel.ModuleDatatable != null)
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response))
                     {
-                        var response = new GetRoleUpdateRequest
+                        string? guidresp = await _guid.GetGUIDBasedOnUserRoleGuid(RoleGUID);
+                        if (guidresp == RoleGUID)
                         {
-                            RoleModel = objRoleModel.rolemodel,
-                            ModuleDatatable = objRoleModel.ModuleDatatable,
+                            var objRoleModel = await _repo.RoleDALRepo.getModulesBasedOnRole(RoleGUID, IsPayrollAccessible, userId);
+                            if (objRoleModel.ModuleDatatable == null || objRoleModel.ModuleDatatable != null)
+                            {
+                                var responseUpdate = new GetRoleUpdateRequest
+                                {
+                                    RoleModel = objRoleModel.rolemodel,
+                                    ModuleDatatable = objRoleModel.ModuleDatatable,
 
-                        };
-                        return Ok(response);
+                                };
+                                return Ok(responseUpdate);
+                            }
+                            else
+                            {
+                                return BadRequest("No Records Found");
+                            }
+                        }
+                        else
+                        {
+                            return BadRequest("Please Check Role Guid");
+                        }
                     }
                     else
                     {
-                        return BadRequest("No Records Found");
+                        return BadRequest("Try to Login");
                     }
+                    
                 }
+                
             }
             catch (Exception ex)
             {
@@ -101,33 +133,43 @@ namespace WebApi.Controllers
                 {
                     using (IUowRole _repo = new UowRole(_httpContextAccessor))
                     {
-                        DataTable dataTable = objModel.RoleModel.ConvertToDataTable(objModel.ModuleDatatable);
-                        var result = await _repo.RoleDALRepo.InsertUpdateRole(objModel.RoleModel);
-                        var msg = "Role Inserted Successfully";
-                        _repo.Commit();
-                        if (result.roleModels!=null)
+                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                        if (!string.IsNullOrEmpty(response))
                         {
-                            switch (result.RetVal)
+                            objModel.RoleModel.CreatedBy = userId;
+                            DataTable dataTable = objModel.RoleModel.ConvertToDataTable(objModel.ModuleDatatable);
+                            var result = await _repo.RoleDALRepo.InsertUpdateRole(objModel.RoleModel);
+                            var msg = "Role Inserted Successfully";
+                            _repo.Commit();
+                            if (result.roleModels != null)
                             {
-                                case >= 1://Success
-                                    responsemsg = msg;
-                                    break;
-                                case -1:
-                                    responsemsg = result.Msg??string.Empty;
-                                    break;
-                                case 0:
-                                    responsemsg = result.Msg??string.Empty;
-                                    break;
-                                default:
-                                    _logger.LogError(Environment.NewLine);
-                                    _logger.LogError("Bad Request occurred while accessing the InsertUpdateRole function in Role api controller");
-                                    return BadRequest();
+                                switch (result.RetVal)
+                                {
+                                    case >= 1://Success
+                                        responsemsg = msg;
+                                        break;
+                                    case -1:
+                                        responsemsg = result.Msg ?? string.Empty;
+                                        break;
+                                    case 0:
+                                        responsemsg = result.Msg ?? string.Empty;
+                                        break;
+                                    default:
+                                        _logger.LogError(Environment.NewLine);
+                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateRole function in Role api controller");
+                                        return BadRequest();
+                                }
+
                             }
-                            
+                            else {
+                                return BadRequest("Try to Login");
+                            }
                         }
                     }
+                    return Ok(responsemsg);
                 }
-                return Ok(responsemsg);
             }
             catch (Exception ex)
             {
@@ -137,10 +179,10 @@ namespace WebApi.Controllers
         }
 
         // Update User Based on UserID
-        [HttpPut("updateUserRole/{id}")]
-        public async Task<IActionResult> UpdateUserRole(int id, [FromBody] RoleModel roleModel)
+        [HttpPut("EditUpdateUserRole")]
+        public async Task<IActionResult> EditUpdateUserRole([FromBody] GetRoleModel roleModel)
         {
-            if (roleModel == null || id != roleModel.RoleId)
+            if (roleModel == null)
             {
                 return BadRequest("Invalid input data.");
             }
@@ -152,33 +194,48 @@ namespace WebApi.Controllers
                     string responsemsg = string.Empty;
                     using (IUowRole _repo = new UowRole(_httpContextAccessor))
                     {
-                        
-                        var result = await _repo.RoleDALRepo.UpdateRoleAsync(id, roleModel);
-                        var msg = "Role updated successfully.";
-                        _repo.Commit();
-                        if (result.roleModels != null)
+                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                        if (!string.IsNullOrEmpty(response))
                         {
-                            switch (result.RetVal)
+                            string guidResp = await _guid.GetGUIDBasedOnUserRoleGuid(roleModel.RoleGuid);
+                            if(roleModel.RoleGuid== guidResp)
                             {
-                                case >= 1:
-                                    responsemsg = msg;
-                                    break;
+                                var result = await _repo.RoleDALRepo.EditUpdateRoleAsync(roleModel);
+                                var msg = "Role updated successfully.";
+                                _repo.Commit();
+                                if (result.roleModels != null)
+                                {
+                                    switch (result.RetVal)
+                                    {
+                                        case >= 1:
+                                            responsemsg = msg;
+                                            break;
 
-                                case -1:
-                                    responsemsg=result.Msg??string.Empty;
-                                    break;
+                                        case -1:
+                                            responsemsg = result.Msg ?? string.Empty;
+                                            break;
 
-                                default:
-                                    _logger.LogError(Environment.NewLine);
-                                    _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
-                                    return BadRequest();
+                                        default:
+                                            _logger.LogError(Environment.NewLine);
+                                            _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
+                                            return BadRequest();
+
+                                    }
                                 }
-                            
+                            }
+                            else
+                            {
+                                return BadRequest("Please Check Role Guid");
+                            }
                         }
-                        
-                        
+                        else
+                        {
+                            return BadRequest("Try to Login");
+                        }
+                        return Ok(responsemsg);
                     }
-                    return Ok(responsemsg);
                 }
                 catch (Exception ex)
                 {
@@ -187,30 +244,120 @@ namespace WebApi.Controllers
                 }
             }
         }
-        [HttpDelete("deleteRole/{id}")]
-        public async Task<IActionResult> DeleteRole(int id)
+
+        [HttpPut("UpdateRole")]
+        public async Task<IActionResult> UpdateRole(RoleInsertUpdateRequest objModel)
+        {
+            try
+            {
+                string responsemsg = string.Empty;
+                if (objModel == null || objModel.RoleModel == null || objModel.ModuleDatatable == null)
+                {
+                    return BadRequest("Invalid input data.");
+                }
+
+                else
+                {
+                    using (IUowRole _repo = new UowRole(_httpContextAccessor))
+                    {
+                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                        if (!string.IsNullOrEmpty(response))
+                        {
+                            objModel.RoleModel.CreatedBy = userId;
+                            string guidResp = await _guid.GetGUIDBasedOnUserRoleGuid(objModel.RoleModel.RoleGuid);
+                            if (objModel.RoleModel.RoleGuid == guidResp)
+                            {
+                                DataTable dataTable = objModel.RoleModel.ConvertToDataTable(objModel.ModuleDatatable);
+                                var result = await _repo.RoleDALRepo.UpdateRole(objModel.RoleModel);
+                                var msg = "Role Updated Successfully";
+                                _repo.Commit();
+                                if (result.roleModels != null)
+                                {
+                                    switch (result.RetVal)
+                                    {
+                                        case >= 1://Success
+                                            responsemsg = msg;
+                                            break;
+                                        case -1:
+                                            responsemsg = result.Msg ?? string.Empty;
+                                            break;
+                                        case 0:
+                                            responsemsg = result.Msg ?? string.Empty;
+                                            break;
+                                        default:
+                                            _logger.LogError(Environment.NewLine);
+                                            _logger.LogError("Bad Request occurred while accessing the InsertUpdateRole function in Role api controller");
+                                            return BadRequest();
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                return BadRequest("Please Check Role Guid");
+                            }
+                        }
+                        else
+                        {
+                            return BadRequest("Try to Login");
+                        }
+                    }
+                    return Ok(responsemsg);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+        [HttpDelete("deleteRole")]
+        
+        public async Task<IActionResult> DeleteRole(RolesDelete roleDelete)
         {
             try
             {
                 using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
-                    string userIdStr = _sessionService.GetSession("strUserID");
-                    int userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt32(userIdStr) : 0;
-
-                    var result = await _repo.RoleDALRepo.DeleteRole(id, userId);
-                    _repo.Commit();
-                    if (result.DeleteRole==true || result.DeleteRole==false)
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                    
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response))
                     {
-                        return Ok(result.deleteRoleInformation);
+                        foreach (var guid in roleDelete.DeleteRoleNames)
+                        {
+                            string? guidresp = await _guid.GetGUIDBasedOnUserRoleGuid(guid.RoleGUID);
+                            if (guidresp == guid.RoleGUID)
+                            {
+                                DataTable? deletetable = roleDelete?.ConvertToDataTable(roleDelete.DeleteRoleNames ?? new List<RolesDeleteInList>());
+                                var result = await _repo.RoleDALRepo.DeleteRole(roleDelete, userId);
+                                _repo.Commit();
+                                if (result.DeleteRole == true || result.DeleteRole == false)
+                                {
+                                    return Ok(result.deleteRoleInformation);
+                                }
+                                else
+                                {
+                                    _logger.LogError(Environment.NewLine);
+                                    _logger.LogError("Bad Request occurred while accessing the DeleteRole function in Role api controller");
+                                    return BadRequest();
+                                }
+                            }
+                            else
+                            {
+                                return BadRequest("Please Check Role GUID");
+                            }
+                        }
                     }
                     else
                     {
-                        _logger.LogError(Environment.NewLine);
-                        _logger.LogError("Bad Request occurred while accessing the DeleteRole function in Role api controller");
-                        return BadRequest();
+                        return BadRequest("Try to Login");
+                    }
+                    return Ok();
                     }
                 }
-            }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message + "  " + ex.StackTrace);
