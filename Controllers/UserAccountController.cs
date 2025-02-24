@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using WebApi.Services;
 using DataAccessLayer.Services;
-using System;
 
 namespace WebApi.Controllers
 {
@@ -37,11 +36,11 @@ namespace WebApi.Controllers
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
                     
-                    string response = _sessionService.GetSession("Guid");
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
                         var lstUserAccountModel = await _repo.UserAccountDALRepo.GetAllUserAccount();
-                        if (lstUserAccountModel != null)
+                        if (lstUserAccountModel != null && lstUserAccountModel.Count > 0)
                         {
                             return Ok(lstUserAccountModel);
                         }
@@ -72,7 +71,7 @@ namespace WebApi.Controllers
             {
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
-                    string response = _sessionService.GetSession("Guid");
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
                         var lstUserPolicyModel = await _repo.UserAccountDALRepo.getAllUserPolicyInDropdown();
@@ -106,11 +105,11 @@ namespace WebApi.Controllers
             {
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
-                    string response =  _sessionService.GetSession("Guid");
+                    string response =  _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
                         var lstUserPolicyModel = await _repo.UserAccountDALRepo.getAllUserRoleInDropdown();
-                        if (lstUserPolicyModel != null)
+                        if (lstUserPolicyModel != null && lstUserPolicyModel.Count>0)
                         {
                             return Ok(lstUserPolicyModel);
                         }
@@ -139,11 +138,11 @@ namespace WebApi.Controllers
             {
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
-                    string responseGUId = _sessionService.GetSession("Guid");
+                    string responseGUId = _sessionService.GetSession(Common.SessionVariables.Guid);
 
                     if (!string.IsNullOrEmpty(responseGUId))
                     {
-                        string guidresp = await _guid.GetGUIDBasedOnUserGuid(guid);
+                        string? guidresp = await _guid.GetGUIDBasedOnUserGuid(guid);
                         if (guid.Equals(guidresp))
                         {
                             var objuseraccountModel = await _repo.UserAccountDALRepo.GetUserAccountByGUId(guid);
@@ -198,9 +197,10 @@ namespace WebApi.Controllers
 
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
-                    string userIdStr = _sessionService.GetSession("strUserID");
+                    
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                    string response = _sessionService.GetSession("Guid");
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
                         var objuseraccountModel = await _repo.UserAccountDALRepo.GetOrgDetailsByUserGUId();
@@ -227,8 +227,8 @@ namespace WebApi.Controllers
         }
 
         //Insert New User Account Creation
-        [HttpPost("insertUpdateUserAccount")]
-        public async Task<IActionResult> InsertUpdateUserAccount(UserAccountUpdateRequest objModel)
+        [HttpPost("insertUserAccount")]
+        public async Task<IActionResult> InsertUserAccount(UserAccountInsertRequest objModel)
         {
             try
             {
@@ -258,91 +258,103 @@ namespace WebApi.Controllers
 
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
-                    string userIdStr = _sessionService.GetSession("strUserID");
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                    string response = _sessionService.GetSession("Guid");
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
-
-                        DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDataTable, 0);
-                        DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, userId, 0);
-                        var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
-                        _repo.Commit();
-                        if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
+                        foreach(var GuidOrg in objModel.OrgDataTable)
                         {
-                            if(objModel.UserAccount.Tenant!=0)
+                            if(GuidOrg?.OrgName!="string")
                             {
-                                if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) &&
-                               (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                string OrgGuid = await _guid.GetGUIDBasedOnOrgName(GuidOrg?.OrgName);
+                                if(OrgGuid== GuidOrg?.OrgName)
                                 {
-                                    switch (result.RetVal)
+                                    DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDataTable, 0);
+                                    DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, userId, 0);
+                                    var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
+                                    _repo.Commit();
+                                    if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
                                     {
-                                        case 0:
-                                        case -1://Already Exists
-                                            responseMsg = result.Msg ?? string.Empty;
+                                        if (objModel.UserAccount.Tenant != 0)
+                                        {
+                                            if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) &&
+                                           (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                            {
+                                                switch (result.RetVal)
+                                                {
+                                                    case 0:
+                                                    case -1://Already Exists
+                                                        responseMsg = result.Msg ?? string.Empty;
 
-                                            break;
+                                                        break;
 
-                                        case >= 1:
-                                            responseMsg = result.Msg ?? string.Empty;
-                                            await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
-                                                                                result.RetVal,
-                                                                                objModel.UserAccount.UserPassword);
+                                                    case >= 1:
+                                                        responseMsg = result.Msg ?? string.Empty;
+                                                        await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
+                                                                                            result.RetVal,
+                                                                                            objModel.UserAccount.UserPassword);
 
-                                            break;
+                                                        break;
 
-                                        default:
-                                            _logger.LogError(Environment.NewLine);
-                                            _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                            return NotFound("User Account Already Exists" + BadRequest());
+                                                    default:
+                                                        _logger.LogError(Environment.NewLine);
+                                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                                        return NotFound("User Account Already Exists" + BadRequest());
+                                                }
+
+                                            }
+                                            else
+                                            {
+                                                _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                                return BadRequest("Please Check Organization Name");
+                                            }
+
+                                        }
+                                        else if (objModel.UserAccount.Tenant == 0)
+                                        {
+                                            if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) ||
+                                           (result.OrgDetails != null && result.OrgDetails.Count == 0))
+                                            {
+                                                switch (result.RetVal)
+                                                {
+                                                    case 0:
+                                                    case -1://Already Exists
+                                                        responseMsg = result.Msg ?? string.Empty;
+
+                                                        break;
+
+                                                    case >= 1:
+                                                        responseMsg = result.Msg ?? string.Empty;
+                                                        await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
+                                                                                            result.RetVal,
+                                                                                            objModel.UserAccount.UserPassword);
+
+                                                        break;
+
+                                                    default:
+                                                        _logger.LogError(Environment.NewLine);
+                                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                                        return NotFound("User Account Already Exists" + BadRequest());
+                                                }
+
+                                            }
+                                            else
+                                            {
+                                                _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                                return BadRequest("Please Check Organization Name");
+                                            }
+
+                                        }
                                     }
-
                                 }
                                 else
                                 {
-                                    _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                    return BadRequest("Please Check Organization Name");
+                                    return BadRequest("Please Check Org Name");
                                 }
-
                             }
-                            else if (objModel.UserAccount.Tenant == 0)
-                            {
-                                if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) ||
-                               (result.OrgDetails != null && result.OrgDetails.Count == 0))
-                                {
-                                    switch (result.RetVal)
-                                    {
-                                        case 0:
-                                        case -1://Already Exists
-                                            responseMsg = result.Msg ?? string.Empty;
-
-                                            break;
-
-                                        case >= 1:
-                                            responseMsg = result.Msg ?? string.Empty;
-                                            await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
-                                                                                result.RetVal,
-                                                                                objModel.UserAccount.UserPassword);
-
-                                            break;
-
-                                        default:
-                                            _logger.LogError(Environment.NewLine);
-                                            _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                            return NotFound("User Account Already Exists" + BadRequest());
-                                    }
-
-                                }
-                                else
-                                {
-                                    _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                    return BadRequest("Please Check Organization Name");
-                                }
-
-                            }
-
-
                         }
+                        
                     }
                     else
                     {
@@ -358,8 +370,9 @@ namespace WebApi.Controllers
                 throw;
             }
         }
+        // Edit Update User Account
         [HttpPut("EditUpdateUserAccount")]
-        public async Task<IActionResult> EditUpdateUserAccount([FromBody] UserAccountModel userAccount)
+        public async Task<IActionResult> EditUpdateUserAccount([FromBody] UpdateUserAccountModel userAccount)
         {
             if (userAccount == null)
             {
@@ -376,37 +389,46 @@ namespace WebApi.Controllers
                     string responseMsg = string.Empty;
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
-
-                        string userIdStr = _sessionService.GetSession("strUserID");
+                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                        string response = _sessionService.GetSession("Guid");
+                        userAccount.CreatedBy = userId;
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+
                         if (!string.IsNullOrEmpty(response))
                         {
-                            var result = await _repo.UserAccountDALRepo.EditUpdateUserAccountAsync(userAccount);
-                            _repo.Commit();
-                            if (result.updateuseraccount != null)
+                            string? guidresp = await _guid.GetGUIDBasedOnUserGuid(userAccount.MasterGuid);
+                            if (userAccount.MasterGuid == guidresp)
                             {
-                                switch (result.RetVal)
+                                var result = await _repo.UserAccountDALRepo.EditUpdateUserAccountAsync(userAccount);
+                                _repo.Commit();
+                                if (result.updateuseraccount != null)
                                 {
-                                    case >= 1:
-                                        responseMsg = result.Msg ?? string.Empty;
-                                        break;
-                                    case -1:
-                                        return Ok(result.Msg);
-                                    default:
-                                        _logger.LogError(Environment.NewLine);
-                                        _logger.LogError("Bad Request occurred while accessing the EditupdateUserAccount function in User Account api controller");
-                                        return BadRequest();
-                                }
+                                    switch (result.RetVal)
+                                    {
+                                        case >= 1:
+                                            responseMsg = result.Msg ?? string.Empty;
+                                            break;
+                                        case -1:
+                                            return Ok(result.Msg);
+                                        default:
+                                            _logger.LogError(Environment.NewLine);
+                                            _logger.LogError("Bad Request occurred while accessing the EditupdateUserAccount function in User Account api controller");
+                                            return BadRequest();
+                                    }
 
+                                }
+                                else
+                                {
+                                    return BadRequest("Please Check the Master Guid");
+                                }
+                            }
+                            else
+                            {
+                                return BadRequest("Try to Login");
                             }
                         }
-                        else
-                        {
-                            return BadRequest("Try to Login");
-                        }
+                        return Ok(responseMsg);
                     }
-                    return Ok(responseMsg);
                 }
                 catch (Exception ex)
                 {
@@ -415,6 +437,7 @@ namespace WebApi.Controllers
                 }
             }
         }
+        // Update User Account
         [HttpPut("updateUserAccount")]
         public async Task<IActionResult> UpdateUserAccount([FromBody] UserAccountUpdateRequest userAccount)
         {
@@ -433,87 +456,86 @@ namespace WebApi.Controllers
                     string responseMsg = string.Empty;
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
-                        string userIdStr = _sessionService.GetSession("strUserID");
+                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                        string response = _sessionService.GetSession("Guid");
+                        userAccount.UserAccount.CreatedBy = userId;
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                         if (!string.IsNullOrEmpty(response))
                         {
-                            var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
-                            _repo.Commit();
-                            if (result.updateuseraccount != null || result.OrgDetails == null || result.OrgDetails != null)
+                            string? guidresp = await _guid.GetGUIDBasedOnUserGuid(userAccount.UserAccount.MasterGuid);
+                            if (userAccount.UserAccount.MasterGuid == guidresp)
                             {
-                                if (userAccount?.UserAccount.Tenant != 0)
+                                var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
+                                _repo.Commit();
+                                if (result.updateuseraccount != null || result.OrgDetails == null || result.OrgDetails != null)
                                 {
-                                    if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) &&
-                                   (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                    if (userAccount?.UserAccount.Tenant != 0)
                                     {
-                                        switch (result.RetVal)
+                                        if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) &&
+                                       (result.OrgDetails != null && result.OrgDetails.Count > 0))
                                         {
-                                            case 0:
-                                            case -1://Already Exists
-                                                responseMsg = result.Msg ?? string.Empty;
-                                                break;
+                                            switch (result.RetVal)
+                                            {
+                                                case 0:
+                                                case -1://Already Exists
+                                                    responseMsg = result.Msg ?? string.Empty;
+                                                    break;
 
-                                            case >= 1:
-                                                responseMsg = result.Msg ?? string.Empty;
-                                                await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
-                                                                                    result.RetVal,
-                                                                                    userAccount?.UserAccount.UserPassword);
+                                                case >= 1:
+                                                    responseMsg = result.Msg ?? string.Empty;
+                                                    
+                                                    break;
 
-                                                break;
+                                                default:
+                                                    _logger.LogError(Environment.NewLine);
+                                                    _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                                    return NotFound("User Account Already Exists" + BadRequest());
+                                            }
 
-                                            default:
-                                                _logger.LogError(Environment.NewLine);
-                                                _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                                return NotFound("User Account Already Exists" + BadRequest());
+                                        }
+                                        else
+                                        {
+                                            _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                            return BadRequest("Please Check Organization Name");
                                         }
 
                                     }
-                                    else
+                                    else if (userAccount.UserAccount.Tenant == 0)
                                     {
-                                        _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                        return BadRequest("Please Check Organization Name");
-                                    }
-
-                                }
-                                else if (userAccount.UserAccount.Tenant == 0)
-                                {
-                                    if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) ||
-                                   (result.OrgDetails != null && result.OrgDetails.Count == 0))
-                                    {
-                                        switch (result.RetVal)
+                                        if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) ||
+                                       (result.OrgDetails != null && result.OrgDetails.Count == 0))
                                         {
-                                            case 0:
-                                            case -1://Already Exists
-                                                responseMsg = result.Msg ?? string.Empty;
+                                            switch (result.RetVal)
+                                            {
+                                                case 0:
+                                                case -1://Already Exists
+                                                    responseMsg = result.Msg ?? string.Empty;
 
-                                                break;
+                                                    break;
 
-                                            case >= 1:
-                                                responseMsg = result.Msg ?? string.Empty;
-                                                await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
-                                                                                    result.RetVal,
-                                                                                    userAccount?.UserAccount.UserPassword);
+                                                case >= 1:
+                                                    responseMsg = result.Msg ?? string.Empty;
+                                                    break;
 
-                                                break;
-
-                                            default:
-                                                _logger.LogError(Environment.NewLine);
-                                                _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                                return NotFound("User Account Already Exists" + BadRequest());
+                                                default:
+                                                    _logger.LogError(Environment.NewLine);
+                                                    _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                                    return NotFound("User Account Already Exists" + BadRequest());
+                                            }
                                         }
-
+                                        else
+                                        {
+                                            _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                            return BadRequest("Please Check Organization Name");
+                                        }
                                     }
-                                    else
-                                    {
-                                        _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                        return BadRequest("Please Check Organization Name");
-                                    }
-
                                 }
-
-
                             }
+                            else
+                            {
+                                return BadRequest("Please Check the Master GUID");
+                            }
+                                
                         }
                         else
                         {
@@ -529,6 +551,7 @@ namespace WebApi.Controllers
                 }
             }
         }
+        // Delete User Account
         [HttpDelete("deleteUserAccount")]
         public async Task<IActionResult> DeleteUserAccount(DeleteUserAccount deleteUserAccount)
         {
@@ -536,35 +559,49 @@ namespace WebApi.Controllers
             {
                 using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                 {
-                    string userIdStr = _sessionService.GetSession("strUserID");
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                    string response = _sessionService.GetSession("Guid");
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
-                        var datatable = deleteUserAccount.ConvertToDataTable(deleteUserAccount.DeleteDataTable);
-                        var result = await _repo.UserAccountDALRepo.DeleteUserAccount(Convert.ToInt64(userId), deleteUserAccount);
-
-                        _repo.Commit();
-                        if (result.deleteuseraccount == true || result.deleteuseraccount == false)
+                        foreach (var UserGuid in deleteUserAccount.DeleteDataTable)
                         {
-                            if (result.deleteResults.Count > 0)
+                            var GuidResp = await _guid.GetGUIDBasedOnUserGuid(UserGuid.UserGUID);
+                            if (GuidResp == UserGuid.UserGUID)
                             {
-                                return Ok(result.deleteResults);
+                                var dataTable = deleteUserAccount.ConvertToDataTable(deleteUserAccount.DeleteDataTable);
+                                var result = await _repo.UserAccountDALRepo.DeleteUserAccount(Convert.ToInt64(userId), deleteUserAccount);
+
+                                _repo.Commit();
+                                if (result.deleteuseraccount == true || result.deleteuseraccount == false)
+                                {
+                                    if (result.deleteResults.Count > 0)
+                                    {
+                                        return Ok(result.deleteResults);
+                                    }
+                                }
+                                else
+                                {
+                                    _logger.LogError(Environment.NewLine);
+                                    _logger.LogError("Bad Request occurred while accessing the DeleteUserAccount function in User Account api controller");
+                                    return BadRequest();
+                                }
+                            }
+                            else
+                            {
+                                return BadRequest("Please Check User Guid");
                             }
                         }
-                        else
-                        {
-                            _logger.LogError(Environment.NewLine);
-                            _logger.LogError("Bad Request occurred while accessing the DeleteUserAccount function in User Account api controller");
-                            return BadRequest();
-                        }
                     }
+
+
                     else
                     {
                         return BadRequest("Try to Login");
                     }
+
+                    return Ok();
                 }
-                return Ok();
             }
             catch (Exception ex)
             {
@@ -588,49 +625,60 @@ namespace WebApi.Controllers
                     {
                         string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString("strUserID");
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                        string response = _sessionService.GetSession("Guid");
+                        objModel.CreatedBy = userId;
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                         if(!string.IsNullOrEmpty(response))
                         {
-                            objModel.CreatedBy= userId;
-                            var result = await _repo.UserAccountDALRepo.AddRoleName(objModel);
-                            
-                            _repo.Commit();
-                            if (result.Roles != null)
+                            string? GuidResp = await _guid.GetGUIDBasedOnUserRoleGuid(objModel.RoleGUID);
+                            string? GuidUser = await _guid.GetGUIDBasedOnUserGuid(objModel.UserGUID);
+                            if (GuidResp == objModel.RoleGUID && GuidUser == objModel.UserGUID)
                             {
-                                switch (result.RetVal)
+                                var result = await _repo.UserAccountDALRepo.AddRoleName(objModel);
+                                _repo.Commit();
+                                if (result.Roles != null)
                                 {
-                                    case 0:// Already Exists
-                                        responseMsg = result.Msg ?? string.Empty;
-                                        break;
+                                    switch (result.RetVal)
+                                    {
+                                        case 0:// Already Exists
+                                            responseMsg = result.Msg ?? string.Empty;
+                                            break;
 
-                                    case -4:// Null Value Return
-                                        responseMsg = result.Msg ?? string.Empty;
-                                        break;
-                                    case 1://Success
-                                        responseMsg = result.Msg ?? string.Empty;
+                                        case -4:// Null Value Return
+                                            responseMsg = result.Msg ?? string.Empty;
+                                            break;
+                                        case 1://Success
+                                            responseMsg = result.Msg ?? string.Empty;
 
-                                        break;
+                                            break;
 
-                                    case -1:// Effective Date Should not be greater than current date
-                                        responseMsg = result.Msg ?? string.Empty;
-                                        break;
+                                        case -1:// Effective Date Should not be greater than current date
+                                            responseMsg = result.Msg ?? string.Empty;
+                                            break;
 
-                                    case -2:
-                                        responseMsg = result.Msg ?? string.Empty;
-                                        break;
-                                    case -3: // There cannot be more than one role for the high level user!
-                                        responseMsg = result.Msg ?? string.Empty;
-                                        break;
+                                        case -2:
+                                            responseMsg = result.Msg ?? string.Empty;
+                                            break;
+                                        case -3: // There cannot be more than one role for the high level user!
+                                            responseMsg = result.Msg ?? string.Empty;
+                                            break;
 
-                                    default:
-                                        _logger.LogError(Environment.NewLine);
-                                        _logger.LogError("Bad Request occurred while accessing the AddRoleInUserAccount function in User Account api controller");
-                                        return BadRequest();
+                                        default:
+                                            _logger.LogError(Environment.NewLine);
+                                            _logger.LogError("Bad Request occurred while accessing the AddRoleInUserAccount function in User Account api controller");
+                                            return BadRequest();
 
+                                    }
                                 }
 
                             }
-
+                            else if (GuidResp == objModel.RoleGUID && GuidUser != objModel.UserGUID)
+                            {
+                                return BadRequest("Please Check User GUID");
+                            }
+                            else
+                            {
+                                return BadRequest("Please Check Role GUID");
+                            }
                         }
                         else { return  BadRequest("Try to Login"); }
                         
@@ -644,9 +692,6 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-
-
-        
         [HttpDelete("DeleteRoleInUserAccount")]
         public async Task<IActionResult> DeleteRoleInUserAccount(DeleteRoleName objModel)
         {
@@ -661,18 +706,18 @@ namespace WebApi.Controllers
                 {
                     using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
                     {
-                        string? userIdStr = _sessionService.GetSession("strUserID");
+                        string? userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         objModel.CreatedBy = userId;
-                        string response = _sessionService.GetSession("Guid");
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                         if (!string.IsNullOrEmpty(response))
                         {
                             foreach (var guid in objModel.DeleteRoleNames)
                             {
-                                string? guidresp = await _guid.GetGUIDBasedOnUserAccountRoleGuid(guid.UserAccountRoleGuid);
-                                if (guidresp == guid.UserAccountRoleGuid)
+                                string? GuidResp = await _guid.GetGUIDBasedOnUserAccountRoleGuid(guid.UserAccountRoleGuid);
+                                if (GuidResp == guid.UserAccountRoleGuid)
                                 {
-                                    DataTable? deletetable = objModel?.ConvertToDataTable(objModel.DeleteRoleNames ?? new List<DeleteRoleNameInList>());
+                                    DataTable? deleteTable = objModel?.ConvertToDataTable(objModel.DeleteRoleNames ?? new List<DeleteRoleNameInList>());
                                     var result = await _repo.UserAccountDALRepo.DeleteRoleInUserAccount(objModel ?? new DeleteRoleName());
 
                                     var msg = "Role Deleted Successfully";
@@ -719,7 +764,7 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-
+        // Reset Password in User Account
         [HttpPost("ResetPasswordInUserAccount")]
         public async Task<IActionResult> ResetPasswordInUserAccount(ResetPassword objModel)
         {
@@ -736,7 +781,7 @@ namespace WebApi.Controllers
                     {
                         string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString("strUserID");
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                        string response = _sessionService.GetSession("Guid");
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                         if (!string.IsNullOrEmpty(response))
                         {
                             var result = await _repo.UserAccountDALRepo.ResetPasswordInUserAccount(objModel);
@@ -783,7 +828,7 @@ namespace WebApi.Controllers
         }
         // Unlock User
         [HttpPut("UnlockUser")]
-        public async Task<IActionResult> UnlockUser([FromBody] UnlockUser listofunlock)
+        public async Task<IActionResult> UnlockUser([FromBody] UnlockUser? listofunlock)
         {
             if (listofunlock == null)
             {
@@ -799,29 +844,38 @@ namespace WebApi.Controllers
                     {
                         string? userIdStr = _httpContextAccessor?.HttpContext?.Session?.GetString("strUserID");
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                        string response = _sessionService.GetSession("Guid");
+                        string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                         if (!string.IsNullOrEmpty(response))
                         {
-                            DataTable? datatable = listofunlock?.ConvertToDataTable(listofunlock.Users ?? new List<UnlockUserList>()) ?? new DataTable();
-                            listofunlock.UpdatedBy = userId;
-                            var result = await _repo.UserAccountDALRepo.UnlockUserAsync(listofunlock);
-                            var msg = "Unlock User successfully.";
-                            _repo.Commit();
-                            if (result.unlockuser != null && result.RetVal == 1)
+                            foreach(var UserGuid in listofunlock.Users ?? new List<UnlockUserList?>())
                             {
-                                switch (result.RetVal)
+                                string? guiduser = await _guid.GetGUIDBasedOnUserGuid(UserGuid?.UserGuId);
+                                if(guiduser== UserGuid?.UserGuId)
                                 {
-                                    case 1:// Success
-                                        responseMsg = msg;
-                                        break;
+                                    DataTable? dataTable = listofunlock?.ConvertToDataTable(listofunlock.Users ?? new List<UnlockUserList?>()) ?? new DataTable();
+                                    listofunlock.UpdatedBy = userId;
+                                    var result = await _repo.UserAccountDALRepo.UnlockUserAsync(listofunlock);
+                                    var msg = "Unlock User successfully.";
+                                    _repo.Commit();
+                                    if (result.unlockuser != null)
+                                    {
+                                        switch (result.RetVal)
+                                        {
+                                            case 1:// Success
+                                                responseMsg = msg;
+                                                break;
 
-                                    case -1:// Failure or Not exists
-                                        responseMsg = result.Msg;
-                                        break;
-                                    default:
-                                        _logger.LogError(Environment.NewLine);
-                                        _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
-                                        return BadRequest();
+                                            case -1:// Failure or Not exists
+                                                responseMsg = result.Msg;
+                                                break;
+                                            default:
+                                                _logger.LogError(Environment.NewLine);
+                                                _logger.LogError("Bad Request occurred while accessing the updateUserAccount function in User Account api controller");
+                                                return BadRequest();
+                                        }
+
+                                    }
+
                                 }
 
                             }
