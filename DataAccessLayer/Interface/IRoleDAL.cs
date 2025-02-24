@@ -4,10 +4,12 @@ namespace DataAccessLayer.Interface
 {
     public interface IRoleDAL
     {
-        Task<List<RoleModel>> GetAllRole(int UserId);
-        Task<(List<RoleModel?> roleModels, int? RetVal,string? Msg)> InsertUpdateRole(RoleModel? LM);
-        Task<(bool DeleteRole, List<DeleteRoleInformation> deleteRoleInformation)> DeleteRole(int Id,int UserId );
-        Task<(RoleModel? rolemodel,List<Modules?> ModuleDatatable)> getModulesBasedonRole(long? Roleid, string? IsPayrollAccessible,long? UserID );
-        Task<(List<RoleModel?> roleModels, int? RetVal, string? Msg)> UpdateRoleAsync(int id, RoleModel roleModel);
+        Task<List<GetRoleModel>> GetAllRole(long UpdatedBy);
+        
+        Task<(List<RoleModel?> roleModels, long? RetVal,string? Msg)> InsertUpdateRole(RoleModel? LM);
+        Task<(List<GetRoleModel?> roleModels, long? RetVal, string? Msg)> UpdateRole(GetRoleModel? LM);
+        Task<(bool? DeleteRole, List<DeleteRoleInformation?> deleteRoleInformation)> DeleteRole(RolesDelete rolesDelete,long UserId );
+        Task<(RoleModel? rolemodel,List<Modules?> ModuleDatatable)> getModulesBasedOnRole(string? RoleGUID, string? IsPayrollAccessible,long? UserGUID );
+        Task<(List<GetRoleModel?> roleModels, long? RetVal, string? Msg)> EditUpdateRoleAsync(GetRoleModel roleModel);
     }
 }
