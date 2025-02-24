@@ -144,8 +144,8 @@ namespace DataAccessLayer.Implementation
                 {
                     foreach (DataRow row in model?.UserAccountOrgTable.Rows)
                     {
-                        var orgname = row["OrgGUID"] != DBNull.Value ? row["OrgGUID"]?.ToString() : null;
-                        if (string.IsNullOrEmpty(orgname) || row["OrgGUID"]?.ToString() == "string")
+                        var orgname = row["OrgName"] != DBNull.Value ? row["OrgName"]?.ToString() : null;
+                        if (string.IsNullOrEmpty(orgname) || row["OrgName"]?.ToString() == "string")
                         {
                             string? masterConnection = _configuration.GetConnectionString("connection");
                             Connection = new SqlConnection(masterConnection);
