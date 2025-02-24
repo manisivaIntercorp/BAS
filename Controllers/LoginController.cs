@@ -208,10 +208,10 @@ namespace WebApi.Controllers
                                 vGuid = loginDetail?.Guid;
                             }
                             var token = _jwtService.GenerateToken(objLogModel?.UserName ?? "", Convert.ToString(vGuid) ?? "", objLogModel?.Password ?? "");
-                            var result = LogLoginDetails("LOGOUT", vGuid?.ToString() ?? "", token);
+                            var result = LogLoginDetails("LOGIN", vGuid?.ToString() ?? "", token);
 
                             HttpContext?.Session?.SetString(Common.SessionVariables.Token, token);
-                            await _auditLogService.LogAction(objLogModel?.Guid ?? "", "LOGIN", token);
+                            await _auditLogService.LogAction(strGuid ?? "", "LOGIN", token);
 
                             return Ok(token);
 
@@ -445,24 +445,26 @@ namespace WebApi.Controllers
 
         //}
         [HttpPost("Logout")]
-        public IActionResult Logout(string token)
+        public async Task<IActionResult> Logout(string token)
         {
             try
             {
-
                 if (string.IsNullOrEmpty(token))
                 {
                     return BadRequest("Token is required for logout.");
                 }
 
                 _jwtService.InvalidateToken(token);
-                // HttpContext.Session.Remove();
+
                 if (HttpContext?.Session != null)
                 {
                     var vGuid = HttpContext.Session.GetString(Common.SessionVariables.Guid);
                     var vtoken = HttpContext.Session.GetString(Common.SessionVariables.Token);
-                    var result = LogLoginDetails("LOGIN", vGuid?.ToString() ?? "", vtoken?.ToString() ?? "");
+                    var result = LogLoginDetails("LOGOUT", vGuid?.ToString() ?? "", vtoken?.ToString() ?? "");
                 }
+
+                await _auditLogService.LogAction(userGuid ?? "", "SelectedOrganisation", token ?? "");
+
                 HttpContext?.Session.Clear();
                 return Ok("Logout successful. Token revoked.");
             }
@@ -472,6 +474,7 @@ namespace WebApi.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred during logout.");
             }
         }
+
 
         [HttpPost("DropDownLanguage")]
         public async Task<IActionResult> GetDDlLanguage(string? RefID1, string? RefID2, string? RefID3)
