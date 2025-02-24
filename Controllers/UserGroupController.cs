@@ -1,10 +1,13 @@
-﻿using DataAccessLayer.Model;
+﻿using Azure;
+using DataAccessLayer.Model;
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.SqlServer.Management.Smo;
 using System.Diagnostics.Eventing.Reader;
+using WebApi.Services;
 
 namespace WebApi.Controllers
 {
@@ -14,10 +17,14 @@ namespace WebApi.Controllers
     {
         private readonly ILogger<UserGroupController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public UserGroupController(ILogger<UserGroupController> logger,IHttpContextAccessor httpContextAccessor ,IConfiguration configuration) : base(configuration)
+        private SessionService _sessionService;
+        private GUID _guid;
+        public UserGroupController(ILogger<UserGroupController> logger,IHttpContextAccessor httpContextAccessor ,IConfiguration configuration, SessionService sessionService,GUID gUID) : base(configuration)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
+            _sessionService = sessionService;
+            _guid = gUID;
 
         }
         [HttpGet("getAllUserPolicy")]
@@ -27,15 +34,23 @@ namespace WebApi.Controllers
             {
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
-                    var lstUserGroupModel = await _repo.UserGroupDALRepo.GetAllUserPolicy();
-                    if (lstUserGroupModel != null)
-                    {
-                        return Ok(lstUserGroupModel);
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response)) {
+                        var lstUserGroupModel = await _repo.UserGroupDALRepo.GetAllUserPolicy();
+                        if (lstUserGroupModel != null && lstUserGroupModel.Count>0)
+                        {
+                            return Ok(lstUserGroupModel);
+                        }
+                        else
+                        {
+                            return BadRequest("No Records Found");
+                        }
                     }
                     else
                     {
-                        return BadRequest();
+                        return BadRequest("Try to Login");
                     }
+                    
                 }
             }
             catch (Exception ex)
@@ -44,56 +59,39 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("getUserPolicyById/{id}")]
-        public async Task<IActionResult> GetUserGroupById(int id)
-        {
-            try
-            {
-                //int i = 0;
-                //var j = 1 / i;
-                using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
-                {
-                    var objUserGroupModel = await _repo.UserGroupDALRepo.GetUserPolicyById(id);
-                    if (objUserGroupModel != null)
-                    {
-                        return Ok(objUserGroupModel);
-                    }
-                    else
-                    {
-                        return BadRequest();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                throw;
-            }
-        }
-        [HttpPost("insertUpdateUserPolicy")]
-        public async Task<IActionResult> InsertUpdateUserGroup(UserGroupModel objModel)
+        [HttpGet("getUserPolicyByGuId/{GuId}")]
+        public async Task<IActionResult> GetUserGroupByGUId(string GUId)
         {
             try
             {
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
-                    var result = await _repo.UserGroupDALRepo.InsertUpdateUserPolicy(objModel);
-                    var msg = "User Policy Inserted Successfully";
-                    _repo.Commit();
-                    if (result)
-                    {
-                        Ok(result);
-                        Ok(msg);
-
-                    }
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response)) {
+                        string GuidUserPolicy = await _guid.GetGUIDBasedOnUserPolicy(GUId);
+                        if(GuidUserPolicy==GUId)
+                        {
+                            var objUserGroupModel = await _repo.UserGroupDALRepo.GetUserPolicyByGUId(GUId);
+                            if (objUserGroupModel != null)
+                            {
+                                return Ok(objUserGroupModel);
+                            }
+                            else
+                            {
+                                return BadRequest();
+                            }
+                        }
+                        else
+                        {
+                            return BadRequest("Please Check Guid");
+                        }
+                        
+                    } 
                     else
                     {
-                        _logger.LogError(Environment.NewLine);
-                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserGroup function in User Group api controller");
-                        return NotFound("User Policy Already Exists");
+                        return BadRequest("Try to Login");
                     }
-                    return Ok(msg + ' ' + result);
-
+                    
                 }
             }
             catch (Exception ex)
@@ -102,12 +100,59 @@ namespace WebApi.Controllers
                 throw;
             }
         }
+        [HttpPost("insertUserPolicy")]
+        public async Task<IActionResult> InsertUserGroup(UserGroupModel objModel)
+        {
+            try
+            {
+                using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
+                {
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response)) 
+                    {
+                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                        objModel.CreatedBy = userId;
 
-        [HttpPut("updateUserPolicy/{id}")]
-        public async Task<IActionResult> UpdateUserGroup(int id, [FromBody] UserGroupModel UserGroup)
+                        var result = await _repo.UserGroupDALRepo.InsertUpdateUserPolicy(objModel);
+                        var msg = "User Policy Inserted Successfully";
+                        _repo.Commit();
+                        if (result.InsertUserGroup==true || result.InsertUserGroup==false)
+                        {
+                            switch (result.RetVal)
+                            {
+                                case 1:// Success
+                                    return Ok(msg);
+                                case 0:// Exists
+                                    return Ok(result.Msg);
+                                default:
+                                    
+                                        _logger.LogError(Environment.NewLine);
+                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserGroup function in User Group api controller");
+                                        return NotFound("User Policy Already Exists");
+                                }
+                            }
+                        
+                    } 
+                    else 
+                    { 
+                        return BadRequest("Try To Login");
+                    }
+                }
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+
+        [HttpPut("updateUserPolicy")]
+        public async Task<IActionResult> UpdateUserGroup( [FromBody] UpdateUserGroupModel UserGroup)
         {
 
-            if (UserGroup == null || id != UserGroup.UserGroupID)
+            if (UserGroup == null)
             {
                 return BadRequest("Invalid data.");
             }
@@ -116,23 +161,46 @@ namespace WebApi.Controllers
             {
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
-                    var result = await _repo.UserGroupDALRepo.UpdateUserPolicyAsync(id, UserGroup);
-                    var msg = "User Group updated successfully.";
-                    _repo.Commit();
-                    if (result)
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response))
                     {
-                        Ok(result);
-                        Ok(msg);
+                        string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                        long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                        string UserPolicyGuid = await _guid.GetGUIDBasedOnUserPolicy(UserGroup.UserPolicyGuid);
+                        if (UserPolicyGuid == UserGroup.UserPolicyGuid)
+                        {
+                            UserGroup.CreatedBy = userId;
+                            var result = await _repo.UserGroupDALRepo.UpdateUserPolicyAsync(UserGroup);
+                            var msg = "User Group updated successfully.";
+                            _repo.Commit();
+                            if (result.UpdateUserGroup == true || result.UpdateUserGroup == false)
+                            {
+                                switch (result.RetVal)
+                                {
+                                    case 1:// Success
+                                        return Ok(msg);
+                                    case 0:// Exists
+                                        return Ok(result.Msg);
+                                    default:
 
+                                        _logger.LogError(Environment.NewLine);
+                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserGroup function in User Group api controller");
+                                        return NotFound("User Policy Already Exists");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            return BadRequest("Please Check UserPolicy GUID");
+                        }
+                       
                     }
                     else
                     {
-                        _logger.LogError(Environment.NewLine);
-                        _logger.LogError("Bad Request occurred while accessing the updateUserPolicy function in User Policy api controller");
-                        return BadRequest();
+                        return BadRequest("Try To Login");
                     }
-                    return Ok(msg + result);
                 }
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -142,26 +210,43 @@ namespace WebApi.Controllers
             }
         }
 
-        [HttpGet("deleteUserPolicy/{id}")]
-        public async Task<IActionResult> DeleteUserGroup(int id)
+        [HttpDelete("deleteUserPolicy")]
+        public async Task<IActionResult> DeleteUserGroup(DeleteUserGroup deleteUserGroup)
         {
             try
             {
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
-                    var result = await _repo.UserGroupDALRepo.DeleteUserPolicy(id);
-                    _repo.Commit();
-                    if (result)
-                    {
-                        return Ok(result);
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    if (!string.IsNullOrEmpty(response)) {
+                        foreach (var UserGuid in deleteUserGroup.DeleteDataTable)
+                        {
+                            var GuidResp = await _guid.GetGUIDBasedOnUserPolicy(UserGuid.UserPolicyGUID);
+                            if (GuidResp == UserGuid.UserPolicyGUID) {
+                                var dataTable = deleteUserGroup.ConvertToDataTable(deleteUserGroup.DeleteDataTable);
+                                var result = await _repo.UserGroupDALRepo.DeleteUserPolicy(userId,deleteUserGroup);
+                                _repo.Commit();
+                                if (result.deleteuserGroup == true || result.deleteuserGroup == false)
+                                {
+                                    if (result.deleteResults.Count > 0)
+                                    {
+                                        return Ok(result.deleteResults);
+                                    }
+                                }
+                                else
+                                {
+                                    _logger.LogError(Environment.NewLine);
+                                    _logger.LogError("Bad Request occurred while accessing the DeleteUserPolicy function in User Policy api controller");
+                                    return BadRequest();
+                                }
+                            }
+                        }
                     }
-                    else
-                    {
-                        _logger.LogError(Environment.NewLine);
-                        _logger.LogError("Bad Request occurred while accessing the DeleteUserPolicy function in User Policy api controller");
-                        return BadRequest();
-                    }
+                     
                 }
+                return Ok();
             }
             catch (Exception ex)
             {
