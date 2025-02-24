@@ -102,7 +102,6 @@ namespace DataAccessLayer.Model
         [JsonIgnore]
         public long CreatedBy { get; set; }
         public long ProfileID { get; set; }
-        public DateOnly? UserExpiryDate { get; set; }
     }
 
 
