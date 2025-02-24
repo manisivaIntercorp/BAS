@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Model;
+using Newtonsoft.Json;
 using System.Data;
 
 namespace DataAccessLayer.Implementation
@@ -10,46 +11,58 @@ namespace DataAccessLayer.Implementation
         public UserGroupDAL(IDbTransaction _transaction) : base(_transaction)
         {
         }
-        public async Task<bool> DeleteUserPolicy(int Id)
+        public async Task<(bool deleteuserGroup, List<DeleteUserGroupResult> deleteResults)> DeleteUserPolicy(long UpdatedBy, DeleteUserGroup deleteUserPolicy)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserGroupID", Id);
+            parameters.Add("@tblDelete", JsonConvert.SerializeObject(deleteUserPolicy.UserGroupDeleteTable));
+            parameters.Add("@UpdatedBy", UpdatedBy);
             parameters.Add("@Mode", "DELETE");
-            var Result = await Connection.ExecuteAsync("sp_UserGroup",
+            var Result = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return Result > 0 ? true : false;
+            List<DeleteUserGroupResult> DeleteUserAccount = (await Result.ReadAsync<DeleteUserGroupResult>()).ToList();
+            while (!Result.IsConsumed)
+            {
+                await Result.ReadAsync();
+            }
+
+            bool res = DeleteUserAccount.Any();
+
+
+
+            return (res, DeleteUserAccount.ToList());
+            
         }
 
-        public async Task<List<UserGroupModel?>> GetAllUserPolicy()
+        public async Task<List<GetUserGroupModel?>> GetAllUserPolicy()
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserGroupID", 0);
+            parameters.Add("@UserGroupGUID", string.Empty);
             parameters.Add("@Mode", "GET");
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return multi.Read<UserGroupModel?>().ToList();
+            return multi.Read<GetUserGroupModel?>().ToList();
         }
 
-        public async Task<UserGroupModel?> GetUserPolicyById(int? Id)
+        public async Task<GetUserGroupModel?> GetUserPolicyByGUId(string? GUId)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserGroupID", Id);
+            parameters.Add("@UserGroupGUID", GUId);
             parameters.Add("@Mode", "GET");
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            var res = multi.Read<UserGroupModel?>().First();
+            var res = multi.Read<GetUserGroupModel?>().First();
 
             return res;
             
         }
 
-        public async Task<bool> InsertUpdateUserPolicy(UserGroupModel? model)
+        public async Task<(bool InsertUserGroup, int RetVal, string Msg)> InsertUpdateUserPolicy(UserGroupModel? model)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserGroupID", model?.UserGroupID);
@@ -70,21 +83,31 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@IdpUser", model?.IdpBasedUser);
             
             parameters.Add("@Mode", "ADD");
-            var multi = await Connection.ExecuteAsync("sp_UserGroup",
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            var res = multi > 0 ? true : false;
+            var UserGroup = (await multi.ReadAsync<UserGroupModel>()).ToList();
+            while (!multi.IsConsumed)
+            {
+                await multi.ReadAsync();
+            }
 
-            return res;
+            bool res = UserGroup.Any();
+            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+            return (res, RetVal, Msg);
             
         }
 
-        public async Task<bool> UpdateUserPolicyAsync(int? id,UserGroupModel? model)
+        public async Task<(bool UpdateUserGroup, int RetVal, string Msg)> UpdateUserPolicyAsync(UpdateUserGroupModel? model)
         {
             
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserGroupID", id);
+            parameters.Add("@UserGroupID", model?.UserGroupID);
             parameters.Add("@UserGroup", model?.UserGroupCode);
             parameters.Add("@Active", model?.Active);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
@@ -99,14 +122,25 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LevelDetailID", model?.LevelDetailsID);
             parameters.Add("@LevelID", model?.LevelID);
             parameters.Add("@IdpUser", model?.IdpBasedUser);
+            parameters.Add("@UserGroupGUID", model?.UserPolicyGuid);
             parameters.Add("@Mode", "EDIT");
-            var multi = await Connection.ExecuteAsync("sp_UserGroup",
+            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            var res = multi > 0 ? true : false;
+            var UserGroup = (await multi.ReadAsync<UserGroupModel>()).ToList();
+            while (!multi.IsConsumed)
+            {
+                await multi.ReadAsync();
+            }
 
-            return res;
+            bool res = UserGroup.Any();
+            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
+
+            return (res, RetVal, Msg);
         }
     }
 }
