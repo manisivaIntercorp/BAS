@@ -50,6 +50,13 @@ namespace DataAccessLayer.Model
             public const string LanguageCode = "LanguageCode";
         }
 
+        public class Messages
+        {
+            public const string Login = "Try To Login";
+            public const string NoRecordsFound = "No Records Found";
+            public const string InvalidData = "Invalid Data";
+        }
+
 
     }
 
@@ -65,4 +72,5 @@ namespace DataAccessLayer.Model
             public const string Guid = "Guid";
         }
     }
+    
 }
