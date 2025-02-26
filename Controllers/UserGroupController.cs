@@ -39,7 +39,7 @@ namespace WebApi.Controllers
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if (!string.IsNullOrEmpty(response)) {
+                    //if (!string.IsNullOrEmpty(response)) {
                         await _auditLogService.LogAction("", "getAllUserPolicy", "");
                         var lstUserGroupModel = await _repo.UserGroupDALRepo.GetAllUserPolicy();
                         if (lstUserGroupModel != null && lstUserGroupModel.Count>0)
@@ -48,13 +48,13 @@ namespace WebApi.Controllers
                         }
                         else
                         {
-                            return BadRequest("No Records Found");
+                            return BadRequest(Common.Messages.NoRecordsFound);
                         }
-                    }
-                    else
-                    {
-                        return BadRequest("Try to Login");
-                    }
+                    //}
+                    //else
+                    //{
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
                     
                 }
             }
@@ -96,7 +96,7 @@ namespace WebApi.Controllers
                     } 
                     else
                     {
-                        return BadRequest("Try to Login");
+                        return BadRequest(Common.Messages.Login);
                     }
                     
                 }
@@ -144,7 +144,7 @@ namespace WebApi.Controllers
                     } 
                     else 
                     { 
-                        return BadRequest("Try To Login");
+                        return BadRequest(Common.Messages.Login);
                     }
                 }
                 return Ok();
@@ -162,7 +162,7 @@ namespace WebApi.Controllers
 
             if (UserGroup == null)
             {
-                return BadRequest("Invalid data.");
+                return BadRequest(Common.Messages.InvalidData);
             }
 
             try
@@ -206,7 +206,7 @@ namespace WebApi.Controllers
                     }
                     else
                     {
-                        return BadRequest("Try To Login");
+                        return BadRequest(Common.Messages.Login);
                     }
                 }
                 return Ok();
@@ -253,6 +253,10 @@ namespace WebApi.Controllers
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        return BadRequest(Common.Messages.Login);
                     }
                 }
                 return Ok();
