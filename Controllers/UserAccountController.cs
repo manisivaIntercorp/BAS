@@ -875,9 +875,9 @@ namespace WebApi.Controllers
         }
         // Unlock User
         [HttpPut("UnlockUser")]
-        public async Task<IActionResult> UnlockUser([FromBody] UnlockUser? listofunlock)
+        public async Task<IActionResult> UnlockUser([FromBody] UnlockUser? listOfUnlock)
         {
-            if (listofunlock == null)
+            if (listOfUnlock == null)
             {
                 return BadRequest("Invalid input data.");
             }
@@ -895,14 +895,14 @@ namespace WebApi.Controllers
                         if (!string.IsNullOrEmpty(response))
                         {
                             await _auditLogService.LogAction("", "UnlockUser", "");
-                            foreach (var UserGuid in listofunlock.Users ?? new List<UnlockUserList?>())
+                            foreach (var UserGuid in listOfUnlock.Users ?? new List<UnlockUserList?>())
                             {
-                                string? guiduser = await _guid.GetGUIDBasedOnUserGuid(UserGuid?.UserGuId);
-                                if(guiduser== UserGuid?.UserGuId)
+                                string? guidUser = await _guid.GetGUIDBasedOnUserGuid(UserGuid?.UserGuId);
+                                if(guidUser == UserGuid?.UserGuId)
                                 {
-                                    DataTable? dataTable = listofunlock?.ConvertToDataTable(listofunlock.Users ?? new List<UnlockUserList?>()) ?? new DataTable();
-                                    listofunlock.UpdatedBy = userId;
-                                    var result = await _repo.UserAccountDALRepo.UnlockUserAsync(listofunlock);
+                                    DataTable? dataTable = listOfUnlock?.ConvertToDataTable(listOfUnlock.Users ?? new List<UnlockUserList?>()) ?? new DataTable();
+                                    listOfUnlock.UpdatedBy = userId;
+                                    var result = await _repo.UserAccountDALRepo.UnlockUserAsync(listOfUnlock);
                                     var msg = "Unlock User successfully.";
                                     _repo.Commit();
                                     if (result.unlockuser != null)

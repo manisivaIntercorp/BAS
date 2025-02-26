@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SqlServer.Management.Smo;
 using System.Diagnostics.Eventing.Reader;
 using WebApi.Services;
+using WebApi.Services.Interface;
 
 namespace WebApi.Controllers
 {
@@ -19,12 +20,15 @@ namespace WebApi.Controllers
         private readonly IHttpContextAccessor _httpContextAccessor;
         private SessionService _sessionService;
         private GUID _guid;
-        public UserGroupController(ILogger<UserGroupController> logger,IHttpContextAccessor httpContextAccessor ,IConfiguration configuration, SessionService sessionService,GUID gUID) : base(configuration)
+        private readonly IAuditLogService _auditLogService;
+
+        public UserGroupController(ILogger<UserGroupController> logger,IHttpContextAccessor httpContextAccessor ,IConfiguration configuration, SessionService sessionService,GUID gUID, IAuditLogService auditLogService) : base(configuration)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _sessionService = sessionService;
             _guid = gUID;
+            _auditLogService = auditLogService;
 
         }
         [HttpGet("getAllUserPolicy")]
@@ -36,6 +40,7 @@ namespace WebApi.Controllers
                 {
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response)) {
+                        await _auditLogService.LogAction("", "getAllUserPolicy", "");
                         var lstUserGroupModel = await _repo.UserGroupDALRepo.GetAllUserPolicy();
                         if (lstUserGroupModel != null && lstUserGroupModel.Count>0)
                         {
@@ -59,15 +64,17 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("getUserPolicyByGuId/{GuId}")]
+        [HttpGet("getUserPolicyByGuId/{GUId}")]
         public async Task<IActionResult> GetUserGroupByGUId(string GUId)
         {
             try
             {
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
+
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response)) {
+                        await _auditLogService.LogAction("", "getUserPolicyByGuId", "");
                         string GuidUserPolicy = await _guid.GetGUIDBasedOnUserPolicy(GUId);
                         if(GuidUserPolicy==GUId)
                         {
@@ -110,6 +117,7 @@ namespace WebApi.Controllers
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response)) 
                     {
+                        await _auditLogService.LogAction("", "insertUserPolicy", "");
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         objModel.CreatedBy = userId;
@@ -164,6 +172,7 @@ namespace WebApi.Controllers
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
+                        await _auditLogService.LogAction("", "updateUserPolicy", "");
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         string UserPolicyGuid = await _guid.GetGUIDBasedOnUserPolicy(UserGroup.UserPolicyGuid);
@@ -221,6 +230,7 @@ namespace WebApi.Controllers
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response)) {
+                        await _auditLogService.LogAction("", "deleteUserPolicy", "");
                         foreach (var UserGuid in deleteUserGroup.DeleteDataTable)
                         {
                             var GuidResp = await _guid.GetGUIDBasedOnUserPolicy(UserGuid.UserPolicyGUID);
@@ -244,7 +254,6 @@ namespace WebApi.Controllers
                             }
                         }
                     }
-                     
                 }
                 return Ok();
             }
