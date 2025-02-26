@@ -73,7 +73,7 @@ namespace WebApi.Controllers
                 {
 
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if (!string.IsNullOrEmpty(response)) {
+                    //if (!string.IsNullOrEmpty(response)) {
                         await _auditLogService.LogAction("", "getUserPolicyByGuId", "");
                         string GuidUserPolicy = await _guid.GetGUIDBasedOnUserPolicy(GUId);
                         if(GuidUserPolicy==GUId)
@@ -93,11 +93,11 @@ namespace WebApi.Controllers
                             return BadRequest("Please Check Guid");
                         }
                         
-                    } 
-                    else
-                    {
-                        return BadRequest(Common.Messages.Login);
-                    }
+                    //} 
+                    //else
+                    //{
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
                     
                 }
             }
@@ -115,8 +115,8 @@ namespace WebApi.Controllers
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if (!string.IsNullOrEmpty(response)) 
-                    {
+                    //if (!string.IsNullOrEmpty(response)) 
+                    //{
                         await _auditLogService.LogAction("", "insertUserPolicy", "");
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
@@ -141,11 +141,11 @@ namespace WebApi.Controllers
                                 }
                             }
                         
-                    } 
-                    else 
-                    { 
-                        return BadRequest(Common.Messages.Login);
-                    }
+                    //} 
+                    //else 
+                    //{ 
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
                 }
                 return Ok();
             }
@@ -170,8 +170,8 @@ namespace WebApi.Controllers
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if (!string.IsNullOrEmpty(response))
-                    {
+                    //if (!string.IsNullOrEmpty(response))
+                    //{
                         await _auditLogService.LogAction("", "updateUserPolicy", "");
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
@@ -203,11 +203,11 @@ namespace WebApi.Controllers
                             return BadRequest("Please Check UserPolicy GUID");
                         }
                        
-                    }
-                    else
-                    {
-                        return BadRequest(Common.Messages.Login);
-                    }
+                    //}
+                    //else
+                    //{
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
                 }
                 return Ok();
             }
@@ -229,7 +229,8 @@ namespace WebApi.Controllers
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if (!string.IsNullOrEmpty(response)) {
+                    //if (!string.IsNullOrEmpty(response)) 
+                    //{
                         await _auditLogService.LogAction("", "deleteUserPolicy", "");
                         foreach (var UserGuid in deleteUserGroup.DeleteDataTable)
                         {
@@ -253,11 +254,11 @@ namespace WebApi.Controllers
                                 }
                             }
                         }
-                    }
-                    else
-                    {
-                        return BadRequest(Common.Messages.Login);
-                    }
+                    //}
+                    //else
+                    //{
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
                 }
                 return Ok();
             }
