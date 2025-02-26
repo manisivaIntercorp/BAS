@@ -130,10 +130,10 @@ namespace DataAccessLayer.Implementation
                 
                 if (model?.UserAccountOrgTable != null)
                 {
-                    foreach (DataRow row in model?.UserAccountOrgTable.Rows)
+                    foreach (DataRow row in model!.UserAccountOrgTable.Rows)
                     {
-                        var orgname = row["OrgName"] != DBNull.Value ? row["OrgName"]?.ToString() : null;
-                        if (string.IsNullOrEmpty(orgname) || row["OrgName"]?.ToString() == "string")
+                        var orgName = row["OrgName"] != DBNull.Value ? row["OrgName"]?.ToString() : null;
+                        if (string.IsNullOrEmpty(orgName) || row["OrgName"]?.ToString() == "string")
                         {
                             string? masterConnection = _configuration.GetConnectionString("connection");
                             Connection = new SqlConnection(masterConnection);
@@ -208,21 +208,21 @@ namespace DataAccessLayer.Implementation
                     transaction: Transaction,
                     commandType: CommandType.StoredProcedure);
 
-                model.UserPassword = EncryptShaAlg.Encrypt(vPassword);
+                model!.UserPassword = EncryptShaAlg.Encrypt(vPassword);
                 model.Guid = UserGuid;
 
                 long RetVal = parameters.Get<long?>("@RetVal") ?? -4;
-                model.UserId = (long?)parameters.Get<long?>("@RetVal") ?? -4;
+                model.UserId = parameters.Get<long?>("@RetVal") ?? -4;
                 string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
                 List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
                 if (RetVal >= 1)
                 {
                     if (model?.UserAccountOrgTable != null)
                     {
-                        foreach (DataRow row in model?.UserAccountOrgTable.Rows)
+                        foreach (DataRow row in model!.UserAccountOrgTable.Rows)
                         {
-                            var orgname = row["OrgName"] != DBNull.Value ? row["OrgName"]?.ToString() : null;
-                            if(orgname!="string")
+                            var orgName = row["OrgName"] != DBNull.Value ? row["OrgName"]?.ToString() : null;
+                            if(orgName != "string")
                             {
                                 // 🌟 Fetch Org Details and Change Connection
                                 OrgDetails = await GetOrgDetailsByUserId(Convert.ToInt32(RetVal));
@@ -249,7 +249,7 @@ namespace DataAccessLayer.Implementation
                                 }
 
                             }
-                            if (orgname =="string")
+                            if (orgName =="string")
                             {
                                 string? masterConnection = _configuration.GetConnectionString("connection");
                                 Connection = new SqlConnection(masterConnection);
@@ -317,22 +317,6 @@ namespace DataAccessLayer.Implementation
 
             var UserGuid = clientParameters.Get<string?>("@UserGuid");
             var vPassword = model?.UserPassword + UserGuid;
-
-
-            //DynamicParameters parameterPassword = new DynamicParameters();
-
-            //parameterPassword.Add("@UserId", model?.UserId);
-            //parameterPassword.Add("@UserName", model?.UserName);
-            //parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
-            //parameterPassword.Add("@Mode", "UPDATE_USER_PASSWORD");
-            //parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
-
-            //using var vPasswordUpdate = await Connection.QueryMultipleAsync(
-            //    "sp_UserAccountCreation",
-            //    parameterPassword,
-            //    transaction: Transaction,
-            //    commandType: CommandType.StoredProcedure);
-
             return (InsertedUsersClient, OrgDetails, RetValClient, MsgClient);
         }
 
