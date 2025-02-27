@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Model;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -16,61 +17,68 @@ namespace DataAccessLayer.Implementation
         
         }
 
-        public async Task<bool> DeleteNationality(int id)
+        public async Task<(bool deletenationality, List<DeleteNationalityResult> deleteResults)> DeleteNationality(long id, DeleteNationality deleteNationality)
         {
                 DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("@Id", id);
-            parameters.Add("@Mode", "DELETE");
-                var Result = await Connection.ExecuteAsync("sp_NationalityCreation",
+            parameters.Add("@tblNationality", JsonConvert.SerializeObject(deleteNationality.NationalityDeleteTable));
+            parameters.Add("@UpdatedBy", id);
+             parameters.Add("@Mode", Common.PageMode.DELETE);
+                var Result = await Connection.QueryMultipleAsync("sp_NationalityCreation",
                     parameters,
                     transaction: Transaction,
                     commandType: CommandType.StoredProcedure);
-                return Result > 0 ?true:false;
-            
+            List<DeleteNationalityResult> DeleteNationality = (await Result.ReadAsync<DeleteNationalityResult>()).ToList();
+            while (!Result.IsConsumed)
+            {
+                await Result.ReadAsync();
+            }
+
+            bool res = DeleteNationality.Any();
+            return (res, DeleteNationality.ToList());
         }
 
-        public async Task<List<NationalityModel>> GetAllNationality()
+        public async Task<List<GetNationalityModel>> GetAllNationality()
         {
             
                 DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("@Id", 0);
-                parameters.Add("@Mode", "GET");
+                parameters.Add("@NationalityGUId", string.Empty);
+                 parameters.Add("@Mode", Common.PageMode.GET);
                 var multi = await Connection.QueryMultipleAsync("sp_NationalityCreation",
                     parameters,
                     transaction: Transaction,
                     commandType: CommandType.StoredProcedure);
-                return multi.Read<NationalityModel>().ToList();
+                return multi.Read<GetNationalityModel>().ToList();
             
             
         }
 
-        public async Task<NationalityModel> GetNationalityById(int Id)
+        public async Task<GetNationalityModel?> GetNationalityByGUId(string GUId)
         {
-            
-                DynamicParameters parameters = new DynamicParameters();
-                 parameters.Add("@Id", Id);
-            parameters.Add("@Mode", "GET");
-            var multi = await Connection.QueryMultipleAsync("sp_NationalityCreation",
+            DynamicParameters parameters = new DynamicParameters();
+                 parameters.Add("@NationalityGUId", GUId);
+                  parameters.Add("@Mode", Common.PageMode.GET);
+                var multi = await Connection.QueryMultipleAsync("sp_NationalityCreation",
                     parameters,
                     transaction:Transaction,
                     commandType: CommandType.StoredProcedure);
-               var res = multi.Read<NationalityModel>().First();
+               var res = multi.Read<GetNationalityModel>().FirstOrDefault();
 
                 return res;
             
         }
 
-        public async Task<(bool Insertnationality, int RetVal, string Msg)> InsertUpdateNationality(NationalityModel model)
+        public async Task<(bool Insertnationality, long RetVal, string Msg)> InsertUpdateNationality(NationalityModel model)
         {
-                DynamicParameters parameters = new DynamicParameters();
-                parameters.Add("@Id", model.Id);
-                parameters.Add("@NationalityCode", model.NationalityCode);
-                parameters.Add("@Nationality", model.Nationality);
-                parameters.Add("@Active", model.Active);
-                parameters.Add("@Mode", "ADD");
-            // Declare output parameters explicitly
-            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+           DynamicParameters parameters = new DynamicParameters();
+           parameters.Add("@Id", model.Id);
+           parameters.Add("@UpdatedBy", model.CreatedBy);
+           parameters.Add("@NationalityCode", model.NationalityCode);
+           parameters.Add("@Nationality", model.Nationality);
+           parameters.Add("@Active", model.Active);
+            parameters.Add("@Mode", Common.PageMode.ADD);
+           // Declare output parameters explicitly
+           parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
+           parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
             var multi = await Connection.QueryMultipleAsync("sp_NationalityCreation",
                     parameters,
@@ -83,14 +91,14 @@ namespace DataAccessLayer.Implementation
             }
 
             bool res = nationalities.Any();
-            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            long RetVal = parameters.Get<long?>("@RetVal") ?? -4;
             string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
                 return (res, RetVal, Msg);
             
 
         }
 
-        public async Task<(bool Updatenationality, int RetVal, string Msg)> UpdateNationality(NationalityModel model)
+        public async Task<(bool Updatenationality, long RetVal, string Msg)> UpdateNationality(UpdateNationality model)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Id", model.Id);
@@ -98,22 +106,22 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Nationality", model.Nationality);
             parameters.Add("@Active", model.Active);
             parameters.Add("@UpdatedBy", model.CreatedBy);
-            parameters.Add("@Mode", "EDIT");
+             parameters.Add("@Mode", Common.PageMode.EDIT);
             // Declare output parameters explicitly
-            parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
+            parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             var multi = await Connection.QueryMultipleAsync("sp_NationalityCreation",
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            var nationalities = (await multi.ReadAsync<NationalityModel>()).ToList();
+            var nationalities = (await multi.ReadAsync<UpdateNationality>()).ToList();
             while (!multi.IsConsumed)
             {
                 await multi.ReadAsync();
             }
 
             bool res = nationalities.Any();
-            int RetVal = parameters.Get<int?>("@RetVal") ?? -4;
+            long RetVal = parameters.Get<long?>("@RetVal") ?? -4;
             string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
             return (res, RetVal, Msg);
         }
