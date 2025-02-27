@@ -56,7 +56,14 @@ namespace DataAccessLayer.Model
             public const string NoRecordsFound = "No Records Found";
             public const string InvalidData = "Invalid Data";
         }
-
+        public class PageMode
+        {
+            public const string EDIT = "EDIT";
+            public const string ADD = "ADD";
+            public const string DELETE = "DELETE";
+            public const string GET = "GET";
+            public const string VIEW ="VIEW";
+        }
 
     }
 
