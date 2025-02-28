@@ -16,6 +16,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Localization;
 
 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add session services
@@ -31,7 +32,7 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddHttpContextAccessor(); // Required for accessing session in services
 
 // Bind the connection string from configuration
-string connectionString = builder.Configuration.GetConnectionString("connection")?? 
+string connectionString = builder.Configuration.GetConnectionString("connection") ??
     throw new InvalidOperationException("Database connection string is missing."); ;
 
 // Register your other services (UoWs, EmailServices, etc.)
@@ -83,7 +84,7 @@ builder.Services.AddSwaggerGen(c =>
 // JWT Authentication setup
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var jwtKey = jwtSettings["Key"];  // Retrieves the Key value
-var keyBytes = Encoding.ASCII.GetBytes(jwtKey?.ToString()??"");
+var keyBytes = Encoding.ASCII.GetBytes(jwtKey?.ToString() ?? "");
 
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -94,7 +95,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new  SymmetricSecurityKey(keyBytes),
+            IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
             ValidateLifetime = true
         };
     });
@@ -129,37 +130,42 @@ builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddHttpContextAccessor();
 //AuditLog End
 
-// Add Localization
-builder.Services.AddLocalization(options => options.ResourcesPath = "");
+builder.Services.AddScoped<IUowTranslation>(provider =>
+    new UowTranslation(connectionString)
+);
 
-// Configure Supported Cultures
-var supportedCultures = new[]
-{
-    new CultureInfo("en"),
-    new CultureInfo("fr"),
-    new CultureInfo("ta"),
-    new CultureInfo("zh-CN")
-};
+
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+// Register TranslationService
+builder.Services.AddScoped<TranslationService>();
+
+//-----------------------
+builder.Services.AddControllers()
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization();
 
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
+    var supportedCultures = new[] { "en", "fr", "es", "ta-IN" };
     options.DefaultRequestCulture = new RequestCulture("en");
-    options.SupportedCultures = supportedCultures;
-    options.SupportedUICultures = supportedCultures;
+    options.SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
+    options.SupportedUICultures = options.SupportedCultures;
 });
-
-builder.Services.AddControllers();
+//-------------------------
 // Localization END
+
 
 var app = builder.Build();
 
-// Enable Localization Middleware
-var localizationOptions = app.Services.GetService<IOptions<RequestLocalizationOptions>>()?.Value;
-if (localizationOptions != null)
+using (var scope = app.Services.CreateScope())
 {
-    app.UseRequestLocalization(localizationOptions);
+    var translationService = scope.ServiceProvider.GetRequiredService<TranslationService>();
+    var uowTranslation = scope.ServiceProvider.GetRequiredService<IUowTranslation>();
+
+    await translationService.GenerateResourceFiles(uowTranslation);
 }
-// Localization END
+
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -182,6 +188,7 @@ app.UseSession();
 
 // Middleware pipeline
 app.UseMiddleware<ConnectionStringMiddleware>();
+
 
 //app.UseMiddleware<TokenBlacklistMiddleware>();  //Logout
 app.UseRouting();
