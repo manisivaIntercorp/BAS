@@ -202,6 +202,78 @@ namespace WebApi.Services
             return response;
         }
 
+        public async Task<string> GetGUIDBasedOnNationality(string? UpdatedGuidBy)
+        {
+            string response = string.Empty;
+            try
+            {
+                using (IUowGUID _repo = new UowGUID(_httpContextAccessor))
+                {
+                    var result = await _repo.GUIDDALRepo.GetGUIDBasedOnNationality(UpdatedGuidBy);
+
+                    _repo.Commit();
+                    if (result.GetGuid == true || result.GetGuid == false)
+                    {
+                        switch (result.RetVal)
+                        {
+                            case 1:// Success
+                                response = result.Msg;
+                                break;
+                            case 0:// Failure
+                                response = result.Msg;
+                                break;
+
+                            default:
+                                response = "Invalid User";
+                                break;
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing GUID: {ex.Message} - {ex.StackTrace}");
+            }
+            return response;
+        }
+
+        public async Task<string> GetGUIDBasedOnMailServer(string? UpdatedGuidBy)
+        {
+            string response = string.Empty;
+            try
+            {
+                using (IUowGUID _repo = new UowGUID(_httpContextAccessor))
+                {
+                    var result = await _repo.GUIDDALRepo.GetGUIDBasedOnMailServer(UpdatedGuidBy);
+
+                    _repo.Commit();
+                    if (result.GetGuid == true || result.GetGuid == false)
+                    {
+                        switch (result.RetVal)
+                        {
+                            case 1:// Success
+                                response = result.Msg;
+                                break;
+                            case 0:// Failure
+                                response = result.Msg;
+                                break;
+
+                            default:
+                                response = "Invalid User";
+                                break;
+
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error processing GUID: {ex.Message} - {ex.StackTrace}");
+            }
+            return response;
+        }
+
     }
 }
     
