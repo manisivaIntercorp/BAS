@@ -24,6 +24,7 @@ namespace DataAccessLayer.Model
             public const string IsAppuserTimeZone = "IsAppuserTimeZone";
             public const string conUserName = "conUserName";
             public const string conPassword = "conPassword";
+            public const string Culture = "Culture";
 
 
 
