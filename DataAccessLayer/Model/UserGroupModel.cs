@@ -37,7 +37,9 @@ namespace DataAccessLayer.Model
         public long PasswordExpiryAlertDays { get; set; }
         public string? RestrictPasswordReuse { get; set; }
         public string? Active { get; set; }
-        public long CreatedBy { get; set; }
+        public string? CreatedBy { get; set; }
+
+        public string? ModifiedBy { get; set; }
 
         public string? twoFAAuthentication { get; set; }
         public long LevelID { get; set; }

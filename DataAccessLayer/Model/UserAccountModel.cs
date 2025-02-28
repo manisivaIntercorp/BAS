@@ -94,6 +94,7 @@ namespace DataAccessLayer.Model
         public string? PasswordChange { get; set; }
         public DateTime? PasswordExpiryDate { get; set; }
         public string? AccountLocked { get; set; }
+        [JsonIgnore]
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
@@ -139,6 +140,74 @@ namespace DataAccessLayer.Model
     }
     public class UpdateUserAccountModel
     {
+        public DataTable UserAccountOrgTable = new DataTable();
+        public DataTable UserAccountRoleTable = new DataTable();
+        public DataTable ConvertToDataTable(List<RoleNameInUserAccount> models, long CreatedBy, string GUid)
+        {
+            // Define columns dynamically based on the model's properties
+            var properties = typeof(RoleNameInUserAccount).GetProperties();
+            UserAccountRoleTable.Columns.Add("UserGUID", typeof(string));
+            foreach (var property in properties)
+            {
+
+                UserAccountRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+            }
+            UserAccountRoleTable.Columns.Add("CreatedBy", typeof(Int64));
+            // Add rows dynamically based on the model data
+            foreach (var model in models)
+            {
+                DataRow row = UserAccountRoleTable.NewRow();
+                foreach (var property in properties)
+                {
+                    if (GUid == "")
+                    {
+                        row["UserGUID"] = "";
+                    }
+                    else if (GUid != "")
+                    {
+                        row["UserGUID"] = GUid;
+                    }
+
+                    row[property.Name] = property.GetValue(model) ?? DBNull.Value;
+                    row["CreatedBy"] = CreatedBy;
+
+                }
+                UserAccountRoleTable.Rows.Add(row);
+            }
+
+            return UserAccountRoleTable;
+        }
+        public DataTable ConvertToDataTable(List<UserAccountOrgDatatable> models, string GUid)
+        {
+            // Define columns dynamically based on the model's properties
+            var properties = typeof(UserAccountOrgDatatable).GetProperties();
+            UserAccountOrgTable.Columns.Add("UserGUID", typeof(string));
+            foreach (var property in properties)
+            {
+
+                UserAccountOrgTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+            }
+            // Add rows dynamically based on the model data
+            foreach (var model in models)
+            {
+                DataRow row = UserAccountOrgTable.NewRow();
+                foreach (var property in properties)
+                {
+                    if (GUid == "")
+                    {
+                        row["UserGUID"] = "";
+                    }
+                    else if (GUid !="")
+                    {
+                        row["UserGUID"] = GUid;
+                    }
+                    row[property.Name] = property.GetValue(model) ?? DBNull.Value;
+                }
+                UserAccountOrgTable.Rows.Add(row);
+            }
+
+            return UserAccountOrgTable;
+        }
         [JsonIgnore]
         public long? UserId { get; set; }
         public string? UserName { get; set; }
@@ -159,6 +228,7 @@ namespace DataAccessLayer.Model
         public string? PasswordChange { get; set; }
         public DateTime? PasswordExpiryDate { get; set; }
         public string? AccountLocked { get; set; }
+        [JsonIgnore]
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
@@ -263,12 +333,13 @@ namespace DataAccessLayer.Model
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? Password { get; set; }
+        [JsonIgnore]
         public long? CreatedBy { get; set; }
         public long? LevelID { get; set; }
         public long? LevelDetailID { get; set; }
         public string? TimeZoneID { get; set; }
         [JsonIgnore]
-        public string? Guid { get; set; }
+        public string? UserGuid { get; set; }
     }
     public class UserPolicyName
     {

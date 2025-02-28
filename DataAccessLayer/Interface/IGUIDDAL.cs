@@ -12,6 +12,9 @@ namespace DataAccessLayer.Interface
         Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnRoleGuid(string UserGuid);
         Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnOrgName(string UserGuid);
         Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnUserPolicy(string UserGuid);
+        Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnNationality(string UserGuid);
+        Task<(bool GetGuid, int RetVal, string Msg)> GetGUIDBasedOnMailServer(string UserGuid);
+
 
     }
 }

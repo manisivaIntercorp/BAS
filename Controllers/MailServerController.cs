@@ -11,15 +11,14 @@ namespace WebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NationalityController : ApiBaseController
+    public class MailServerController : ApiBaseController
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly IAuditLogService _auditLogService;
         private SessionService _sessionService;
         private GUID _guid;
-        private readonly ILogger<NationalityController> _logger;
-        
-        public NationalityController(ILogger<NationalityController> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IAuditLogService auditLogService,GUID gUID,SessionService sessionService) : base(configuration)
+        private readonly ILogger<MailServerController> _logger;
+        public MailServerController(ILogger<MailServerController> logger, IConfiguration configuration, IHttpContextAccessor httpContextAccessor, IAuditLogService auditLogService, GUID gUID, SessionService sessionService) : base(configuration)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
@@ -27,23 +26,21 @@ namespace WebApi.Controllers
             _guid = gUID;
             _sessionService = sessionService;
         }
-        
-
-        [HttpGet("getAllNationality")]
-        public async Task<IActionResult> GetAllNationality()
+        [HttpGet("getAllMailServer")]
+        public async Task<IActionResult> getAllMailServer()
         {
             try
             {
-                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
+                using (IUowMailServer _repo = new UowMailServer(_httpContextAccessor))
                 {
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if(!string.IsNullOrEmpty(response))
+                    if (!string.IsNullOrEmpty(response))
                     {
-                        await _auditLogService.LogAction("", "getAllNationality", "");
-                        var lstNationalityModel = await _repo.NationalityDALRepo.GetAllNationality();
-                        if (lstNationalityModel != null && lstNationalityModel.Count > 0)
+                        await _auditLogService.LogAction("", "getAllMailServer", "");
+                        var lstMailServerModel = await _repo.MailServerDALRepo.GetAllMailServer();
+                        if (lstMailServerModel != null && lstMailServerModel.Count > 0)
                         {
-                            return Ok(lstNationalityModel);
+                            return Ok(lstMailServerModel);
                         }
                         else
                         {
@@ -62,24 +59,24 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpGet("getNationalityByGUId/{GUId}")]
-        public async Task<IActionResult> getNationalityByGUId(string GUId)
+        [HttpGet("getMailServerByGUId/{GUId}")]
+        public async Task<IActionResult> getMailServerByGUId(string GUId)
         {
             try
             {
-                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
+                using (IUowMailServer _repo = new UowMailServer(_httpContextAccessor))
                 {
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
-                        await _auditLogService.LogAction("", "getNationalityByGUId", "");
-                        string GuidNationality = await _guid.GetGUIDBasedOnNationality(GUId);
-                        if (GuidNationality == GUId)
+                        await _auditLogService.LogAction("", "getMailServerByGUId", "");
+                        string GuidMailServer = await _guid.GetGUIDBasedOnMailServer(GUId);
+                        if (GuidMailServer == GUId)
                         {
-                            var objNationalityModel = await _repo.NationalityDALRepo.GetNationalityByGUId(GUId);
-                            if (objNationalityModel != null)
+                            var objMailServerModel = await _repo.MailServerDALRepo.GetMailServerByGUId(GUId);
+                            if (objMailServerModel != null)
                             {
-                                return Ok(objNationalityModel);
+                                return Ok(objMailServerModel);
                             }
                             else
                             {
@@ -88,14 +85,13 @@ namespace WebApi.Controllers
                         }
                         else
                         {
-                            return BadRequest("Please Check Nationality GUID");
+                            return BadRequest("Please Check Mail Server GUID");
                         }
                     }
                     else
                     {
                         return BadRequest(Common.Messages.Login);
                     }
-                    
                 }
             }
             catch (Exception ex)
@@ -104,23 +100,23 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpPost("insertNationality")]
-        public async Task<IActionResult> InsertNationality(NationalityModel objModel)
+        [HttpPost("insertMailServer")]
+        public async Task<IActionResult> InsertMailServer(MailServerModel objModel)
         {
             try
             {
-                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
+                using (IUowMailServer _repo = new UowMailServer(_httpContextAccessor))
                 {
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
-                        await _auditLogService.LogAction("", "insertNationality", "");
+                        await _auditLogService.LogAction("", "insertMailServer", "");
                         objModel.CreatedBy = userId;
-                        var result = await _repo.NationalityDALRepo.InsertUpdateNationality(objModel);
+                        var result = await _repo.MailServerDALRepo.InsertUpdateMailServer(objModel);
                         _repo.Commit();
-                        if (result.Insertnationality == true || result.Insertnationality == false)
+                        if (result.Insertmailserver == true || result.Insertmailserver == false)
                         {
                             switch (result.RetVal)
                             {
@@ -146,19 +142,19 @@ namespace WebApi.Controllers
                     return Ok();
                 }
             }
-            catch (Exception ex )
+            catch (Exception ex)
             {
                 _logger.LogError(ex.Message + "  " + ex.StackTrace);
                 throw;
             }
         }
 
-        [HttpPut("UpdateNationality")]
-        public async Task<IActionResult> UpdateNationality(UpdateNationality objModel)
+        [HttpPut("UpdateMailServer")]
+        public async Task<IActionResult> UpdateMailServer(UpdateMailServerModel objModel)
         {
             try
             {
-                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
+                using (IUowMailServer _repo = new UowMailServer(_httpContextAccessor))
                 {
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
@@ -166,10 +162,10 @@ namespace WebApi.Controllers
                     if (!string.IsNullOrEmpty(response))
                     {
                         objModel.CreatedBy = userId;
-                        await _auditLogService.LogAction("", "UpdateNationality", "");
-                        var result = await _repo.NationalityDALRepo.UpdateNationality(objModel);
+                        await _auditLogService.LogAction("", "UpdateMailServer", "");
+                        var result = await _repo.MailServerDALRepo.UpdateMailServer(objModel);
                         _repo.Commit();
-                        if (result.Updatenationality == true || result.Updatenationality == false)
+                        if (result.Updatemailserver == true || result.Updatemailserver == false)
                         {
                             switch (result.RetVal)
                             {
@@ -200,43 +196,43 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        [HttpDelete("deleteNationality")]
-        public async Task<IActionResult> DeleteNationality(DeleteNationality deleteNationality)
+        [HttpDelete("deleteMailServer")]
+        public async Task<IActionResult> DeleteMailServer(DeleteMailServer deleteMailServer)
         {
             try
             {
-                using (IUowNationality _repo = new UowNationality(_httpContextAccessor))
+                using (IUowMailServer _repo = new UowMailServer(_httpContextAccessor))
                 {
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     if (!string.IsNullOrEmpty(response))
                     {
-                        await _auditLogService.LogAction("", "deleteNationality", "");
-                        foreach (var UserGuid in deleteNationality.DeleteDataTable)
+                        await _auditLogService.LogAction("", "deleteMailServer", "");
+                        foreach (var UserGuid in deleteMailServer.DeleteDataTable)
                         {
-                            var GuidResp = await _guid.GetGUIDBasedOnNationality(UserGuid.NationalityGuid);
-                            if (GuidResp == UserGuid.NationalityGuid)
+                            var GuidResp = await _guid.GetGUIDBasedOnMailServer(UserGuid.MailServerGuid);
+                            if (GuidResp == UserGuid.MailServerGuid)
                             {
-                                DataTable dataTable = deleteNationality.ConvertToDataTable(deleteNationality.DeleteDataTable);
-                                var result = await _repo.NationalityDALRepo.DeleteNationality(userId, deleteNationality);
+                                DataTable dataTable = deleteMailServer.ConvertToDataTable(deleteMailServer.DeleteDataTable);
+                                var result = await _repo.MailServerDALRepo.DeleteMailServer(userId, deleteMailServer);
                                 _repo.Commit();
-                                if (result.deletenationality==true || result.deletenationality==false)
+                                if (result.deletemailserver == true || result.deletemailserver == false)
                                 {
                                     return Ok(result.deleteResults);
                                 }
                                 else
                                 {
                                     _logger.LogError(Environment.NewLine);
-                                    _logger.LogError("Bad Request occurred while accessing the DeleteNationality function in Nationality api controller");
+                                    _logger.LogError("Bad Request occurred while accessing the Delete MailServer function in Nationality api controller");
                                     return BadRequest();
                                 }
                             }
                             else
                             {
-                                return BadRequest("Please Check Nationality GUID");
+                                return BadRequest("Please Check Mail Server GUID");
                             }
-                            
+
                         }
                     }
                     else

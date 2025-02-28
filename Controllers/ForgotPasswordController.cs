@@ -60,8 +60,6 @@ namespace WebApi.Controllers
                                                                         Convert.ToInt64(result.Msg.ToString()),
                                                                         string.Empty);
                                     return Ok();
-                                    
-                                    
                                 case -1:// User Not Exists
                                     return Ok(result.Msg);
                                 
@@ -87,15 +85,14 @@ namespace WebApi.Controllers
         {
             try
             {
-                
                 using (IUowForgotPassword _repo = new UowForgotPassword(_httpContextAccessor))
                 {
                     var objvalidatetoken = await _repo.ForgotPasswordDALRepo.ValidateTokenForgotPassword(token);
                     if (objvalidatetoken != null)
                     {
-                        _SessionService.SetSession("@UserName", objvalidatetoken.UserName??string.Empty);
-                        _SessionService.SetSession("@UserID", Convert.ToString(objvalidatetoken.UserID) ?? "0");
-                        _SessionService.SetSession("@RefID",Convert.ToString(objvalidatetoken.ID) ??"0");
+                        _SessionService.SetSession(Common.SessionVariables.UserName, objvalidatetoken.UserName??string.Empty);
+                        _SessionService.SetSession(Common.SessionVariables.UserID, Convert.ToString(objvalidatetoken.UserID) ?? "0");
+                        _SessionService.SetSession(Common.SessionVariables.Token,Convert.ToString(objvalidatetoken.ID) ??"0");
                         return Ok(objvalidatetoken);
                     }
                     else
