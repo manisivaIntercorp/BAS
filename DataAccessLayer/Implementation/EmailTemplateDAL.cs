@@ -3,6 +3,7 @@ using DataAccessLayer.Interface;
 using DataAccessLayer.Services;
 using System.Data;
 using Microsoft.Data.SqlClient;
+using DataAccessLayer.Model;
 
 namespace DataAccessLayer.Implementation
 {
@@ -45,7 +46,7 @@ namespace DataAccessLayer.Implementation
                 connection.Open();
                 DynamicParameters parameters = new DynamicParameters();
 
-                parameters.Add("@Mode", "GET");
+                 parameters.Add("@Mode", Common.PageMode.GET);
                 parameters.Add("@ID", objMailServerConfig?.ID);
                 parameters.Add("@TimeZoneID", objMailServerConfig?.TimeZoneID);
                 var result = connection.QueryMultiple(
