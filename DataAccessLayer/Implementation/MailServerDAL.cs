@@ -75,7 +75,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@SMTP_Port", model.SMTP_Port);
             parameters.Add("@SSL_Required", model.SSL_Required);
             parameters.Add("@SetupName", model.SetupName);
-            parameters.Add("@IsDefault", model.IsDefault);
+            
              parameters.Add("@Mode", Common.PageMode.ADD);
             // Declare output parameters explicitly
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
@@ -92,7 +92,7 @@ namespace DataAccessLayer.Implementation
             }
 
             bool res = mailServer.Any();
-            long RetVal = parameters.Get<long?>("@RetVal") ?? -4;
+            long RetVal = parameters.Get<long>("@RetVal");
             string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
             return (res, RetVal, Msg);
         }
@@ -111,7 +111,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@SMTP_Port", model.SMTP_Port);
             parameters.Add("@SSL_Required", model.SSL_Required);
             parameters.Add("@SetupName", model.SetupName);
-            parameters.Add("@IsDefault", model.IsDefault);
+            parameters.Add("@MailServerGUId", model.MailServerGuid);
              parameters.Add("@Mode", Common.PageMode.EDIT);
             // Declare output parameters explicitly
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
@@ -127,7 +127,7 @@ namespace DataAccessLayer.Implementation
             }
 
             bool res = mailServerModels.Any();
-            long RetVal = parameters.Get<long?>("@RetVal") ?? -4;
+            long RetVal = parameters.Get<long>("@RetVal");
             string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
             return (res, RetVal, Msg);
         }
