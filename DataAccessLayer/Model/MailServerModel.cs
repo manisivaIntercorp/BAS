@@ -21,8 +21,6 @@ namespace DataAccessLayer.Model
         public long? CreatedBy {  get; set; }
         public string? Active {  get; set; }
         public string? SetupName {  get; set; }
-        public string? IsDefault {  get; set; }
-        
     }
     public class GetMailServerModel
     {
@@ -58,8 +56,6 @@ namespace DataAccessLayer.Model
         public long? CreatedBy { get; set; }
         public string? Active { get; set; }
         public string? SetupName { get; set; }
-        public string? IsDefault { get; set; }
-        
         public string? MailServerGuid { get; set; }
     }
     public class DeleteMailServer
