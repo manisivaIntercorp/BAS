@@ -16,7 +16,7 @@ namespace DataAccessLayer.Implementation
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@tblDelete", JsonConvert.SerializeObject(deleteUserPolicy.UserGroupDeleteTable));
             parameters.Add("@UpdatedBy", UpdatedBy);
-            parameters.Add("@Mode", "DELETE");
+             parameters.Add("@Mode", Common.PageMode.DELETE);
             var Result = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
                 transaction: Transaction,
@@ -39,7 +39,7 @@ namespace DataAccessLayer.Implementation
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserGroupGUID", string.Empty);
-            parameters.Add("@Mode", "GET");
+             parameters.Add("@Mode", Common.PageMode.GET);
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
                 transaction: Transaction,
@@ -51,7 +51,7 @@ namespace DataAccessLayer.Implementation
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserGroupGUID", GUId);
-            parameters.Add("@Mode", "GET");
+             parameters.Add("@Mode", Common.PageMode.GET);
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,
                 transaction: Transaction,
@@ -82,7 +82,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LevelID",model?.LevelID);
             parameters.Add("@IdpUser", model?.IdpBasedUser);
             
-            parameters.Add("@Mode", "ADD");
+             parameters.Add("@Mode", Common.PageMode.ADD);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
@@ -123,7 +123,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LevelID", model?.LevelID);
             parameters.Add("@IdpUser", model?.IdpBasedUser);
             parameters.Add("@UserGroupGUID", model?.UserPolicyGuid);
-            parameters.Add("@Mode", "EDIT");
+             parameters.Add("@Mode", Common.PageMode.EDIT);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
