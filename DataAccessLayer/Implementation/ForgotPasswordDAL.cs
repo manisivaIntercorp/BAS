@@ -20,7 +20,7 @@ namespace DataAccessLayer.Implementation
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserName", model.UserName);
             parameters.Add("@Token", model.Token);
-            parameters.Add("@Mode", "ADD");
+             parameters.Add("@Mode", Common.PageMode.ADD);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@RetMsg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             using (var result = await Connection.QueryMultipleAsync("sp_ForgotPassword",
