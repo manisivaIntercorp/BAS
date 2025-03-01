@@ -21,7 +21,7 @@ namespace DataAccessLayer.Implementation
             //try {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@LanguageId", Id);
-            parameters.Add("@Mode", "DELETE");
+             parameters.Add("@Mode", Common.PageMode.DELETE);
             var Result = await Connection.ExecuteAsync("sp_LanguageCreation",
                 parameters,
                 transaction: Transaction,
@@ -39,7 +39,7 @@ namespace DataAccessLayer.Implementation
         {
             DynamicParameters parameters = new DynamicParameters();
              parameters.Add("@LanguageId", 0);
-            parameters.Add("@Mode", "GET");
+             parameters.Add("@Mode", Common.PageMode.GET);
             var multi = await Connection.QueryMultipleAsync("sp_LanguageCreation",
                 parameters,
                 transaction: Transaction,
@@ -63,7 +63,7 @@ namespace DataAccessLayer.Implementation
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@LanguageId", Id);
-            parameters.Add("@Mode", "GET");
+             parameters.Add("@Mode", Common.PageMode.GET);
             var multi = await Connection.QueryMultipleAsync("sp_LanguageCreation",
                 parameters,
                 transaction: Transaction,
@@ -81,7 +81,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LanguageName", model.LanguageName);
             parameters.Add("@Active", model.Active);
             parameters.Add("@UpdatedBy", model.CreatedBy);
-            parameters.Add("@Mode", "ADD");
+             parameters.Add("@Mode", Common.PageMode.ADD);
             var multi = await Connection.ExecuteAsync("sp_LanguageCreation",
                 parameters,
                 transaction: Transaction,
@@ -98,7 +98,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LanguageName", model.LanguageName);
             parameters.Add("@Active", model.Active);
             parameters.Add("@UpdatedBy", model.CreatedBy);
-            parameters.Add("@Mode", "EDIT");
+             parameters.Add("@Mode", Common.PageMode.EDIT);
             var multi = await Connection.ExecuteAsync("sp_LanguageCreation",
                 parameters,
                 transaction: Transaction,
