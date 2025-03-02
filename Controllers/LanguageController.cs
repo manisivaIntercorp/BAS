@@ -22,58 +22,6 @@ namespace WebApi.Controllers
             _httpContextAccessor = httpContextAccessor;
             
         }
-        //[HttpGet("getAllLanguageinDropdown")]
-        //public async Task<IActionResult> GetAllLanguageinDropdown([FromQuery] LanguageNameEnum language)
-        //{
-        //    try
-        //    {
-        //        using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
-        //        {
-        //            var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguageinDropdown();
-        //            if (lstLanguageModel != null)
-        //            {
-        //                var languages = LanguageName.GetAllLanguages();
-        //                return Ok(lstLanguageModel);
-        //            }
-        //            else
-        //            {
-        //                return BadRequest();
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex.Message + "  " + ex.StackTrace);
-        //        throw;
-        //    }
-        //}
-
-        //[HttpPost("getAllLanguageinDropdown")]
-        //public async Task<IActionResult> InsertAllLanguageinDropdown([FromQuery] LanguageNameEnum language)
-        //{
-        //    try
-        //    {
-        //        using (IUowLanguage _repo = new UowLanguage(_httpContextAccessor))
-        //        {
-        //            var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguageinDropdown();
-        //            if (lstLanguageModel != null)
-        //            {
-        //                var languages = LanguageName.GetAllLanguages();
-        //                return Ok(lstLanguageModel);
-        //            }
-        //            else
-        //            {
-        //                return BadRequest();
-        //            }
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        _logger.LogError(ex.Message + "  " + ex.StackTrace);
-        //        throw;
-        //    }
-        //}
-
         [HttpGet("getAllLanguage")]
         public async Task<IActionResult> GetAllLanguage()
         {
@@ -84,13 +32,20 @@ namespace WebApi.Controllers
                     var lstLanguageModel = await _repo.LanguageDALRepo.GetAllLanguage();
                     if (lstLanguageModel != null)
                     {
-                        return Ok(lstLanguageModel);
-                    }
-                    else
-                    {
-                        return BadRequest();
+                        switch (lstLanguageModel.Count)
+                        {
+                            case > 0:
+                                return Ok(lstLanguageModel);
+                            case 0:
+                                return BadRequest(Common.Messages.NoRecordsFound);
+                            default:
+                                return BadRequest();
+
+                        }
+                        
                     }
                 }
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -156,7 +111,7 @@ namespace WebApi.Controllers
 
             if (objModel == null || id != objModel.LanguageID)
             {
-                return BadRequest("Invalid data.");
+                return BadRequest(Common.Messages.InvalidData);
             }
             else
             {
