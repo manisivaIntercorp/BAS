@@ -119,7 +119,7 @@ namespace WebApi.Controllers
 
             if (Guid == null || Guid != Org.CustomerGuid)
             {
-                return BadRequest("Invalid data.");
+                return BadRequest(Common.Messages.InvalidData);
             }
 
             try
