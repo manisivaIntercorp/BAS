@@ -122,8 +122,7 @@ namespace WebApi.Controllers
                             {
                                 case 1://Success
                                     return Ok(result.Msg);
-                                case -2:// Failure in Nationality Name
-                                    return Ok(result.Msg);
+                                
                                 case -1:// Failure in Nationality Name
                                     return Ok(result.Msg);
                                 default:
@@ -171,8 +170,7 @@ namespace WebApi.Controllers
                             {
                                 case 1://Success
                                     return Ok(result.Msg);
-                                case -2:// Failure in Nationality Name
-                                    return Ok(result.Msg);
+                                
                                 case -1:// Failure in Nationality Name
                                     return Ok(result.Msg);
                                 default:
