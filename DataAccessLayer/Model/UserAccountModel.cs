@@ -85,7 +85,7 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
-        public string? TimeZoneID { get; set; }
+        public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
@@ -103,10 +103,10 @@ namespace DataAccessLayer.Model
         [JsonIgnore]
         public long CreatedBy { get; set; }
         public long ProfileID { get; set; }
+        public DateOnly? UserExpiryDate { get; set; }
+
     }
-
-
-    public class GetUserAccountModel
+   public class GetUserAccountModel
     {
         
         public long? UserId { get; set; }
@@ -119,7 +119,7 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
-        public string? TimeZoneID { get; set; }
+        public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
@@ -219,7 +219,7 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
-        public string? TimeZoneID { get; set; }
+        public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
@@ -342,6 +342,16 @@ namespace DataAccessLayer.Model
         public string? UserGuid { get; set; }
     }
     public class UserPolicyName
+    {
+        public string? Value { get; set; }
+        public string? Text { get; set; }
+    }
+    public class UserLanguageName
+    {
+        public string? Value { get; set; }
+        public string? Text { get; set; }
+    }
+    public class UserTimeZoneName
     {
         public string? Value { get; set; }
         public string? Text { get; set; }
