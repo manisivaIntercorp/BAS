@@ -8,8 +8,11 @@ namespace DataAccessLayer.Interface
 
         Task<List<UserPolicyName?>> getAllUserPolicyInDropdown();
 
-        Task<List<GetRoleName?>> getAllUserRoleInDropdown();
+        Task<List<UserLanguageName?>> getAllUserLanguageInDropdown();
+        Task<List<UserTimeZoneName?>> getAllUserTimeZoneInDropdown();
 
+        Task<List<GetRoleName?>> getAllUserRoleInDropdown();
+        Task<(List<UserAccountModel?> InsertedUsers,  long? RetVal, string? Msg)> InsertCheckUserAccount(UserAccountModel? UM);
         Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? UM);
 
         Task<(List<DeleteRoleName?> deleteroles, int? RetVal, string? Msg)> DeleteRoleInUserAccount(DeleteRoleName RM);
