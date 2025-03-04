@@ -4,21 +4,54 @@ using DataAccessLayer.Services;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using DataAccessLayer.Model;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 
 namespace DataAccessLayer.Implementation
 {
     public class GUIDDAL: RepositoryBase, IGUIDDAL
     {
         private readonly IDbTransaction? _transaction;
-        
+        private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly string? _connectionString;
-        public GUIDDAL(IDbTransaction? transaction, string? connectionString) : base(transaction)
+        public GUIDDAL(IDbTransaction? transaction, string? connectionString, IConfiguration configuration) : base(transaction)
         {
             _connectionString = connectionString;
             _transaction = transaction;
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         }
+
+        public GUIDDAL(IHttpContextAccessor httpContextAccessor, IConfiguration configuration)
+            : base(new SqlConnection(configuration.GetConnectionString("connection"))) // ✅ Always Start with Master DB
+        {
+            _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            
+            SetDynamicConnection();
+        }
+        private void SetDynamicConnection()
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+
+            if (httpContext != null && httpContext.Items.ContainsKey("connection"))
+            {
+                string dynamicConnectionString = httpContext.Items["connection"] as string ?? string.Empty;
+
+                if (!string.IsNullOrEmpty(dynamicConnectionString))
+                {
+                    Connection = new SqlConnection(dynamicConnectionString);
+                }
+            }
+        }
+        
         public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUID(string? UserGuid)
         {
+            if (Connection.Database == "master")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "GET_USERGUID");
             parameters.Add("@UpdatedBy", UserGuid);
