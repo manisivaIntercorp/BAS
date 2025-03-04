@@ -223,8 +223,6 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Tenant", model?.Tenant);
             parameters.Add("@TempDeactive", model?.TempDeactive);
             parameters.Add("@EmailID", model?.emailID);
-            parameters.Add("@SystemUser", model?.SystemUser);
-            parameters.Add("@ProfileUser", model?.ProfileUser);
             parameters.Add("@PlatformUser", model?.PlatformUser);
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
@@ -359,9 +357,7 @@ namespace DataAccessLayer.Implementation
             clientParameters.Add("@Tenant", model?.Tenant);
             clientParameters.Add("@TempDeactive", model?.TempDeactive);
             clientParameters.Add("@EmailID", model?.emailID);
-            clientParameters.Add("@SystemUser", model?.SystemUser);
             clientParameters.Add("@UserGuid", model?.Guid);
-            clientParameters.Add("@ProfileUser", model?.ProfileUser);
             clientParameters.Add("@PlatformUser", model?.PlatformUser);
             clientParameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             clientParameters.Add("@UpdatedBy", model?.CreatedBy);
@@ -619,8 +615,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Tenant", model?.Tenant);
             parameters.Add("@TempDeactive", model?.TempDeactive);
             parameters.Add("@EmailID", model?.emailID);
-            parameters.Add("@SystemUser", model?.SystemUser);
-            parameters.Add("@ProfileUser", model?.ProfileUser);
+            
             parameters.Add("@PlatformUser", model?.PlatformUser);
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
@@ -750,8 +745,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Tenant", model?.Tenant);
             parameters.Add("@TempDeactive", model?.TempDeactive);
             parameters.Add("@EmailID", model?.emailID);
-            parameters.Add("@SystemUser", model?.SystemUser);
-            parameters.Add("@ProfileUser", model?.ProfileUser);
+            
             parameters.Add("@PlatformUser", model?.PlatformUser);
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
@@ -858,8 +852,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Tenant", model?.Tenant);
             parameters.Add("@TempDeactive", model?.TempDeactive);
             parameters.Add("@EmailID", model?.emailID);
-            parameters.Add("@SystemUser", model?.SystemUser);
-            parameters.Add("@ProfileUser", model?.ProfileUser);
+            
             parameters.Add("@PlatformUser", model?.PlatformUser);
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
