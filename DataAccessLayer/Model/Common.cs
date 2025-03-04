@@ -64,6 +64,12 @@ namespace DataAccessLayer.Model
             public const string DELETE = "DELETE";
             public const string GET = "GET";
             public const string VIEW ="VIEW";
+            public const string USER_GROUP = "USER_GROUP";
+            public const string GET_MASTER_LANGUAGE = "GET_MASTER_LANGUAGE";
+            public const string USER_ROLE= "USER_ROLE";
+            public const string GET_DETAIL= "GET_DETAIL";
+            public const string GET_ORG= "GET_ORG";
+            public const string GET_TIMEZONE= "GET_TIMEZONE";
         }
 
     }
