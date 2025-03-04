@@ -85,6 +85,7 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
+        [JsonIgnore]
         public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
@@ -98,8 +99,7 @@ namespace DataAccessLayer.Model
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
-        public string? SystemUser { get; set; }
-        public string? ProfileUser { get; set; }
+        
         [JsonIgnore]
         public long CreatedBy { get; set; }
         public long ProfileID { get; set; }
@@ -119,6 +119,7 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
+        [JsonIgnore]
         public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
@@ -131,8 +132,6 @@ namespace DataAccessLayer.Model
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
-        public string? SystemUser { get; set; }
-        public string? ProfileUser { get; set; }
         
         public string? CreatedBy { get; set; }
         public long ProfileID { get; set; }
@@ -219,6 +218,7 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
+        [JsonIgnore]
         public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
@@ -232,8 +232,7 @@ namespace DataAccessLayer.Model
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
-        public string? SystemUser { get; set; }
-        public string? ProfileUser { get; set; }
+        
         [JsonIgnore]
         public long? CreatedBy { get; set; }
         public long ProfileID { get; set; }
