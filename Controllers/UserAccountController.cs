@@ -341,7 +341,7 @@ namespace WebApi.Controllers
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    
+                    objModel.UserAccount.CreatedBy = userId;
                     if (!string.IsNullOrEmpty(response))
                     {
                         await _auditLogService.LogAction("", "InsertUserAccount", "");
