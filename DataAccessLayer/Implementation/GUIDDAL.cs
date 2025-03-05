@@ -43,15 +43,20 @@ namespace DataAccessLayer.Implementation
                     Connection = new SqlConnection(dynamicConnectionString);
                 }
             }
-        }
-        
-        public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUID(string? UserGuid)
-        {
             if (Connection.Database == "master")
             {
                 string? masterConnection = _configuration.GetConnectionString("connection");
                 Connection = new SqlConnection(masterConnection);
             }
+            if (Connection.Database != "MasterData")
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
+        }
+        
+        public async Task<(bool GetGuid, int RetVal, string Msg)> GetGUID(string? UserGuid)
+        {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@Mode", "GET_USERGUID");
             parameters.Add("@UpdatedBy", UserGuid);
