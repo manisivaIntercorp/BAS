@@ -4,7 +4,7 @@ namespace DataAccessLayer.Interface
 {
     public interface IUserAccountDAL
     {
-        Task<List<GetUserAccountModel?>> GetAllUserAccount();
+        Task<List<GetUserAccountModel?>> GetAllUserAccount(long UpdatedBy);
 
         Task<List<UserPolicyName?>> getAllUserPolicyInDropdown();
 
