@@ -70,6 +70,11 @@ namespace DataAccessLayer.Model
             public const string GET_DETAIL= "GET_DETAIL";
             public const string GET_ORG= "GET_ORG";
             public const string GET_TIMEZONE= "GET_TIMEZONE";
+            public const string DELETE_ROLE= "DELETE_ROLE";
+            public const string UNLOCK= "UNLOCK";
+            public const string ADD_ROLE= "ADD_ROLE";
+            public const string UPDATE_USER_PASSWORD= "UPDATE_USER_PASSWORD";
+            public const string RESET_PWD_MASTER= "RESET_PWD_MASTER";
         }
 
     }
