@@ -91,7 +91,7 @@ namespace DataAccessLayer.Implementation
             }
 
             bool res = nationalities.Any();
-            long RetVal = parameters.Get<long?>("@RetVal") ?? -4;
+            long RetVal = parameters.Get<long>("@RetVal");
             string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
                 return (res, RetVal, Msg);
             
@@ -121,7 +121,7 @@ namespace DataAccessLayer.Implementation
             }
 
             bool res = nationalities.Any();
-            long RetVal = parameters.Get<long?>("@RetVal") ?? -4;
+            long RetVal = parameters.Get<long>("@RetVal");
             string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
             return (res, RetVal, Msg);
         }

@@ -147,8 +147,10 @@ namespace DataAccessLayer.Uow.Implementation
         }
         public void Commit()
         {
+            if (transaction == null)
+                throw new InvalidOperationException("No transaction available to commit.");
             try
-            {
+            {                
                 transaction.Commit();
             }
             catch
@@ -178,7 +180,7 @@ namespace DataAccessLayer.Uow.Implementation
                     if (transaction != null)
                     {
                         transaction.Dispose();
-                        //  transaction = null;
+                        
                     }
                     if (connection != null)
                     {

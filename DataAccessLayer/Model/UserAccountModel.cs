@@ -12,13 +12,32 @@ namespace DataAccessLayer.Model
         {
             // Define columns dynamically based on the model's properties
             var properties = typeof(RoleNameInUserAccount).GetProperties();
-            UserAccountRoleTable.Columns.Add("UserID", typeof(Int64));
+            if (UserAccountRoleTable.Columns.Contains("UserID"))
+            {
+                UserAccountRoleTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleTable.Columns.Add("UserID", typeof(Int64));
+            }
+            
             foreach (var property in properties)
             {
-
-                UserAccountRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                if (!UserAccountRoleTable.Columns.Contains(property.Name))
+                {
+                    UserAccountRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                }
+                    
             }
-            UserAccountRoleTable.Columns.Add("CreatedBy", typeof(Int64));
+            if (UserAccountRoleTable.Columns.Contains("CreatedBy"))
+            {
+                UserAccountRoleTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleTable.Columns.Add("CreatedBy", typeof(Int64));
+            }
+            
             // Add rows dynamically based on the model data
             foreach (var model in models)
             {
@@ -47,11 +66,21 @@ namespace DataAccessLayer.Model
         {
             // Define columns dynamically based on the model's properties
             var properties = typeof(UserAccountOrgDatatable).GetProperties();
-            UserAccountOrgTable.Columns.Add("UserID", typeof(Int64));
+            if (UserAccountOrgTable.Columns.Contains("UserID"))
+            {
+                UserAccountOrgTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountOrgTable.Columns.Add("UserID", typeof(Int64));
+            }
+            
             foreach (var property in properties)
             {
-
-                UserAccountOrgTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                if (!UserAccountOrgTable.Columns.Contains(property.Name))
+                {
+                    UserAccountOrgTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                }
             }
             // Add rows dynamically based on the model data
             foreach (var model in models)
@@ -85,7 +114,8 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
-        public string? TimeZoneID { get; set; }
+        [JsonIgnore]
+        public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
@@ -98,15 +128,14 @@ namespace DataAccessLayer.Model
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
-        public string? SystemUser { get; set; }
-        public string? ProfileUser { get; set; }
+        
         [JsonIgnore]
         public long CreatedBy { get; set; }
         public long ProfileID { get; set; }
+        public DateOnly? UserExpiryDate { get; set; }
+
     }
-
-
-    public class GetUserAccountModel
+   public class GetUserAccountModel
     {
         
         public long? UserId { get; set; }
@@ -119,7 +148,8 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
-        public string? TimeZoneID { get; set; }
+        [JsonIgnore]
+        public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
@@ -131,8 +161,6 @@ namespace DataAccessLayer.Model
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
-        public string? SystemUser { get; set; }
-        public string? ProfileUser { get; set; }
         
         public string? CreatedBy { get; set; }
         public long ProfileID { get; set; }
@@ -146,13 +174,30 @@ namespace DataAccessLayer.Model
         {
             // Define columns dynamically based on the model's properties
             var properties = typeof(RoleNameInUserAccount).GetProperties();
-            UserAccountRoleTable.Columns.Add("UserGUID", typeof(string));
+            if (UserAccountRoleTable.Columns.Contains("UserGUID"))
+            {
+                UserAccountRoleTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountRoleTable.Columns.Add("UserGUID", typeof(string));
+
+            }
             foreach (var property in properties)
             {
-
-                UserAccountRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                if (!UserAccountRoleTable.Columns.Contains(property.Name))
+                {
+                    UserAccountRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                }
             }
-            UserAccountRoleTable.Columns.Add("CreatedBy", typeof(Int64));
+            if (UserAccountRoleTable.Columns.Contains("CreatedBy"))
+            {
+                UserAccountRoleTable.Rows.Clear();
+            }
+            else {
+                UserAccountRoleTable.Columns.Add("CreatedBy", typeof(Int64));
+            }
+            
             // Add rows dynamically based on the model data
             foreach (var model in models)
             {
@@ -181,11 +226,21 @@ namespace DataAccessLayer.Model
         {
             // Define columns dynamically based on the model's properties
             var properties = typeof(UserAccountOrgDatatable).GetProperties();
-            UserAccountOrgTable.Columns.Add("UserGUID", typeof(string));
+            if (UserAccountOrgTable.Columns.Contains("UserGUID"))
+            {
+                UserAccountOrgTable.Rows.Clear();
+            }
+            else
+            {
+                UserAccountOrgTable.Columns.Add("UserGUID", typeof(string));
+            }
+            
             foreach (var property in properties)
             {
-
-                UserAccountOrgTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                if (!UserAccountOrgTable.Columns.Contains(property.Name))
+                {
+                    UserAccountOrgTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                }
             }
             // Add rows dynamically based on the model data
             foreach (var model in models)
@@ -219,7 +274,8 @@ namespace DataAccessLayer.Model
         public string? Vendor { get; set; }
         public string? DisplayName { get; set; }
         public long LanguageID { get; set; }
-        public string? TimeZoneID { get; set; }
+        [JsonIgnore]
+        public long TimeZoneID { get; set; }
         [EmailAddress]
         public string? emailID { get; set; }
         public string? ContactNo { get; set; }
@@ -232,8 +288,7 @@ namespace DataAccessLayer.Model
         public int Tenant { get; set; }
         public string? Active { get; set; }
         public string? TempDeactive { get; set; }
-        public string? SystemUser { get; set; }
-        public string? ProfileUser { get; set; }
+        
         [JsonIgnore]
         public long? CreatedBy { get; set; }
         public long ProfileID { get; set; }
@@ -287,7 +342,11 @@ namespace DataAccessLayer.Model
             var properties = typeof(DeleteRoleNameInList).GetProperties();
             foreach (var property in properties)
             {
-                UserAccountDeleteRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                if (!UserAccountDeleteRoleTable.Columns.Contains(property.Name))
+                {
+                    UserAccountDeleteRoleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                }
+                
             }
             // Add rows dynamically based on the model data
             foreach (var model in models)
@@ -295,7 +354,6 @@ namespace DataAccessLayer.Model
                 DataRow row = UserAccountDeleteRoleTable.NewRow();
                 foreach (var property in properties)
                 {
-
                     row[property.Name] = property.GetValue(model) ?? DBNull.Value;
                 }
                 UserAccountDeleteRoleTable.Rows.Add(row);
@@ -337,11 +395,21 @@ namespace DataAccessLayer.Model
         public long? CreatedBy { get; set; }
         public long? LevelID { get; set; }
         public long? LevelDetailID { get; set; }
-        public string? TimeZoneID { get; set; }
+        
         [JsonIgnore]
         public string? UserGuid { get; set; }
     }
     public class UserPolicyName
+    {
+        public string? Value { get; set; }
+        public string? Text { get; set; }
+    }
+    public class UserLanguageName
+    {
+        public string? Value { get; set; }
+        public string? Text { get; set; }
+    }
+    public class UserTimeZoneName
     {
         public string? Value { get; set; }
         public string? Text { get; set; }
@@ -402,8 +470,10 @@ namespace DataAccessLayer.Model
             var properties = typeof(UnlockUserList).GetProperties();
             foreach (var property in properties)
             {
-
-                UnlockTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                if (!UnlockTable.Columns.Contains(property.Name))
+                {
+                    UnlockTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
+                }
             }
             // Add rows dynamically based on the model data
             foreach (var model in models)

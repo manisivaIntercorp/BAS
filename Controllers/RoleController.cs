@@ -9,6 +9,7 @@ using System;
 using System.Data;
 using System.Diagnostics.Eventing.Reader;
 using WebApi.Services;
+using WebApi.Services.Interface;
 
 namespace WebApi.Controllers
 {
@@ -18,18 +19,18 @@ namespace WebApi.Controllers
     {
         private readonly ILogger<RoleController> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IAuditLogService _auditLogService;
         private SessionService _sessionService;
         private GUID _guid;
         
-        public RoleController(ILogger<RoleController> logger, IConfiguration configuration,IHttpContextAccessor httpContextAccessor, SessionService sessionService, GUID guid) : base(configuration)
+        public RoleController(ILogger<RoleController> logger, IConfiguration configuration,IHttpContextAccessor httpContextAccessor, SessionService sessionService, GUID guid,IAuditLogService auditLogService) : base(configuration)
         {
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
             _sessionService = sessionService;
             _guid = guid;
-            
-            //var logPath = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
-            //NLog.GlobalDiagnosticsContext.Set("LoggingDirectory", logPath);
+            _auditLogService = auditLogService;
+           
         }
         [HttpGet("getAllRole")]
         public async Task<IActionResult> GetAllRole()
@@ -38,9 +39,10 @@ namespace WebApi.Controllers
             {
                 using (IUowRole _repo = new UowRole(_httpContextAccessor))
                 {
-                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if (!string.IsNullOrEmpty(response))
-                    {
+                    //string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    //if (!string.IsNullOrEmpty(response))
+                    //{
+                        await _auditLogService.LogAction("", "getAllRole", "");
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         var lstRoleModel = await _repo.RoleDALRepo.GetAllRole(userId);
@@ -50,13 +52,13 @@ namespace WebApi.Controllers
                         }
                         else
                         {
-                            return BadRequest("No Records Found");
+                            return BadRequest(Common.Messages.NoRecordsFound);
                         }
-                    }
-                    else
-                    {
-                        return NotFound("Try to Login");
-                    }
+                    //}
+                    //else
+                    //{
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
                 }
             }
             catch (Exception ex)
@@ -76,9 +78,10 @@ namespace WebApi.Controllers
                 {
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if (!string.IsNullOrEmpty(response))
-                    {
+                    //string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    //if (!string.IsNullOrEmpty(response))
+                    //{
+                        await _auditLogService.LogAction("", "getModulesBasedOnRole", "");
                         string? guidresp = await _guid.GetGUIDBasedOnUserRoleGuid(RoleGUID);
                         if (guidresp == RoleGUID)
                         {
@@ -95,18 +98,18 @@ namespace WebApi.Controllers
                             }
                             else
                             {
-                                return BadRequest("No Records Found");
+                                return BadRequest(Common.Messages.NoRecordsFound);
                             }
                         }
                         else
                         {
                             return BadRequest("Please Check Role Guid");
                         }
-                    }
-                    else
-                    {
-                        return BadRequest("Try to Login");
-                    }
+                    //}
+                    //else
+                    //{
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
                     
                 }
                 
@@ -118,8 +121,8 @@ namespace WebApi.Controllers
             }
         }
         
-        [HttpPost("InsertUpdateRole")]
-        public async Task<IActionResult> InsertUpdateRole(RoleUpdateRequest objModel)
+        [HttpPost("InsertRole")]
+        public async Task<IActionResult> InsertRole(RoleUpdateRequest objModel)
         {
             try
             {
@@ -139,6 +142,7 @@ namespace WebApi.Controllers
                         if (!string.IsNullOrEmpty(response))
                         {
                             objModel.RoleModel.CreatedBy = userId;
+                            await _auditLogService.LogAction("", "InsertRole", "");
                             DataTable dataTable = objModel.RoleModel.ConvertToDataTable(objModel.ModuleDatatable);
                             var result = await _repo.RoleDALRepo.InsertUpdateRole(objModel.RoleModel);
                             var msg = "Role Inserted Successfully";
@@ -164,7 +168,7 @@ namespace WebApi.Controllers
 
                             }
                             else {
-                                return BadRequest("Try to Login");
+                                return BadRequest(Common.Messages.Login);
                             }
                         }
                     }
@@ -199,6 +203,7 @@ namespace WebApi.Controllers
                         string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                         if (!string.IsNullOrEmpty(response))
                         {
+                            await _auditLogService.LogAction("", "EditUpdateUserRole", "");
                             string guidResp = await _guid.GetGUIDBasedOnUserRoleGuid(roleModel.RoleGuid);
                             if(roleModel.RoleGuid== guidResp)
                             {
@@ -232,7 +237,7 @@ namespace WebApi.Controllers
                         }
                         else
                         {
-                            return BadRequest("Try to Login");
+                            return BadRequest(Common.Messages.Login);
                         }
                         return Ok(responsemsg);
                     }
@@ -263,9 +268,10 @@ namespace WebApi.Controllers
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                        if (!string.IsNullOrEmpty(response))
-                        {
+                        //if (!string.IsNullOrEmpty(response))
+                        //{
                             objModel.RoleModel.CreatedBy = userId;
+                            await _auditLogService.LogAction("", "UpdateRole", "");
                             string guidResp = await _guid.GetGUIDBasedOnUserRoleGuid(objModel.RoleModel.RoleGuid);
                             if (objModel.RoleModel.RoleGuid == guidResp)
                             {
@@ -297,11 +303,11 @@ namespace WebApi.Controllers
                             {
                                 return BadRequest("Please Check Role Guid");
                             }
-                        }
-                        else
-                        {
-                            return BadRequest("Try to Login");
-                        }
+                        //}
+                        //else
+                        //{
+                        //    return BadRequest(Common.Messages.Login);
+                        //}
                     }
                     return Ok(responsemsg);
                 }
@@ -314,7 +320,7 @@ namespace WebApi.Controllers
         }
         [HttpDelete("deleteRole")]
         
-        public async Task<IActionResult> DeleteRole(RolesDelete roleDelete)
+        public async Task<IActionResult> DeleteRole(RolesDelete RoleDelete)
         {
             try
             {
@@ -324,15 +330,16 @@ namespace WebApi.Controllers
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                     
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    if (!string.IsNullOrEmpty(response))
-                    {
-                        foreach (var guid in roleDelete.DeleteRoleNames)
+                    //if (!string.IsNullOrEmpty(response))
+                    //{
+                        await _auditLogService.LogAction("", "deleteRole", "");
+                        foreach (var guid in RoleDelete.DeleteRoleNames)
                         {
-                            string? guidresp = await _guid.GetGUIDBasedOnUserRoleGuid(guid.RoleGUID);
-                            if (guidresp == guid.RoleGUID)
+                            string? GuidResp = await _guid.GetGUIDBasedOnUserRoleGuid(guid.RoleGUID);
+                            if (GuidResp == guid.RoleGUID)
                             {
-                                DataTable? deletetable = roleDelete?.ConvertToDataTable(roleDelete.DeleteRoleNames ?? new List<RolesDeleteInList>());
-                                var result = await _repo.RoleDALRepo.DeleteRole(roleDelete, userId);
+                                DataTable? deleteTable = RoleDelete?.ConvertToDataTable(RoleDelete.DeleteRoleNames ?? new List<RolesDeleteInList>());
+                                var result = await _repo.RoleDALRepo.DeleteRole(RoleDelete, userId);
                                 _repo.Commit();
                                 if (result.DeleteRole == true || result.DeleteRole == false)
                                 {
@@ -350,11 +357,11 @@ namespace WebApi.Controllers
                                 return BadRequest("Please Check Role GUID");
                             }
                         }
-                    }
-                    else
-                    {
-                        return BadRequest("Try to Login");
-                    }
+                    //}
+                    //else
+                    //{
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
                     return Ok();
                     }
                 }

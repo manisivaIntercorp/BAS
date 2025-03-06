@@ -96,7 +96,13 @@ namespace DataAccessLayer.Uow.Implementation
         {
             get
             {
-                return objGUIDDAL == null ? objGUIDDAL = new GUIDDAL(_transaction, connectionString) : objGUIDDAL;
+                IHttpContextAccessor httpContextAccessor = new HttpContextAccessor();
+                IConfiguration configuration = new ConfigurationBuilder()
+
+                        .SetBasePath(Directory.GetCurrentDirectory())
+                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                        .Build();
+                return objGUIDDAL ?? new GUIDDAL(httpContextAccessor, configuration);
             }
         }
 

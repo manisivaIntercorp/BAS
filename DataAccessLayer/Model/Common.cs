@@ -49,6 +49,8 @@ namespace DataAccessLayer.Model
             public const string IsSystemUser = "IsSystemUser";
             public const string UserImgPath = "UserImgPath";
             public const string LanguageCode = "LanguageCode";
+            public const string ServiceURL = "ServiceURL";
+            public const string RegionCode = "RegionCode";
         }
 
         public class Messages
@@ -64,6 +66,17 @@ namespace DataAccessLayer.Model
             public const string DELETE = "DELETE";
             public const string GET = "GET";
             public const string VIEW ="VIEW";
+            public const string USER_GROUP = "USER_GROUP";
+            public const string GET_MASTER_LANGUAGE = "GET_MASTER_LANGUAGE";
+            public const string USER_ROLE= "USER_ROLE";
+            public const string GET_DETAIL= "GET_DETAIL";
+            public const string GET_ORG= "GET_ORG";
+            public const string GET_TIMEZONE= "GET_TIMEZONE";
+            public const string DELETE_ROLE= "DELETE_ROLE";
+            public const string UNLOCK= "UNLOCK";
+            public const string ADD_ROLE= "ADD_ROLE";
+            public const string UPDATE_USER_PASSWORD= "UPDATE_USER_PASSWORD";
+            public const string RESET_PWD_MASTER= "RESET_PWD_MASTER";
         }
 
     }
