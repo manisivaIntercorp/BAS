@@ -395,7 +395,7 @@ namespace DataAccessLayer.Model
         public long? CreatedBy { get; set; }
         public long? LevelID { get; set; }
         public long? LevelDetailID { get; set; }
-        public string? TimeZoneID { get; set; }
+        
         [JsonIgnore]
         public string? UserGuid { get; set; }
     }
