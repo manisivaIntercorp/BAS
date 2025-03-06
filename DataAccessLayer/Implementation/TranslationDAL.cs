@@ -50,7 +50,7 @@ namespace DataAccessLayer.Implementation
             return affectedRows > 0;
         }
 
-        public async Task<List<TranslationModel>> ExportResourceFiles(string ResourceName, string? Culture)
+        public async Task<List<Translation>> ExportResourceFiles(string ResourceName, string? Culture)
         {
             var parameters = new DynamicParameters();
             parameters.Add("@ResourceName", ResourceName, DbType.String);
@@ -58,7 +58,7 @@ namespace DataAccessLayer.Implementation
             string storedProcedure = "sp_ExportTranslation";
 
             // FIX: Remove List<> from QueryAsync
-            return (await _connection.QueryAsync<TranslationModel>(
+            return (await _connection.QueryAsync<Translation>(
                 storedProcedure,
                 parameters, // Add parameters
                 commandType: CommandType.StoredProcedure
