@@ -12,12 +12,12 @@ namespace DataAccessLayer.Implementation
         {
 
         }
-    public async Task<(bool? DeleteRole, List<DeleteRoleInformation?> deleteRoleInformation)> DeleteRole(RolesDelete rolesdelete,long UserId)
+    public async Task<(bool? DeleteRole, List<DeleteRoleInformation?> deleteRoleInformation)> DeleteRole(RolesDelete? rolesdelete,long UserId)
         {
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@tblDelete", JsonConvert.SerializeObject(rolesdelete.DeleteRoleTable));
+            parameters.Add("@tblDelete", JsonConvert.SerializeObject(rolesdelete?.DeleteRoleTable));
             parameters.Add("@UpdatedBy", UserId);
-            parameters.Add("@Mode", "DELETE");
+             parameters.Add("@Mode", Common.PageMode.DELETE);
             var Result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                 parameters,
                 transaction: Transaction,
@@ -35,7 +35,7 @@ namespace DataAccessLayer.Implementation
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@RoleGUID", string.Empty);
-            parameters.Add("@Mode", "GET");
+             parameters.Add("@Mode", Common.PageMode.GET);
             parameters.Add("@UpdatedBy", UpdatedBy);
             var multi = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                 parameters,
@@ -76,7 +76,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LevelID", model?.LevelID);
             parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model?.ModuleTable), DbType.String);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
-            parameters.Add("@Mode", "ADD");
+             parameters.Add("@Mode", Common.PageMode.ADD);
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
@@ -95,7 +95,7 @@ namespace DataAccessLayer.Implementation
             }
 
             // Access the output parameters after consuming all datasets
-            long retVal = parameters.Get<long?>("@RetVal") ?? -4;
+            long retVal = parameters.Get<long>("@RetVal");
             string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
             string RoleGuid = parameters.Get<string?>("@RoleGUID") ??string.Empty;
 
@@ -120,7 +120,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LevelID", model?.LevelID);
             parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model?.ModuleTable), DbType.String);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
-            parameters.Add("@Mode", "ADD");
+             parameters.Add("@Mode", Common.PageMode.ADD);
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
@@ -139,7 +139,7 @@ namespace DataAccessLayer.Implementation
             }
 
             // Access the output parameters after consuming all datasets
-            long retVal = parameters.Get<long?>("@RetVal") ?? -4;
+            long retVal = parameters.Get<long>("@RetVal");
             string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
             string RoleGuid = parameters.Get<string?>("@RoleGUID") ?? string.Empty;
 
@@ -163,7 +163,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LevelID", model.LevelID);
             parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model.ModuleTable), DbType.String);
             parameters.Add("@UpdatedBy", model.CreatedBy);
-            parameters.Add("@Mode", "EDIT");
+             parameters.Add("@Mode", Common.PageMode.EDIT);
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             var result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
@@ -180,7 +180,7 @@ namespace DataAccessLayer.Implementation
             }
 
             // Access the output parameters after consuming all datasets
-            long retVal = parameters.Get<long?>("@RetVal") ?? -4;
+            long retVal = parameters.Get<long>("@RetVal");
             string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
 
             // Return the roles list along with output parameters
