@@ -644,11 +644,11 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
              parameters.Add("@Mode", Common.PageMode.EDIT);
-            using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+            using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure))
-            {
+                                                                        commandType: CommandType.StoredProcedure);
+            
                 // Process the first result set (roles)
                 var UserAccount = result.Read<UpdateUserAccountModel?>().ToList();
                 // Ensure all result sets are consumed to retrieve the output parameters
@@ -727,7 +727,7 @@ namespace DataAccessLayer.Implementation
                 // Return the roles list along with output parameters
                 return (UserAccount??new List<UpdateUserAccountModel?>(),OrgDetails ?? new List<OrgDetails?>(), retVal, msg);
             }
-        }
+        
 
         public async Task<(List<UpdateUserAccountModel?> updateuseraccount, int? RetVal, string? Msg)> EditUpdateUserAccountAsync(UpdateUserAccountModel? model)
         {
@@ -774,11 +774,11 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
              parameters.Add("@Mode", Common.PageMode.EDIT);
-            using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+            using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure))
-            {
+                                                                        commandType: CommandType.StoredProcedure)
+            
                 // Process the first result set (roles)
                 var UserAccount = result.Read<UpdateUserAccountModel?>().ToList();
                 // Ensure all result sets are consumed to retrieve the output parameters
@@ -814,13 +814,13 @@ namespace DataAccessLayer.Implementation
                 if (retVal >= 1)
                 {
                     // 🌟 Fetch Org Details and Change Connection
-                        OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
-                        if (OrgDetails != null && OrgDetails.Any())
-                        {
-                            var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
-                            var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
-                            var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
-                            var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
+                    OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
+                    if (OrgDetails != null && OrgDetails.Any())
+                    {
+                        var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
+                        var strinstancename = _httpContextAccessor?.HttpContext?.Session.GetString("InstanceName");
+                        var strusername = _httpContextAccessor?.HttpContext?.Session.GetString("DataBaseUserName");
+                        var strpassword = _httpContextAccessor?.HttpContext?.Session.GetString("DataBasePassword");
 
                         foreach (var org in OrgDetails)
                         {
@@ -836,17 +836,17 @@ namespace DataAccessLayer.Implementation
                                 }
                             }
                         }
-                            _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
-                            _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
-                            _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
-                            _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
-                        }
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DBName", strdbname ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("InstanceName", strinstancename ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBaseUserName", strusername ?? string.Empty);
+                        _httpContextAccessor?.HttpContext?.Session.SetString("DataBasePassword", strpassword ?? string.Empty);
                     }
+                }
                 
                 // Return the roles list along with output parameters
                 return (UserAccount, retVal, msg);
             }
-        }
+        
         //To Edit the Data in Client DB
         public async Task<(List<UpdateUserAccountModel?> updateClientuseraccount, long? RetValClient, string? MsgClient)> UpdateClientUserAccountAsync(string? username, UpdateUserAccountModel? model)
         {
@@ -879,11 +879,11 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
              parameters.Add("@Mode", Common.PageMode.EDIT);
-            using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+            using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                      parameters,
                                                                      transaction: Transaction,
-                                                                     commandType: CommandType.StoredProcedure))
-            {
+                                                                     commandType: CommandType.StoredProcedure);
+            
                 // Process the first result set (roles)
                 var UserAccount = result.Read<UpdateUserAccountModel?>().ToList();
                 // Ensure all result sets are consumed to retrieve the output parameters
@@ -899,7 +899,7 @@ namespace DataAccessLayer.Implementation
                 return (UserAccount, retVal, msg);
             }
 
-        }
+        
         public async Task<(List<UnlockUser?> unlockuser, int? RetVal, string? Msg)> UnlockUserAsync(UnlockUser? model)
         {
             DynamicParameters parameters = new DynamicParameters();
@@ -910,11 +910,11 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@Mode", Common.PageMode.UNLOCK);
-            using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+            using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
                                                                         commandType: CommandType.StoredProcedure))
-            {
+            
                 // Process the first result set (roles)
                 var useraccount = result.Read<UnlockUser?>().ToList();
                 // Ensure all result sets are consumed to retrieve the output parameters
@@ -929,7 +929,7 @@ namespace DataAccessLayer.Implementation
 
                 // Return the roles list along with output parameters
                 return (useraccount, retVal, msg);
-            }
+            
         }
 
         public async Task<(List<DeleteRoleName?> deleteroles, int? RetVal, string? Msg)> DeleteRoleInUserAccount(DeleteRoleName model)
@@ -946,11 +946,11 @@ namespace DataAccessLayer.Implementation
                 {
                     Connection.Open();
                 }
-                using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure))
-                {
+                                                                        commandType: CommandType.StoredProcedure);
+                
                     // Process the first result set (roles)
                     var roles = result.Read<DeleteRoleName?>().ToList();
 
@@ -966,7 +966,7 @@ namespace DataAccessLayer.Implementation
 
                     // Return the roles list along with output parameters
                     return (roles, retVal, msg);
-                }
+                
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("There is already an open DataReader"))
             {
@@ -996,11 +996,11 @@ namespace DataAccessLayer.Implementation
                 {
                     Connection.Open();
                 }
-                using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure))
-                {
+                                                                        commandType: CommandType.StoredProcedure);
+                
                     // Process the first result set (roles)
                     var roles = result.Read<RoleName?>().ToList();
 
@@ -1017,7 +1017,7 @@ namespace DataAccessLayer.Implementation
                     
                     // Return the roles list along with output parameters
                     return (roles, retVal, msg);
-                }
+                
 
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("There is already an open DataReader"))
@@ -1044,7 +1044,6 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Password", EncryptShaAlg.Encrypt(model.Password));
             parameters.Add("@UpdatedBy", model.CreatedBy);
             parameters.Add("@Mode", Common.PageMode.RESET_PWD_MASTER);
-            parameters.Add("@TimeZone", model.TimeZoneID);
             parameters.Add("@LevelID", model.LevelID);
             parameters.Add("@LevelDetailID", model.LevelDetailID);
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
@@ -1057,11 +1056,11 @@ namespace DataAccessLayer.Implementation
                 {
                     Connection.Open();
                 }
-                using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure))
-                {
+                                                                        commandType: CommandType.StoredProcedure)
+                
                     // Process the first result set (Passwordreset)
                     var PasswordReset = result.Read<ResetPassword?>().ToList();
 
@@ -1129,7 +1128,7 @@ namespace DataAccessLayer.Implementation
                     }
                 // Return the Password Reset list along with output parameters
                     return (PasswordReset, retVal, msg);
-                }
+                
 
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("There is already an open DataReader"))
@@ -1150,7 +1149,6 @@ namespace DataAccessLayer.Implementation
             clientparameters.Add("@Password", model.Password);
             clientparameters.Add("@UpdatedBy", model.CreatedBy);
             clientparameters.Add("@Mode", Common.PageMode.RESET_PWD_MASTER);
-            clientparameters.Add("@TimeZone", model.TimeZoneID);
             clientparameters.Add("@LevelID", model.LevelID);
             clientparameters.Add("@LevelDetailID", model.LevelDetailID);
             clientparameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
@@ -1163,11 +1161,11 @@ namespace DataAccessLayer.Implementation
                 {
                     Connection.Open();
                 }
-                using (var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                          clientparameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure))
-                {
+                                                                        commandType: CommandType.StoredProcedure);
+                
                     // Process the first result set (Passwordreset)
                     var PasswordReset = result.Read<ResetPassword?>().ToList();
 
@@ -1179,11 +1177,11 @@ namespace DataAccessLayer.Implementation
 
                     // Access the output parameters after consuming all datasets
                     long retVal = clientparameters.Get<long>("@RetVal");
-                    model.UserId = (long)clientparameters.Get<int>("@RetVal");
+                    model.UserId = (long)clientparameters.Get<long>("@RetVal");
                     string msg = clientparameters.Get<string?>("@Msg") ?? "No Records Found";
                     
                     return (PasswordReset, retVal, msg);
-                }
+                
 
             }
             catch (InvalidOperationException ex) when (ex.Message.Contains("There is already an open DataReader"))
