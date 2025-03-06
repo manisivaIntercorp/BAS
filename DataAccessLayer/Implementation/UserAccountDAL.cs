@@ -777,7 +777,7 @@ namespace DataAccessLayer.Implementation
             using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure)
+                                                                        commandType: CommandType.StoredProcedure);
             
                 // Process the first result set (roles)
                 var UserAccount = result.Read<UpdateUserAccountModel?>().ToList();
@@ -913,7 +913,7 @@ namespace DataAccessLayer.Implementation
             using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure))
+                                                                        commandType: CommandType.StoredProcedure);
             
                 // Process the first result set (roles)
                 var useraccount = result.Read<UnlockUser?>().ToList();
@@ -1059,7 +1059,7 @@ namespace DataAccessLayer.Implementation
                 using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
-                                                                        commandType: CommandType.StoredProcedure)
+                                                                        commandType: CommandType.StoredProcedure);
                 
                     // Process the first result set (Passwordreset)
                     var PasswordReset = result.Read<ResetPassword?>().ToList();
