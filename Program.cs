@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Localization;
+using Microsoft.SqlServer.Management.Smo.Wmi;
+using WebApi.Middleware;
 
 
 
@@ -165,7 +167,6 @@ using (var scope = app.Services.CreateScope())
     await translationService.GenerateResourceFiles(uowTranslation);
 }
 
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -188,6 +189,7 @@ app.UseSession();
 
 // Middleware pipeline
 app.UseMiddleware<ConnectionStringMiddleware>();
+app.UseMiddleware<ServiceUrlMiddleware>();
 
 
 //app.UseMiddleware<TokenBlacklistMiddleware>();  //Logout
@@ -196,4 +198,10 @@ app.UseRouting();
 app.UseAuthentication(); // JWT Authentication
 app.UseAuthorization();
 app.MapControllers();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllerRoute(
+        name: "default",
+        pattern: "api/{region}/{controller}/{action=Index}/{id?}");
+});
 app.Run();
