@@ -42,6 +42,7 @@ namespace DataAccessLayer.Model
         public string? ValidateOTP { get; set; }
 
         public string? Guid { get; set; }
+        public string? RegionCode { get; set; }
 
     }
 
@@ -63,6 +64,7 @@ namespace DataAccessLayer.Model
         public string? GlobalUser { get; set; }
         public string? LanguageCode { get; set; }
         public string? Guid { get; set; }
+        public string? RegionCode { get; set; }
 
 
 

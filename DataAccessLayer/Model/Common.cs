@@ -49,6 +49,8 @@ namespace DataAccessLayer.Model
             public const string IsSystemUser = "IsSystemUser";
             public const string UserImgPath = "UserImgPath";
             public const string LanguageCode = "LanguageCode";
+            public const string ServiceURL = "ServiceURL";
+            public const string RegionCode = "RegionCode";
         }
 
         public class Messages

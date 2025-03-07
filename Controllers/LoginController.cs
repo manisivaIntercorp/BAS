@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SqlServer.Management.Smo;
 using Microsoft.SqlServer.Management.Smo.Agent;
+using Microsoft.SqlServer.Management.XEvent;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ using System.Runtime.Serialization;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Xml.Linq;
-using WebApi.Resources;
+//using WebApi.Resources;
 using WebApi.Services;
 using WebApi.Services.Implementation;
 using WebApi.Services.Interface;
@@ -34,7 +35,8 @@ namespace WebApi.Controllers
 {
 
     [ApiController]
-    [Route("api/[controller]")]
+    //[Route("api/[controller]")]
+    [Route("api/{region?}/[controller]")] // {region} is optional
     public class LoginController : ApiBaseController
     {
         private readonly ILogger<LoginController> _logger;
@@ -43,9 +45,12 @@ namespace WebApi.Controllers
         //private readonly AppGlobalVariableService _appGlobalVariableService;
         private readonly EncryptedDecrypt _encryptedDecrypt;
         private readonly IAuditLogService _auditLogService;
-        private readonly IStringLocalizer _localizer;
+        //private readonly IStringLocalizer _localizer;
+        private readonly TranslationService _translationService;
         string token = string.Empty;
         string userGuid = string.Empty;
+       // private readonly IServiceUrlProvider _serviceUrlProvider;
+
         /// <summary>
         /// private readonly ICommon _common;
         /// </summary>
@@ -56,10 +61,11 @@ namespace WebApi.Controllers
         /// <param name="httpContextAccessor"></param>
         /// <param name="auditLogService"></param>
         /// <param name="localizer"></param>
+        /// <param name="translationService"></param>
 
         public LoginController(ILogger<LoginController> logger, EncryptedDecrypt encryptedDecrypt,
         JwtService jwtService, IConfiguration configuration, IHttpContextAccessor httpContextAccessor,
-        IAuditLogService auditLogService, IStringLocalizer<SharedResources> localizer)
+        IAuditLogService auditLogService, TranslationService translationService) //IStringLocalizer<SharedResources> localizer)
         : base(configuration)
         {
             _logger = logger;
@@ -68,61 +74,11 @@ namespace WebApi.Controllers
             //_appGlobalVariableService = appGlobalVariableService;
             _encryptedDecrypt = encryptedDecrypt;
             _auditLogService = auditLogService;
-            _localizer = localizer;
+            //_localizer = localizer;
+            _translationService = translationService;
+            //_serviceUrlProvider = serviceUrlProvider;
             // _common = common;
         }
-
-        [HttpPost("change")]
-        public IActionResult ChangeLanguage([FromQuery] string culture)
-        {
-            try
-            {
-                var supportedCultures = new[] { "en", "fr", "es" };
-                if (!supportedCultures.Contains(culture))
-                {
-                    return BadRequest("Culture not supported.");
-                }
-
-                var cultureInfo = new CultureInfo(culture);
-                CultureInfo.CurrentCulture = cultureInfo;
-                CultureInfo.CurrentUICulture = cultureInfo;
-
-                Response.Cookies.Append(
-                    CookieRequestCultureProvider.DefaultCookieName,
-                    CookieRequestCultureProvider.MakeCookieValue(new RequestCulture(culture)),
-                    new CookieOptions { Expires = DateTimeOffset.UtcNow.AddYears(1) }
-                );
-
-                return Ok(new { message = $"Language changed to {culture}", currentCulture = CultureInfo.CurrentCulture.Name });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                throw;
-            }
-        }
-
-        [HttpGet("Greeting")]
-        public IActionResult GetHello()
-        {
-            try
-            {
-                var requestCulture = HttpContext.Features.Get<IRequestCultureFeature>();
-                var currentCulture = requestCulture?.RequestCulture.Culture.Name ?? CultureInfo.CurrentCulture.Name;
-                var greeting = _localizer["Greeting"];
-                return Ok(new { greeting.Value, greeting.ResourceNotFound });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                throw;
-            }
-
-        }
-
-
-
-
 
         [HttpPost("Get UserID")]
         public async Task<IActionResult> GetUserID(string username, string? Language)
@@ -130,6 +86,7 @@ namespace WebApi.Controllers
             try
             {
                 var objLogModel = new LoginModel { UserName = username, LanguageCode = Language };
+
 
                 using (IUowLogin _repo = new UowLogin(_httpContextAccessor, _configuration, _encryptedDecrypt))
                 {
@@ -166,7 +123,6 @@ namespace WebApi.Controllers
         [HttpGet("UserLogin")]
         public async Task<IActionResult> UserLogin(string username, string password)
         {
-
 
             try
             {
@@ -257,6 +213,8 @@ namespace WebApi.Controllers
                         string strIsSystemUser = "N";
                         string strUserImgPath = lstUserDetails[0]?.ImagePath?.Trim() ?? string.Empty;
                         string strGuid = lstUserDetails[0]?.Guid?.Trim() ?? string.Empty;
+                        string strRegionCode = lstUserDetails[0]?.RegionCode?.Trim() ?? string.Empty;
+                        
 
                         HttpContext.Session.SetString(Common.SessionVariables.UserID, strUserID);
                         HttpContext.Session.SetString(Common.SessionVariables.UserName, strUserName);
@@ -274,6 +232,7 @@ namespace WebApi.Controllers
                         HttpContext.Session.SetString(Common.SessionVariables.IsSystemUser, strIsSystemUser);
                         HttpContext.Session.SetString(Common.SessionVariables.UserImgPath, strUserImgPath);
                         HttpContext.Session.SetString(Common.SessionVariables.Guid, strGuid);
+                        HttpContext.Session.SetString(Common.SessionVariables.RegionCode, strRegionCode);
                     }
 
                     if (string.IsNullOrWhiteSpace(strDBName))
