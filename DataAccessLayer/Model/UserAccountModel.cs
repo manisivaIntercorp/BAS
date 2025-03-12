@@ -137,7 +137,6 @@ namespace DataAccessLayer.Model
     }
    public class GetUserAccountModel
     {
-        
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
@@ -165,6 +164,9 @@ namespace DataAccessLayer.Model
         public string? CreatedBy { get; set; }
         public long ProfileID { get; set; }
         public DateOnly? UserExpiryDate { get; set; }
+        [JsonIgnore]
+        public DateTime? UserExpiryDateTime { get; set; }
+        public string? ProfileImg { get; set; }
     }
     public class UpdateUserAccountModel
     {
