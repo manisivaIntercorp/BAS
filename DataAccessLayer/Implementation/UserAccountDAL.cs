@@ -518,7 +518,19 @@ namespace DataAccessLayer.Implementation
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return multi.Read<GetUserAccountModel?>().ToList();
+            
+            var result = multi.Read<GetUserAccountModel?>().ToList();
+            foreach (var user in result)
+            {
+                if (user?.UserExpiryDateTime != null && user?.UserExpiryDateTime.HasValue == true)
+                {
+                    if (DateOnly.TryParse(user?.UserExpiryDateTime?.ToString("yyyy-MM-dd"), out var parsedDate))
+                    {
+                        user.UserExpiryDate = parsedDate;
+                    }
+                }
+            }
+            return result;
         }
 
         public async Task<List<UserPolicyName?>> getAllUserPolicyInDropdown()
