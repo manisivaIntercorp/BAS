@@ -13,7 +13,7 @@ using WebApi.Services.Interface;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/{region?}/[controller]")]
     [ApiController]
     public class RoleController : ApiBaseController
     {
@@ -201,8 +201,8 @@ namespace WebApi.Controllers
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                         long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                         string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                        if (!string.IsNullOrEmpty(response))
-                        {
+                        //if (!string.IsNullOrEmpty(response))
+                        //{
                             await _auditLogService.LogAction("", "EditUpdateUserRole", "");
                             string guidResp = await _guid.GetGUIDBasedOnUserRoleGuid(roleModel.RoleGuid);
                             if(roleModel.RoleGuid== guidResp)
@@ -234,11 +234,11 @@ namespace WebApi.Controllers
                             {
                                 return BadRequest("Please Check Role Guid");
                             }
-                        }
-                        else
-                        {
-                            return BadRequest(Common.Messages.Login);
-                        }
+                        //}
+                        //else
+                        //{
+                        //    return BadRequest(Common.Messages.Login);
+                        //}
                         return Ok(responsemsg);
                     }
                 }
