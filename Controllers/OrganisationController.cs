@@ -12,7 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/{region?}/[controller]")]
     [ApiController]
     public class OrganisationController : ApiBaseController
     {
@@ -83,6 +83,31 @@ namespace WebApi.Controllers
             {
                 _logger.LogError(ex.Message + " " + ex.StackTrace);
                 return StatusCode(500); 
+            }
+        }
+        [HttpGet("DataLocationInDropdown")]
+        public async Task<IActionResult> DataLocationInDropdown()
+        {
+            try
+            {
+
+
+                var objOrganisationModel = await _repository.OrganisationDALRepo.DataLocationInDropdown();
+                // Log the action before returning response
+                await _auditLogService.LogAction("", "DataLocationInDropdown", token);
+                if (objOrganisationModel != null)
+                {
+                    return Ok(objOrganisationModel);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
             }
         }
 
