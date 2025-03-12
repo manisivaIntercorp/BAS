@@ -124,6 +124,8 @@ namespace DataAccessLayer.Implementation
             }
 
         }
+
+
         public async Task<OrganisationModel> GetOrganisationById(string strGuid)
         {
             OrganisationModel Rst = new OrganisationModel();
@@ -267,8 +269,54 @@ namespace DataAccessLayer.Implementation
 
             return res;
         }
+        public async Task<List<DataLocationDropdown>> DataLocationInDropdown()
+        {
+            List<DataLocationDropdown> lstResult = new List<DataLocationDropdown>();
+            try
+            {
 
-        
+                using (var connection = new Microsoft.Data.SqlClient.SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            DynamicParameters parameters = new DynamicParameters();
+                            parameters.Add("@Mode", Common.PageMode.GET_DATALOCATION_DROPDOWN);
+
+                            var multi = await connection.QueryMultipleAsync(
+                                "sp_ListData",
+                                parameters,
+                                transaction: transaction,
+                                commandType: CommandType.StoredProcedure);
+
+                            //transaction.Commit();
+
+                            return multi.Read<DataLocationDropdown>().ToList();
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Error: {ex.Message}");
+                return lstResult;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return lstResult;
+            }
+
+        }
+
 
 
     }
