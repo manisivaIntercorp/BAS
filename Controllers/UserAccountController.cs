@@ -11,7 +11,7 @@ using NLog;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/{region?}/[controller]")]
     [ApiController]
     public class UserAccountController : ApiBaseController
     {
