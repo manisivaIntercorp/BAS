@@ -133,6 +133,7 @@ namespace DataAccessLayer.Model
         public long CreatedBy { get; set; }
         public long ProfileID { get; set; }
         public DateOnly? UserExpiryDate { get; set; }
+        public string? ProfileImg {  get; set; }
 
     }
    public class GetUserAccountModel
@@ -172,6 +173,8 @@ namespace DataAccessLayer.Model
     {
         public DataTable UserAccountOrgTable = new DataTable();
         public DataTable UserAccountRoleTable = new DataTable();
+        public string? ProfileImg { get; set; }
+
         public DataTable ConvertToDataTable(List<RoleNameInUserAccount> models, long CreatedBy, string GUid)
         {
             // Define columns dynamically based on the model's properties
