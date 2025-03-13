@@ -199,7 +199,7 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@CompanyLogo", model.Logo);
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@Active", model.Active);
-                    parameters.Add("@Guid", model.CustomerGuid);
+                    parameters.Add("@Guid", model.Guid);
                     parameters.Add("@Mode", Common.PageMode.EDIT);
                     parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
