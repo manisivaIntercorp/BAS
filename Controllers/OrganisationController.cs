@@ -9,6 +9,7 @@ using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using WebApi.Services.Interface;
 using Newtonsoft.Json.Linq;
+using WebApi.Services;
 
 namespace WebApi.Controllers
 {
@@ -19,6 +20,7 @@ namespace WebApi.Controllers
         private readonly IUowOrganisation _repository;
         private readonly ILogger<OrganisationController> _logger;
         private readonly IAuditLogService _auditLogService;
+        
         string token = string.Empty;
         string userGuid = string.Empty;
         public OrganisationController(ILogger<OrganisationController> logger,IConfiguration configuration,IUowOrganisation repository, IAuditLogService auditLogService) : base(configuration)
@@ -33,7 +35,7 @@ namespace WebApi.Controllers
         {
             try
             {
-               var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
+                var result = await _repository.OrganisationDALRepo.InsertOrganisation(orgModel);
                 await _auditLogService.LogAction(userGuid, "InsertOrganisation", token);
 
                 var msg = "Organisation Inserted Successfully";
@@ -116,8 +118,6 @@ namespace WebApi.Controllers
         {
             try
             {
-                
-
                 var objOrganisationModel = await _repository.OrganisationDALRepo.GetOrganisationById(Guid);
                 // Log the action before returning response
                 await _auditLogService.LogAction(userGuid, "GetOrganisationById", token);
@@ -139,25 +139,22 @@ namespace WebApi.Controllers
 
 
         [HttpPut("UpdateOrganisation")]
-        public async Task<IActionResult> UpdateOrganisation(string Guid, [FromBody] OrganisationModel Org)
+        public async Task<IActionResult> UpdateOrganisation([FromBody] OrganisationModel Org)
         {
 
-            if (Guid == null || Guid != Org.CustomerGuid)
+            if (Org.Guid!=null && Org.Guid=="string")
             {
                 return BadRequest(Common.Messages.InvalidData);
             }
 
             try
             {
-
                 var result = await _repository.OrganisationDALRepo.UpdateOrganisation(Org);
-                await _auditLogService.LogAction(userGuid, "UpdateOrganisation", token);
-                var msg = "User account updated successfully.";
+                await _auditLogService.LogAction("","UpdateOrganisation", token);
+                var msg = "Organization updated successfully.";
                 if (result == "1")
                 {
-                    Ok(result);
                     Ok(msg);
-
                 }
                 else
                 {
@@ -165,7 +162,7 @@ namespace WebApi.Controllers
                     _logger.LogError("Bad Request occurred while accessing the update Organisation function in Organisation Update api controller");
                     return BadRequest();
                 }
-                return Ok(msg + result);
+                return Ok(msg);
             }
             catch (Exception ex)
             {
@@ -176,13 +173,13 @@ namespace WebApi.Controllers
         }
 
 
-        [HttpPost("DeleteOrganisation")]
-        public async Task<IActionResult> Deleterganisation([FromBody] List<DeleteRecord> dltOrg)
+        [HttpDelete("DeleteOrganisation")]
+        public async Task<IActionResult> DeleteOrganisation([FromBody] List<DeleteRecord> dltOrg)
         {
             try
             {
                 var objOrganisationModel = await _repository.OrganisationDALRepo.DeleteOrganisation(dltOrg);
-                await _auditLogService.LogAction(userGuid, "Deleterganisation", token);
+                await _auditLogService.LogAction(userGuid, "DeleteOrganisation", token);
 
                 if (objOrganisationModel != null)
                 {
