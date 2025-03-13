@@ -77,8 +77,12 @@ namespace DataAccessLayer.Model
             public const string ADD_ROLE= "ADD_ROLE";
             public const string UPDATE_USER_PASSWORD= "UPDATE_USER_PASSWORD";
             public const string RESET_PWD_MASTER= "RESET_PWD_MASTER";
+            public const string ADD_CLIENT_TO_MASTER= "ADD_CLIENT_TO_MASTER";
+            public const string GET_USER_ID = "GET_USER_ID";
+            public const string EDIT_VALIDATE_USER = "EDIT_VALIDATE_USER";
+            public const string GET_DATALOCATION_DROPDOWN= "GET_DATALOCATION_DROPDOWN";
+            public const string GET_MODULE_INFORMATION= "GET_MODULE_INFORMATION";
         }
-
     }
 
     public static class TableVariables
