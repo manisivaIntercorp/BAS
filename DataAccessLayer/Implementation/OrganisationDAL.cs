@@ -52,8 +52,9 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@CcEmailAddress", model.CcEmailAddress);
                     parameters.Add("@CompanyLogo", model.Logo);
                     parameters.Add("@UpdatedBy", model.UserID);
+                    parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Active", model.Active);
-                     parameters.Add("@Mode", Common.PageMode.ADD);
+                    parameters.Add("@Mode", Common.PageMode.ADD);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
                     await connection.ExecuteAsync(
@@ -139,9 +140,8 @@ namespace DataAccessLayer.Implementation
                         try
                         {
                             var parameters = new DynamicParameters();
-                            //parameters.Add("@OrgID", Id);
                             parameters.Add("@Guid", strGuid);
-                             parameters.Add("@Mode", Common.PageMode.GET);
+                            parameters.Add("@Mode", Common.PageMode.GET);
 
                             var multi = await connection.QueryMultipleAsync(
                                 "sp_OrganisationConfiguration",
@@ -200,7 +200,8 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@Active", model.Active);
                     parameters.Add("@Guid", model.CustomerGuid);
-                     parameters.Add("@Mode", Common.PageMode.EDIT);
+                    parameters.Add("@Mode", Common.PageMode.EDIT);
+                    parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
                     await connection.ExecuteAsync(
