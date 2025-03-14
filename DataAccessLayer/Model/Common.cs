@@ -82,6 +82,8 @@ namespace DataAccessLayer.Model
             public const string EDIT_VALIDATE_USER = "EDIT_VALIDATE_USER";
             public const string GET_DATALOCATION_DROPDOWN= "GET_DATALOCATION_DROPDOWN";
             public const string GET_MODULE_INFORMATION= "GET_MODULE_INFORMATION";
+            public const string MODULES = "MODULES";
+            
         }
     }
 
