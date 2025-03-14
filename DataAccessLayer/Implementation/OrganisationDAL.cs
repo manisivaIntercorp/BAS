@@ -318,6 +318,54 @@ namespace DataAccessLayer.Implementation
 
         }
 
+        public async Task<List<OrganisationModules>> GetAllModules()
+        {
+            List<OrganisationModules> lstResult = new List<OrganisationModules>();
+            try
+            {
+
+                using (var connection = new Microsoft.Data.SqlClient.SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            DynamicParameters parameters = new DynamicParameters();
+                            parameters.Add("@Mode", Common.PageMode.GET_ORGMODULES);
+
+                            var multi = await connection.QueryMultipleAsync(
+                                "sp_ListData",
+                                parameters,
+                                transaction: transaction,
+                                commandType: CommandType.StoredProcedure);
+
+                            //transaction.Commit();
+
+                            return multi.Read<OrganisationModules>().ToList();
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Error: {ex.Message}");
+                return lstResult;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return lstResult;
+            }
+
+        }
+
 
 
     }
