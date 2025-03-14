@@ -131,6 +131,7 @@ builder.Services.AddScoped<IUowAuditLog, UowAuditLog>();
 builder.Services.AddScoped<IAuditLogService, AuditLogService>();
 builder.Services.AddHttpContextAccessor();
 //AuditLog End
+builder.Services.AddScoped<IUowMenu>(sp => new UowMenu(connectionString));
 
 builder.Services.AddScoped<IUowTranslation>(provider =>
     new UowTranslation(connectionString)
