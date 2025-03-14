@@ -286,9 +286,9 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("GetOrganisationWithDBDetails")]
-        public async Task<IActionResult> GetOrganisationWithDBDetails(string username)
+        public async Task<IActionResult> GetOrganisationWithDBDetails(string Guid)
         {
-            var objLogModel = new LoginModel { UserName = username };
+            var objLogModel = new LoginModel { Guid = Guid };
             try
             {
                
