@@ -92,11 +92,33 @@ namespace WebApi.Controllers
         {
             try
             {
-
-
                 var objOrganisationModel = await _repository.OrganisationDALRepo.DataLocationInDropdown();
                 // Log the action before returning response
                 await _auditLogService.LogAction("", "DataLocationInDropdown", token);
+                if (objOrganisationModel != null)
+                {
+                    return Ok(objOrganisationModel);
+                }
+                else
+                {
+                    return BadRequest();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+
+        [HttpGet("GetAllModules")]
+        public async Task<IActionResult> GetAllModules()
+        {
+            try
+            {
+                var objOrganisationModel = await _repository.OrganisationDALRepo.GetAllModules();
+                // Log the action before returning response
+                await _auditLogService.LogAction("", "GetAllModules", token);
                 if (objOrganisationModel != null)
                 {
                     return Ok(objOrganisationModel);
