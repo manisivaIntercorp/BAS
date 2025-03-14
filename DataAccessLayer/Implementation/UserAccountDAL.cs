@@ -238,6 +238,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
             parameters.Add("@ProfileID", model?.ProfileID);
+            parameters.Add("@ProfileImg", model?.ProfileImg);
             parameters.Add("@EffectiveDate", model?.EffectiveDate);
             parameters.Add("@LastActiveDate", date?.ToString("yyyy-MM-dd"));
             parameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
@@ -375,6 +376,7 @@ namespace DataAccessLayer.Implementation
             clientParameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             clientParameters.Add("@UpdatedBy", model?.CreatedBy);
             clientParameters.Add("@ProfileID", model?.ProfileID);
+            clientParameters.Add("@ProfileImg", model?.ProfileImg);
             clientParameters.Add("@EffectiveDate", model?.EffectiveDate);
             clientParameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
             clientParameters.Add("@dtOrgRole", JsonConvert.SerializeObject(model?.UserAccountRoleTable), DbType.String);
@@ -518,7 +520,19 @@ namespace DataAccessLayer.Implementation
                 parameters,
                 transaction: Transaction,
                 commandType: CommandType.StoredProcedure);
-            return multi.Read<GetUserAccountModel?>().ToList();
+            
+            var result = multi.Read<GetUserAccountModel?>().ToList();
+            foreach (var user in result)
+            {
+                if (user?.UserExpiryDateTime != null && user?.UserExpiryDateTime.HasValue == true)
+                {
+                    if (DateOnly.TryParse(user?.UserExpiryDateTime?.ToString("yyyy-MM-dd"), out var parsedDate))
+                    {
+                        user.UserExpiryDate = parsedDate;
+                    }
+                }
+            }
+            return result;
         }
 
         public async Task<List<UserPolicyName?>> getAllUserPolicyInDropdown()
@@ -642,8 +656,8 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@GuId", model?.MasterGuid);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
-
-             parameters.Add("@Mode", Common.PageMode.EDIT);
+            parameters.Add("@ProfileImg", model?.ProfileImg);
+            parameters.Add("@Mode", Common.PageMode.EDIT);
             using var result = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
                                                                         parameters,
                                                                         transaction: Transaction,
@@ -770,7 +784,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@RetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
             parameters.Add("@UserGuid", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             parameters.Add("@GUID", model?.MasterGuid);
-
+            parameters.Add("@ProfileImg", model?.ProfileImg);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
              parameters.Add("@Mode", Common.PageMode.EDIT);
@@ -867,7 +881,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@Tenant", model?.Tenant);
             parameters.Add("@TempDeactive", model?.TempDeactive);
             parameters.Add("@EmailID", model?.emailID);
-            
+            parameters.Add("@ProfileImg", model?.ProfileImg);
             parameters.Add("@PlatformUser", model?.PlatformUser);
             parameters.Add("@PasswordExpiryDate", model?.PasswordExpiryDate);
             parameters.Add("@UpdatedBy", model?.CreatedBy);

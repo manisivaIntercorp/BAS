@@ -11,7 +11,14 @@ namespace DataAccessLayer.Model
             
             // Define columns dynamically based on the model's properties
             var properties = typeof(ModulesDatatable).GetProperties();
-            ModuleTable.Columns.Add("RoleID",typeof(Int64));
+            if (ModuleTable.Columns.Contains("RoleID"))
+            {
+                ModuleTable.Rows.Clear();
+            }
+            else
+            {
+                ModuleTable.Columns.Add("RoleID", typeof(Int64));
+            }
             foreach (var property in properties)
             {
                 ModuleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);
@@ -53,7 +60,14 @@ namespace DataAccessLayer.Model
 
             // Define columns dynamically based on the model's properties
             var properties = typeof(ModulesDatatable).GetProperties();
-            ModuleTable.Columns.Add("RoleID", typeof(Int64));
+            if (ModuleTable.Columns.Contains("RoleID"))
+            {
+                ModuleTable.Rows.Clear();
+            }
+            else
+            {
+                ModuleTable.Columns.Add("RoleID", typeof(Int64));
+            }
             foreach (var property in properties)
             {
                 ModuleTable.Columns.Add(property.Name, Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType);

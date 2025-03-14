@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace DataAccessLayer.Model
@@ -29,7 +30,7 @@ namespace DataAccessLayer.Model
         public long? UserID { get; set; }
 
         public DateTime? LastActiveDate { get; set; }
-        public string? CustomerGuid { get; set; }
+        public string? Guid { get; set; }
 
         //public DataTable? FunctionConfiguration { get; set; } // Matches utt_FunctionConfiguration
         //public DataTable? Modules { get; set; } // Matches utt_FunctionConfiguration
@@ -60,5 +61,10 @@ namespace DataAccessLayer.Model
     {
         public long ID { get; set; }
         public string? Required { get; set; }
+    }
+    public class DataLocationDropdown
+    {
+        public long Value { get; set; }
+        public string? Text { get; set; }
     }
 }

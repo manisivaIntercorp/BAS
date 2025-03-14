@@ -18,5 +18,6 @@ namespace DataAccessLayer.Interface
         Task<string> UpdateOrganisation(OrganisationModel OrganisationModel);
 
         Task<List<OrganisationDeleteRecord>> DeleteOrganisation(List<DeleteRecord> dltOrg);
+        Task<List<DataLocationDropdown>> DataLocationInDropdown();
     }
 }

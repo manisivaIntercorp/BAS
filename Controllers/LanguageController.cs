@@ -9,7 +9,7 @@ using System.Diagnostics.Eventing.Reader;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/{region?}/[controller]")]
     [ApiController]
     public class LanguageController : ApiBaseController
     {

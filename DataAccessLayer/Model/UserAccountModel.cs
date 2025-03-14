@@ -133,11 +133,11 @@ namespace DataAccessLayer.Model
         public long CreatedBy { get; set; }
         public long ProfileID { get; set; }
         public DateOnly? UserExpiryDate { get; set; }
+        public string? ProfileImg {  get; set; }
 
     }
    public class GetUserAccountModel
     {
-        
         public long? UserId { get; set; }
         public string? UserName { get; set; }
         public string? UserPassword { get; set; }
@@ -165,11 +165,16 @@ namespace DataAccessLayer.Model
         public string? CreatedBy { get; set; }
         public long ProfileID { get; set; }
         public DateOnly? UserExpiryDate { get; set; }
+        [JsonIgnore]
+        public DateTime? UserExpiryDateTime { get; set; }
+        public string? ProfileImg { get; set; }
     }
     public class UpdateUserAccountModel
     {
         public DataTable UserAccountOrgTable = new DataTable();
         public DataTable UserAccountRoleTable = new DataTable();
+        public string? ProfileImg { get; set; }
+
         public DataTable ConvertToDataTable(List<RoleNameInUserAccount> models, long CreatedBy, string GUid)
         {
             // Define columns dynamically based on the model's properties

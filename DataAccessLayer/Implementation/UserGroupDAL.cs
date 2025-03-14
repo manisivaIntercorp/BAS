@@ -35,10 +35,11 @@ namespace DataAccessLayer.Implementation
             
         }
 
-        public async Task<List<GetUserGroupModel?>> GetAllUserPolicy()
+        public async Task<List<GetUserGroupModel?>> GetAllUserPolicy(long UpdatedBy)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserGroupGUID", string.Empty);
+            parameters.Add("@UpdatedBy", UpdatedBy);
              parameters.Add("@Mode", Common.PageMode.GET);
             var multi = await Connection.QueryMultipleAsync("sp_UserGroup",
                 parameters,

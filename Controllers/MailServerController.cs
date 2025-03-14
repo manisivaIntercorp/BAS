@@ -9,7 +9,7 @@ using WebApi.Services.Interface;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/{region?}/[controller]")]
     [ApiController]
     public class MailServerController : ApiBaseController
     {

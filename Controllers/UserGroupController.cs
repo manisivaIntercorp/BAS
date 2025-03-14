@@ -12,7 +12,7 @@ using WebApi.Services.Interface;
 
 namespace WebApi.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/{region?}/[controller]")]
     [ApiController]
     public class UserGroupController : ApiBaseController
     {
@@ -38,10 +38,13 @@ namespace WebApi.Controllers
             {
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    //if (!string.IsNullOrEmpty(response)) {
+                    //if (!string.IsNullOrEmpty(response)) 
+                    //{
                         await _auditLogService.LogAction("", "getAllUserPolicy", "");
-                        var lstUserGroupModel = await _repo.UserGroupDALRepo.GetAllUserPolicy();
+                        var lstUserGroupModel = await _repo.UserGroupDALRepo.GetAllUserPolicy(userId);
                         if (lstUserGroupModel != null && lstUserGroupModel.Count>0)
                         {
                             return Ok(lstUserGroupModel);
@@ -53,7 +56,7 @@ namespace WebApi.Controllers
                     //}
                     //else
                     //{
-                    //    return BadRequest(Common.Messages.Login);
+                     //   return BadRequest(Common.Messages.Login);
                     //}
                     
                 }
@@ -114,6 +117,7 @@ namespace WebApi.Controllers
             {
                 using (IUowUserGroup _repo = new UowUserGroup(_httpContextAccessor))
                 {
+                    
                     string response = _sessionService.GetSession(Common.SessionVariables.Guid);
                     //if (!string.IsNullOrEmpty(response)) 
                     //{

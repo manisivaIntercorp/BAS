@@ -14,7 +14,7 @@ namespace DataAccessLayer.Interface
         Task<bool> InsertOrUpdateTranslationList(List<Translation> translation);
                    
         Task<List<TranslationModel>> GetAllTranslations();
-        Task<List<Translation>> ExportResourceFiles(string ResourceName, string? Culture);
+        Task<List<TranslationModel>> ExportResourceFiles(string ResourceName, string? Culture);
 
         //Task<string?> GetTranslation(string key, string languageCode, string scope); // Updated method signature
 

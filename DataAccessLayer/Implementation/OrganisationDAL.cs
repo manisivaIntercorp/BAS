@@ -52,8 +52,9 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@CcEmailAddress", model.CcEmailAddress);
                     parameters.Add("@CompanyLogo", model.Logo);
                     parameters.Add("@UpdatedBy", model.UserID);
+                    parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Active", model.Active);
-                     parameters.Add("@Mode", Common.PageMode.ADD);
+                    parameters.Add("@Mode", Common.PageMode.ADD);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
                     await connection.ExecuteAsync(
@@ -124,6 +125,8 @@ namespace DataAccessLayer.Implementation
             }
 
         }
+
+
         public async Task<OrganisationModel> GetOrganisationById(string strGuid)
         {
             OrganisationModel Rst = new OrganisationModel();
@@ -137,9 +140,8 @@ namespace DataAccessLayer.Implementation
                         try
                         {
                             var parameters = new DynamicParameters();
-                            //parameters.Add("@OrgID", Id);
                             parameters.Add("@Guid", strGuid);
-                             parameters.Add("@Mode", Common.PageMode.GET);
+                            parameters.Add("@Mode", Common.PageMode.GET);
 
                             var multi = await connection.QueryMultipleAsync(
                                 "sp_OrganisationConfiguration",
@@ -197,8 +199,9 @@ namespace DataAccessLayer.Implementation
                     parameters.Add("@CompanyLogo", model.Logo);
                     parameters.Add("@UpdatedBy", model.UserID);
                     parameters.Add("@Active", model.Active);
-                    parameters.Add("@Guid", model.CustomerGuid);
-                     parameters.Add("@Mode", Common.PageMode.EDIT);
+                    parameters.Add("@Guid", model.Guid);
+                    parameters.Add("@Mode", Common.PageMode.EDIT);
+                    parameters.Add("@PinCode", model.PinCode);
                     parameters.Add("@Msg", dbType: DbType.String, size: 2000, direction: ParameterDirection.Output);
 
                     await connection.ExecuteAsync(
@@ -267,8 +270,54 @@ namespace DataAccessLayer.Implementation
 
             return res;
         }
+        public async Task<List<DataLocationDropdown>> DataLocationInDropdown()
+        {
+            List<DataLocationDropdown> lstResult = new List<DataLocationDropdown>();
+            try
+            {
 
-        
+                using (var connection = new Microsoft.Data.SqlClient.SqlConnection(_connectionString))
+                {
+                    await connection.OpenAsync();
+                    using (var transaction = connection.BeginTransaction())
+                    {
+                        try
+                        {
+                            DynamicParameters parameters = new DynamicParameters();
+                            parameters.Add("@Mode", Common.PageMode.GET_DATALOCATION_DROPDOWN);
+
+                            var multi = await connection.QueryMultipleAsync(
+                                "sp_ListData",
+                                parameters,
+                                transaction: transaction,
+                                commandType: CommandType.StoredProcedure);
+
+                            //transaction.Commit();
+
+                            return multi.Read<DataLocationDropdown>().ToList();
+                        }
+                        catch
+                        {
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+                }
+
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine($"SQL Error: {ex.Message}");
+                return lstResult;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return lstResult;
+            }
+
+        }
+
 
 
     }
