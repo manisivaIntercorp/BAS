@@ -167,7 +167,7 @@ namespace DataAccessLayer.Implementation
         public async Task<List<ResultModel>> GetUserID(LoginModel objloginModel)
         {
             DynamicParameters dyParameter = new DynamicParameters();
-            dyParameter.Add("@Mode", "GET_USER_ID");
+            dyParameter.Add("@Mode", Common.PageMode.GET_USER_ID);
             dyParameter.Add("@UserName", objloginModel.UserName);
             dyParameter.Add("@Password", objloginModel.Password);
             dyParameter.Add("@UserType", objloginModel.UserType);
@@ -203,8 +203,8 @@ namespace DataAccessLayer.Implementation
         public async Task<List<OrganisationDBDetails>> GetOrganisationWithDBDetails(LoginModel objloginModel)
         {
             DynamicParameters dynamicParameters = new DynamicParameters();
-            dynamicParameters.Add("@Mode", "GET_ORG");
-            dynamicParameters.Add("@UserName", objloginModel.UserName);
+            dynamicParameters.Add("@Mode", Common.PageMode.GET_ORG);
+            dynamicParameters.Add("@UserGUID", objloginModel.Guid);
             if (Connection == null)
                 throw new ArgumentException(nameof(Connection), "The database connection cannot be null.");
 
