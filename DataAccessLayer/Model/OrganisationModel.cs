@@ -67,4 +67,15 @@ namespace DataAccessLayer.Model
         public long Value { get; set; }
         public string? Text { get; set; }
     }
+    public class OrganisationModules
+    {
+        public string? Moduleid
+        {
+            get;set;
+        }
+        public string? ModuleName { get; set; }
+        public string? MenuType { get; set; }
+        public string? ParentId {  get; set; }
+
+    }
 }
