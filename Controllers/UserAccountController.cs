@@ -6,9 +6,6 @@ using System.Data;
 using WebApi.Services;
 using DataAccessLayer.Services;
 using WebApi.Services.Interface;
-using NLog;
-using Org.BouncyCastle.Asn1.Esf;
-
 
 namespace WebApi.Controllers
 {
