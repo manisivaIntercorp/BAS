@@ -73,7 +73,7 @@ namespace DataAccessLayer.Implementation
         }
 
         // 🔹 Fetch Org Details and Update Connection String
-        public async Task<List<OrgDetails?>> GetOrgDetailsByUserId(long? userId)
+        public async Task<List<OrgDetails?>> GetOrgDetailsByUserId(long? userId, UserAccountModel? model)
         {
             if (Connection.Database != "MasterData") // To Change the DB Name into Master DB
             {
@@ -82,6 +82,7 @@ namespace DataAccessLayer.Implementation
             }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserId", userId);
+            parameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
             parameters.Add("@Mode", Common.PageMode.GET_ORG);
 
             var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
@@ -93,7 +94,7 @@ namespace DataAccessLayer.Implementation
             return orgDetails;
         }
 
-        public async Task<List<OrgDetails?>> GetOrgDetailsByUserName(string? username)
+        public async Task<List<OrgDetails?>> GetOrgDetailsByUserName(string? username, UpdateUserAccountModel model)
         {
             if (Connection.Database != "MasterData") // To Change the DB Name into Master DB
             {
@@ -102,6 +103,7 @@ namespace DataAccessLayer.Implementation
             }
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@UserName", username);
+            parameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
             parameters.Add("@Mode", Common.PageMode.GET_ORG);
 
             var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
@@ -112,7 +114,46 @@ namespace DataAccessLayer.Implementation
             var orgDetails = multi.Read<OrgDetails?>().ToList();
             return orgDetails;
         }
+        public async Task<List<OrgDetails?>> GetOrgDetailsByInsertClientUserName(string? username, UserAccountModel model)
+        {
+            if (Connection.Database != "MasterData") // To Change the DB Name into Master DB
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@UserName", username);
+            parameters.Add("@dtOrgRights", JsonConvert.SerializeObject(model?.UserAccountOrgTable), DbType.String);
+            parameters.Add("@Mode", Common.PageMode.GET_ORG);
 
+            var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+
+            var orgDetails = multi.Read<OrgDetails?>().ToList();
+            return orgDetails;
+        }
+        public async Task<List<OrgDetails?>> GetOrgDetailsByResetPasswordUserName(string? username)
+        {
+            if (Connection.Database != "MasterData") // To Change the DB Name into Master DB
+            {
+                string? masterConnection = _configuration.GetConnectionString("connection");
+                Connection = new SqlConnection(masterConnection);
+            }
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@UserName", username);
+            
+            parameters.Add("@Mode", Common.PageMode.GET_ORG);
+
+            var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                parameters,
+                transaction: Transaction,
+                commandType: CommandType.StoredProcedure);
+
+            var orgDetails = multi.Read<OrgDetails?>().ToList();
+            return orgDetails;
+        }
         public async Task<List<OrgDetails?>> GetOrgDetailsByGUID(string? GUID)
         {
             DynamicParameters parameters = new DynamicParameters();
@@ -268,25 +309,24 @@ namespace DataAccessLayer.Implementation
                 }
                 var UserGuid = parameters.Get<string?>("@UserGuid");
                 var vPassword = model?.UserPassword + UserGuid;
+                if (UserGuid != null) {
+                    DynamicParameters parameterPassword = new DynamicParameters();
 
+                    parameterPassword.Add("@UserId", model?.UserId);
+                    parameterPassword.Add("@UserName", model?.UserName);
+                    parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
+                    parameterPassword.Add("@Mode", Common.PageMode.UPDATE_USER_PASSWORD);
+                    parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
 
-                DynamicParameters parameterPassword = new DynamicParameters();
+                    using var vPasswordUpdate = await Connection.QueryMultipleAsync(
+                        "sp_UserAccountCreation",
+                        parameterPassword,
+                        transaction: Transaction,
+                        commandType: CommandType.StoredProcedure);
 
-                parameterPassword.Add("@UserId", model?.UserId);
-                parameterPassword.Add("@UserName", model?.UserName);
-                parameterPassword.Add("@Password", EncryptShaAlg.Encrypt(vPassword));
-                parameterPassword.Add("@Mode", Common.PageMode.UPDATE_USER_PASSWORD);
-                parameterPassword.Add("@PasswordRetVal", dbType: DbType.Int32, direction: ParameterDirection.Output);
-
-                using var vPasswordUpdate = await Connection.QueryMultipleAsync(
-                    "sp_UserAccountCreation",
-                    parameterPassword,
-                    transaction: Transaction,
-                    commandType: CommandType.StoredProcedure);
-
-                model!.UserPassword = EncryptShaAlg.Encrypt(vPassword);
-                model.Guid = UserGuid;
-
+                    model!.UserPassword = EncryptShaAlg.Encrypt(vPassword);
+                    model.Guid = UserGuid;
+                }
                 long RetVal = parameters.Get<long>("@RetVal");
                 model.UserId = parameters.Get<long>("@RetVal");
                 string Msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
@@ -299,11 +339,11 @@ namespace DataAccessLayer.Implementation
                         {
                             
                             var orgName = row["OrgName"] != DBNull.Value ? row["OrgName"]?.ToString() : null;
-                            var OrgGuid = _httpContextAccessor?.HttpContext?.Session.GetString("OrgName");
-                            if (orgName != "string" && orgName==OrgGuid)
+                            
+                            if (orgName != "string")
                             {
                                 // 🌟 Fetch Org Details and Change Connection
-                                OrgDetails = await GetOrgDetailsByUserId(Convert.ToInt32(RetVal));
+                                OrgDetails = await GetOrgDetailsByUserId(Convert.ToInt32(RetVal),model);
                                 if (OrgDetails != null && OrgDetails.Any())
                                 {
                                     var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
@@ -313,7 +353,7 @@ namespace DataAccessLayer.Implementation
 
                                     foreach (var org in OrgDetails)
                                     {
-                                        if (org != null && orgName==org.OrgName)
+                                        if (org != null)
                                         {
                                             if((org.DBName!=null && org.DBName !=string.Empty) && (org.InstanceName!=null && org.InstanceName!=string.Empty)
                                                 && (org.ConUserName!=null && org.ConUserName!=string.Empty)
@@ -400,7 +440,7 @@ namespace DataAccessLayer.Implementation
             {
                 await resultClient.ReadAsync();
             }
-            OrgDetails = await GetOrgDetailsByUserName(Convert.ToString(model.UserName));
+            OrgDetails = await GetOrgDetailsByInsertClientUserName(Convert.ToString(model.UserName),model);
             long RetValClient = clientParameters.Get<long>("@RetVal");
             string MsgClient = clientParameters.Get<string?>("@Msg") ?? "No Records Found";
             var UserGuid = clientParameters.Get<string?>("@UserGuid");
@@ -483,8 +523,6 @@ namespace DataAccessLayer.Implementation
         // To Delete Client Database
         public async Task<(bool deleteuseraccount, List<DeleteResult>)> DeleteClientUserAccount(long UpdatedBy, DeleteUserAccount deleteUserAccount)
         {
-
-
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@tblDelete", JsonConvert.SerializeObject(deleteUserAccount.UserAccountDeleteTable));
             parameters.Add("@UpdatedBy", UpdatedBy);
@@ -675,6 +713,7 @@ namespace DataAccessLayer.Implementation
                 long retVal = parameters.Get<long>("@RetVal");
                 string msg = parameters.Get<string?>("@Msg") ?? "No Records Found";
                 var UserGuid = parameters.Get<string?>("@UserGuid");
+            if (UserGuid!=null) {
                 var vPassword = model?.UserPassword + UserGuid;
 
 
@@ -694,6 +733,8 @@ namespace DataAccessLayer.Implementation
 
                 model.UserPassword = EncryptShaAlg.Encrypt(vPassword);
                 model.MasterGuid = UserGuid;
+            }
+                
                 List<OrgDetails?> OrgDetails = new List<OrgDetails?>();
                 if (retVal >= 1)
                 {
@@ -702,11 +743,11 @@ namespace DataAccessLayer.Implementation
                         foreach (DataRow row in model?.UserAccountOrgTable.Rows)
                         {
                             var orgname = row["OrgName"] != DBNull.Value ? row["OrgName"]?.ToString() : null;
-                            var OrgGuid = _httpContextAccessor?.HttpContext?.Session.GetString("OrgName");
-                            if (orgname != "string" && orgname==OrgGuid)
+                            
+                            if (orgname != "string")
                             {
                                 // 🌟 Fetch Org Details and Change Connection
-                                OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
+                                OrgDetails = await GetOrgDetailsByUserName(model?.UserName,model);
                                 if (OrgDetails != null && OrgDetails.Any())
                                 {
                                     var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
@@ -716,7 +757,7 @@ namespace DataAccessLayer.Implementation
 
                                     foreach (var org in OrgDetails)
                                     {
-                                        if (org != null && orgname == org.OrgName)
+                                        if (org != null)
                                         {
                                             if ((org.DBName != null && org.DBName != string.Empty) && (org.InstanceName != null && org.InstanceName != string.Empty)
                                                 && (org.ConUserName != null && org.ConUserName != string.Empty)
@@ -828,7 +869,7 @@ namespace DataAccessLayer.Implementation
                 if (retVal >= 1)
                 {
                     // 🌟 Fetch Org Details and Change Connection
-                    OrgDetails = await GetOrgDetailsByUserName(model?.UserName);
+                    OrgDetails = await GetOrgDetailsByUserName(model?.UserName,model);
                     if (OrgDetails != null && OrgDetails.Any())
                     {
                         var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
@@ -1112,7 +1153,7 @@ namespace DataAccessLayer.Implementation
                     if (retVal >= 1)
                     {
                         // 🌟 Fetch Org Details and Change Connection
-                        OrgDetails = await GetOrgDetailsByUserName(model.UserName);
+                        OrgDetails = await GetOrgDetailsByResetPasswordUserName(model.UserName);
                         if (OrgDetails != null && OrgDetails.Any())
                         {
                             var strdbname = _httpContextAccessor?.HttpContext?.Session.GetString("DBName");
