@@ -7,6 +7,7 @@ using WebApi.Services;
 using DataAccessLayer.Services;
 using WebApi.Services.Interface;
 using NLog;
+using Org.BouncyCastle.Asn1.Esf;
 
 
 namespace WebApi.Controllers
@@ -337,10 +338,10 @@ namespace WebApi.Controllers
                         return BadRequest("OrgDataTable ActiveOrg is invalid. Only 'Y' or 'N' are allowed.");
                     }
                 }
-                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
-                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
-                    string response = _sessionService.GetSession(Common.SessionVariables.Guid);
-                    objModel.UserAccount.CreatedBy = userId;
+                string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                objModel.UserAccount.CreatedBy = userId;
                 if (!string.IsNullOrEmpty(response))
                 {
                     await _auditLogService.LogAction("", "InsertUserAccount", "");
@@ -349,113 +350,9 @@ namespace WebApi.Controllers
                         if (GuidOrg?.OrgName != "string" || GuidOrg?.OrgName == "string")
                         {
                             string OrgGuid = await _guid.GetGUIDBasedOnOrgName(GuidOrg?.OrgName);
-                            _sessionService.SetSession("OrgName", OrgGuid);
-                            if (OrgGuid == GuidOrg?.OrgName)
+                            if (OrgGuid != GuidOrg?.OrgName)
                             {
-                                DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDataTable, 0);
-                                DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, userId, 0);
-                                using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
-                                {
-                                    //var insertCheckResult = await _repo.UserAccountDALRepo.InsertCheckUserAccount(objModel.UserAccount);
-
-                                    //if(insertCheckResult.InsertedUsers != null)
-                                    //{
-                                    //    switch (insertCheckResult.RetVal) {
-                                    //        case 0:// Success
-
-                                    //            break;
-                                    //        case 1:// Already Exists
-                                    //            _logger.LogError("UserName Already exists: " + (objModel.UserAccount.UserName ?? "Already Exists"));
-                                    //            return BadRequest("UserName " + (objModel.UserAccount.UserName ?? "Already Exists") +" Already Exists");
-
-                                    //    }
-                                    //}
-                                    var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
-                                    _repo.Commit();
-
-                                    if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
-                                    {
-                                        if (!string.IsNullOrEmpty(GuidOrg?.OrgName) && GuidOrg?.OrgName != "string")
-                                        {
-                                            if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) &&
-                                                 (result.OrgDetails != null && result.OrgDetails.Count > 0))
-                                            {
-                                                switch (result.RetVal)
-                                                {
-                                                    case 0:
-                                                    case -1://Already Exists
-                                                        responseMsg = result.Msg ?? string.Empty;
-
-                                                        break;
-
-                                                    case >= 1:
-                                                        result.Msg = "User Account Created Successfully";
-                                                        responseMsg = result.Msg ?? string.Empty;
-                                                        await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
-                                                                                            result.RetVal,
-                                                                                            objModel.UserAccount.UserPassword);
-
-                                                        break;
-
-                                                    default:
-                                                        _logger.LogError(Environment.NewLine);
-                                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                                        return NotFound("User Account Already Exists" + BadRequest());
-                                                }
-
-                                            }
-                                            else
-                                            {
-                                                _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                                return BadRequest("Please Check Organization Name");
-                                            }
-                                        }
-                                        else if ((!string.IsNullOrEmpty(GuidOrg?.OrgName) && GuidOrg?.OrgName == "string") || (string.IsNullOrEmpty(GuidOrg?.OrgName) && GuidOrg?.OrgName == "string"))
-                                        {
-                                            if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) ||
-                                           (result.OrgDetails != null && result.OrgDetails.Count == 0))
-                                            {
-                                                switch (result.RetVal)
-                                                {
-                                                    case 0:
-                                                    case -1://Already Exists
-                                                        responseMsg = result.Msg ?? string.Empty;
-
-                                                        break;
-
-                                                    case >= 1:
-                                                        responseMsg = result.Msg ?? string.Empty;
-                                                        await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
-                                                                                            result.RetVal,
-                                                                                            objModel.UserAccount.UserPassword);
-
-                                                        break;
-
-                                                    default:
-                                                        _logger.LogError(Environment.NewLine);
-                                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                                        return NotFound("User Account Already Exists" + BadRequest());
-                                                }
-
-                                            }
-                                            else
-                                            {
-                                                _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                                return BadRequest("Please Check Organization Name");
-                                            }
-                                        }
-                                    }
-
-                                    else
-                                    {
-                                        return BadRequest($"Please Check Org Name {GuidOrg?.OrgName}");
-                                    }
-                                }
-                                
-                            }
-                            else
-                            {
-                                return BadRequest("Please Check the Master Guid");
+                                return BadRequest("Please Check the Org Name"+"("+GuidOrg?.OrgName+")");
                             }
                             if (GuidOrg?.OrgName == "")
                             {
@@ -463,17 +360,60 @@ namespace WebApi.Controllers
                             }
                         }
                     }
+                    DataTable dataTable = objModel.UserAccount.ConvertToDataTable(objModel.OrgDataTable, 0);
+                    DataTable dataTableRole = objModel.UserAccount.ConvertToDataTable(objModel.RoleNameList, userId, 0);
+                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
+                    {
+                        var result = await _repo.UserAccountDALRepo.InsertUpdateUserAccount(objModel.UserAccount);
+                        _repo.Commit();
+                        if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
+                        {
+                            if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) &&
+                                 (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                            {
+                                switch (result.RetVal)
+                                {
+                                    case 0:
+                                    case -1://Already Exists
+                                        responseMsg = result.Msg ?? string.Empty;
+
+                                        break;
+
+                                    case >= 1:
+                                        result.Msg = "User Account Created Successfully";
+                                        responseMsg = result.Msg ?? string.Empty;
+                                        await _emailService.SendMailMessage(EmailTemplateCode.USER_ACCOUNT_CREATED, -1,
+                                                                            result.RetVal,
+                                                                            objModel.UserAccount.UserPassword);
+
+                                        break;
+
+                                    default:
+                                        _logger.LogError(Environment.NewLine);
+                                        _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                        return NotFound("User Account Already Exists" + BadRequest());
+                                }
+
+                            }
+                            else
+                            {
+                                _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                return BadRequest("Please Check Organization Name");
+                            }
+                        }
+                    }
+                    return Ok(responseMsg);
                 }
                 else
                 {
                     return BadRequest(Common.Messages.Login);
                 }
-                return Ok(responseMsg);
+
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message + "  " + ex.StackTrace);
-                
+
                 throw;
             }
         }
@@ -590,87 +530,50 @@ namespace WebApi.Controllers
                                 if (org?.OrgName != "string" || org?.OrgName == "string")
                                 {
                                     string OrgGuid = await _guid.GetGUIDBasedOnOrgName(org?.OrgName);
-                                    _sessionService.SetSession("OrgName", OrgGuid);
-                                    if (org?.OrgName == OrgGuid) {
-                                        DataTable dataTable = userAccount.UserAccount.ConvertToDataTable(userAccount.OrgDataTable, userAccount.UserAccount.MasterGuid);
-                                        DataTable dataTableRole = userAccount.UserAccount.ConvertToDataTable(userAccount.RoleNameList, userId, userAccount.UserAccount.MasterGuid);
-                                        using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
-                                        {
-                                            var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
-                                            _repo.Commit();
-                                            if (result.updateuseraccount != null || result.OrgDetails == null || result.OrgDetails != null)
-                                            {
-                                                if (!string.IsNullOrEmpty(org?.OrgName) && org?.OrgName != "string")
-                                                {
-                                                    if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) &&
-                                                        (result.OrgDetails != null && result.OrgDetails.Count > 0))
-                                                    {
-                                                        switch (result.RetVal)
-                                                        {
-                                                            case 0:
-                                                            case -1://Already Exists
-                                                                responseMsg = result.Msg ?? string.Empty;
-                                                                break;
-
-                                                            case >= 1:
-                                                                responseMsg = result.Msg ?? string.Empty;
-
-                                                                break;
-
-                                                            default:
-                                                                _logger.LogError(Environment.NewLine);
-                                                                _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                                                return NotFound("User Account Already Exists" + BadRequest());
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                                        return BadRequest("Please Check Organization Name");
-                                                    }
-
-                                                }
-                                                else if (!string.IsNullOrEmpty(org?.OrgName) && org?.OrgName == "string")
-                                                {
-                                                    if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) ||
-                                                   (result.OrgDetails != null && result.OrgDetails.Count == 0))
-                                                    {
-                                                        switch (result.RetVal)
-                                                        {
-                                                            case 0:
-                                                            case -1://Already Exists
-                                                                responseMsg = result.Msg ?? string.Empty;
-
-                                                                break;
-
-                                                            case >= 1:
-                                                                responseMsg = result.Msg ?? string.Empty;
-                                                                break;
-
-                                                            default:
-                                                                _logger.LogError(Environment.NewLine);
-                                                                _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
-                                                                return NotFound("User Account Already Exists" + BadRequest());
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                                        return BadRequest("Please Check Organization Name");
-                                                    }
-                                                }
-                                            }
-
-                                        }
-                                    } 
-                                    else
-                                    {
-                                        return BadRequest("Please Check the Master Guid");
+                                    if (org?.OrgName != OrgGuid) {
+                                        return BadRequest("Please Check the Org Name"+"("+org?.OrgName+")");
                                     }
+                                    
                                 }
                                 if (org?.OrgName == "")
                                 {
                                     return BadRequest("OrgName should not be empty");
+                                }
+                            }
+                            DataTable dataTable = userAccount.UserAccount.ConvertToDataTable(userAccount.OrgDataTable, userAccount.UserAccount.MasterGuid);
+                            DataTable dataTableRole = userAccount.UserAccount.ConvertToDataTable(userAccount.RoleNameList, userId, userAccount.UserAccount.MasterGuid);
+                            using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
+                            {
+                                var result = await _repo.UserAccountDALRepo.UpdateUserAccountAsync(userAccount?.UserAccount);
+                                _repo.Commit();
+                                if (result.updateuseraccount != null || result.OrgDetails == null || result.OrgDetails != null)
+                                {
+                                    if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) &&
+                                        (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                        {
+                                            switch (result.RetVal)
+                                            {
+                                                case 0:
+                                                case -1://Already Exists
+                                                    responseMsg = result.Msg ?? string.Empty;
+                                                    break;
+
+                                                case >= 1:
+                                                    responseMsg = result.Msg ?? string.Empty;
+
+                                                    break;
+
+                                                default:
+                                                    _logger.LogError(Environment.NewLine);
+                                                    _logger.LogError("Bad Request occurred while accessing the InsertUpdateUserAccount function in User Account api controller");
+                                                    return NotFound("User Account Already Exists" + BadRequest());
+                                            }
+                                    }
+                                    else
+                                    {
+                                        _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
+                                        return BadRequest("Please Check Organization Name");
+                                    }
                                 }
                             }
                         }
