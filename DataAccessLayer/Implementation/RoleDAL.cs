@@ -44,13 +44,12 @@ namespace DataAccessLayer.Implementation
             return multi.Read<GetRoleModel>().ToList();
         }
 
-        public async Task<(RoleModel? rolemodel,List<Modules?> ModuleDatatable)> getModulesBasedOnRole(string? RoleGUID, string? IsPayrollAccessible, long? updatedBy)
+        public async Task<(RoleModel? rolemodel,List<Modules?> ModuleDatatable)> getModulesBasedOnRole(string? RoleGUID,long? updatedBy)
         {
             DynamicParameters parameters = new DynamicParameters();
             parameters.Add("@RoleGUID", RoleGUID);
-            parameters.Add("@IsPayrollAccessible", IsPayrollAccessible);
             parameters.Add("@UpdatedBy", updatedBy);
-            parameters.Add("@Mode", "GET_MODULE_INFORMATION");
+            parameters.Add("@Mode", Common.PageMode.GET_MODULE_INFORMATION);
             var multi = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                                                              parameters,
                                                              transaction: Transaction,
@@ -120,11 +119,11 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LevelID", model?.LevelID);
             parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model?.ModuleTable), DbType.String);
             parameters.Add("@UpdatedBy", model?.CreatedBy);
-             parameters.Add("@Mode", Common.PageMode.ADD);
+            parameters.Add("@Mode", Common.PageMode.EDIT);
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
 
-            parameters.Add("@RoleGUID", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
+            parameters.Add("@RoleGUID", model?.RoleGuid);
             var result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
                                                               parameters,
                                                               transaction: Transaction,
