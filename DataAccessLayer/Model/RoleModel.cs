@@ -6,7 +6,7 @@ namespace DataAccessLayer.Model
     public class RoleModel
     {
         public DataTable ModuleTable = new DataTable();
-        public DataTable ConvertToDataTable(List<ModulesDatatable> models)
+        public DataTable ConvertToDataTable(List<ModulesDatatable?> models)
         {
             
             // Define columns dynamically based on the model's properties
@@ -40,10 +40,13 @@ namespace DataAccessLayer.Model
         public long RoleId { get; set; }
         public string? RoleName { get; set; }
         public string? IsAdmin { get; set; }
+        [JsonIgnore]
         public string? IsEntityAdmin { get; set; }
+        [JsonIgnore]
         public string? Active { get; set; }
         [JsonIgnore]
         public long CreatedBy { get; set; }
+        [JsonIgnore]
         public string? IsPayrollAccessible { get; set; }
         public string? DisplayPDPAData { get; set; }
         public int LevelID { get; set; }
@@ -89,10 +92,12 @@ namespace DataAccessLayer.Model
         public long RoleId { get; set; }
         public string? RoleName { get; set; }
         public string? IsAdmin { get; set; }
+        [JsonIgnore]
         public string? IsEntityAdmin { get; set; }
         public string? Active { get; set; }
         [JsonIgnore]
         public long CreatedBy { get; set; }
+        [JsonIgnore]
         public string? IsPayrollAccessible { get; set; }
         public string? DisplayPDPAData { get; set; }
         public int LevelID { get; set; }
@@ -110,28 +115,27 @@ namespace DataAccessLayer.Model
 
     public class Modules
     {
-        public string? SelectedMode { get; set; }
-        
-        public string? ItemID { get; set; }
-        public string ? ItemDesc { get; set; }
-        public string ? ParentID { get; set; }
-        public string? Type { get; set; }
-        public string? Selected { get; set;}
-        public string? Color { get; set; }
-        public long MenuOrder { get; set; }
-        public long FunctionID { get; set; }
-        public string? code { get; set; }
-        
+        public string? ModuleID { get; set; }
+        public string? ModuleName { get; set; }
+        public string ? MenuType { get; set; }
+        public string? ParentID { get; set; }
+        public string? Add { get; set; }
+        public string? Edit { get; set; }
+        public string? Delete { get; set; }
+        public string? View { get; set; }
+        public string? Cancel { get; set; }
+        public string? ViewOnlyOwnData { get; set; }
+        public string? ViewRate { get; set; }
     }
     public class RoleUpdateRequest
     {
         public RoleModel? RoleModel { get; set; }
-        public List<ModulesDatatable>? ModuleDatatable { get; set; }
+        public List<ModulesDatatable?> ModuleDatatable { get; set; }
     }
     public class RoleInsertUpdateRequest
     {
         public GetRoleModel? RoleModel { get; set; }
-        public List<ModulesDatatable>? ModuleDatatable { get; set; }
+        public List<ModulesDatatable?> ModuleDatatable { get; set; }
     }
     public class GetRoleUpdateRequest
     {
