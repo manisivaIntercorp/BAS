@@ -69,8 +69,8 @@ namespace WebApi.Controllers
         }
        
         // This Method while Showing the Module Records Based UserID
-        [HttpGet("getModulesBasedOnRole/{RoleGUID}/{IsPayrollAccessible}")]
-        public async Task<IActionResult> getModulesBasedOnRole(string RoleGUID,string IsPayrollAccessible)
+        [HttpGet("getModulesBasedOnRole/{RoleGUID}")]
+        public async Task<IActionResult> getModulesBasedOnRole(string RoleGUID)
         {
             try
             {
@@ -85,7 +85,7 @@ namespace WebApi.Controllers
                         string? guidresp = await _guid.GetGUIDBasedOnUserRoleGuid(RoleGUID);
                         if (guidresp == RoleGUID)
                         {
-                            var objRoleModel = await _repo.RoleDALRepo.getModulesBasedOnRole(RoleGUID, IsPayrollAccessible, userId);
+                            var objRoleModel = await _repo.RoleDALRepo.getModulesBasedOnRole(RoleGUID,userId);
                             if (objRoleModel.ModuleDatatable == null || objRoleModel.ModuleDatatable != null)
                             {
                                 var responseUpdate = new GetRoleUpdateRequest
