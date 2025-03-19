@@ -119,13 +119,15 @@ namespace DataAccessLayer.Model
         public string? ModuleName { get; set; }
         public string ? MenuType { get; set; }
         public string? ParentID { get; set; }
-        public string? Add { get; set; }
+        public string? AdjustOrder { get; set; }
         public string? Edit { get; set; }
         public string? Delete { get; set; }
         public string? View { get; set; }
-        public string? Cancel { get; set; }
-        public string? ViewOnlyOwnData { get; set; }
+        public string? Correct { get; set; }
+        public string? ViewHistory { get; set; }
         public string? ViewRate { get; set; }
+        public string? Create { get; set; }
+        public string? ImportExport { get; set; }
     }
     public class RoleUpdateRequest
     {
