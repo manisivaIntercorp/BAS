@@ -120,7 +120,43 @@ namespace WebApi.Controllers
                 throw;
             }
         }
-        
+
+        [HttpGet("getModulesBasedOnInsertRole")]
+        public async Task<IActionResult> getModulesBasedOnInsertRole()
+        {
+            try
+            {
+                using (IUowRole _repo = new UowRole(_httpContextAccessor))
+                {
+                    string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                    long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                    //string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                    //if (!string.IsNullOrEmpty(response))
+                    //{
+                    await _auditLogService.LogAction("", "getModulesBasedOnInsertRole", "");
+                    var objRoleModel = await _repo.RoleDALRepo.getModulesBasedOnInsertRole(userId);
+                    if (objRoleModel == null || objRoleModel != null)
+                    {
+                        return Ok(objRoleModel);
+                    }
+                    else
+                    {
+                        return BadRequest(Common.Messages.NoRecordsFound);
+                    }
+                   //}
+                    //else
+                    //{
+                    //    return BadRequest(Common.Messages.Login);
+                    //}
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+
         [HttpPost("InsertRole")]
         public async Task<IActionResult> InsertRole(RoleUpdateRequest objModel)
         {
