@@ -6,6 +6,7 @@ using DataAccessLayer.Uow.Interface;
 using Microsoft.Data.SqlClient;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DataAccessLayer.Uow.Implementation
 {
@@ -92,7 +93,11 @@ namespace DataAccessLayer.Uow.Implementation
         {
             get
             {
-                return objRoleDAL == null ? objRoleDAL = new RoleDAL(transaction) : objRoleDAL;
+                IHttpContextAccessor httpContextAccessor = new HttpContextAccessor();
+                IConfiguration configuration = httpContextAccessor.HttpContext?.RequestServices.GetService<IConfiguration>()
+                                                ?? throw new InvalidOperationException("Configuration service is not available.");
+
+                return objRoleDAL == null ? objRoleDAL = new RoleDAL(httpContextAccessor, configuration) : objRoleDAL;
             }
         }
 
