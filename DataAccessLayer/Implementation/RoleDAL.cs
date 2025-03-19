@@ -1,6 +1,9 @@
 ﻿using Dapper;
 using DataAccessLayer.Interface;
 using DataAccessLayer.Model;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Data;
 
@@ -8,10 +11,14 @@ namespace DataAccessLayer.Implementation
 {
     public class RoleDAL: RepositoryBase, IRoleDAL
     {
-        public RoleDAL(IDbTransaction _transaction) : base(_transaction)
+        private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public RoleDAL(IHttpContextAccessor httpContextAccessor, IConfiguration configuration) : base(new SqlConnection(configuration.GetConnectionString("connection")))
         {
-
+            _httpContextAccessor = httpContextAccessor;
+            _configuration = configuration;
         }
+
     public async Task<(bool? DeleteRole, List<DeleteRoleInformation?> deleteRoleInformation)> DeleteRole(RolesDelete? rolesdelete,long UserId)
         {
             DynamicParameters parameters = new DynamicParameters();
@@ -58,6 +65,22 @@ namespace DataAccessLayer.Implementation
             var Moduleinfo = (await multi.ReadAsync<Modules?>()).ToList();
             
             return (Roles, Moduleinfo);
+        }
+
+        public async Task<List<Modules?>> getModulesBasedOnInsertRole(long? updatedBy)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@RoleGuid", string.Empty);
+            parameters.Add("@UpdatedBy", updatedBy);
+            parameters.Add("@Mode", Common.PageMode.GET_MODULE_INFORMATION);
+            var multi = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
+                                                             parameters,
+                                                             transaction: Transaction,
+                                                             commandType: CommandType.StoredProcedure);
+            
+            var ModuleInfo = (await multi.ReadAsync<Modules?>()).ToList();
+
+            return ModuleInfo;
         }
 
         public async Task<(List<RoleModel?> roleModels, long? RetVal, string? Msg)> InsertUpdateRole(RoleModel? model)
@@ -162,7 +185,7 @@ namespace DataAccessLayer.Implementation
             parameters.Add("@LevelID", model.LevelID);
             parameters.Add("@tblRARDetail", JsonConvert.SerializeObject(model.ModuleTable), DbType.String);
             parameters.Add("@UpdatedBy", model.CreatedBy);
-             parameters.Add("@Mode", Common.PageMode.EDIT);
+            parameters.Add("@Mode", Common.PageMode.EDIT);
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             var result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
