@@ -3,6 +3,7 @@ using DataAccessLayer.Model;
 using DataAccessLayer.Uow.Implementation;
 using DataAccessLayer.Uow.Interface;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System;
@@ -170,6 +171,30 @@ namespace WebApi.Controllers
 
                 else
                 {
+                    using (IUowRole _repoModule = new UowRole(_httpContextAccessor))
+                    {
+                        foreach (var Module in objModel.ModuleDatatable)
+                        {
+                            if(Module.RARMode!="" && Module.RARMode!="string")
+                            {
+                             string RarMode= await _repoModule.RoleDALRepo.ModuleTypeCheckBeforeInsert(Module.RARMode);
+                                _repoModule.Commit();
+                                if (!string.IsNullOrEmpty(RarMode) && RarMode.Contains(Module.RARMode))
+                                {
+                                    
+                                }
+                                else
+                                {
+                                    return BadRequest("Invalid Mode "+ Module.RARMode);
+                                }
+                            }
+                            else if(Module.RARMode=="string")
+                            {
+                                return BadRequest("Invalid Mode " + Module.RARMode);
+                            }
+                        }
+                        
+                    }
                     using (IUowRole _repo = new UowRole(_httpContextAccessor))
                     {
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
@@ -179,6 +204,7 @@ namespace WebApi.Controllers
                         {
                             objModel.RoleModel.CreatedBy = userId;
                             await _auditLogService.LogAction("", "InsertRole", "");
+                            
                             DataTable dataTable = objModel.RoleModel.ConvertToDataTable(objModel.ModuleDatatable);
                             var result = await _repo.RoleDALRepo.InsertUpdateRole(objModel.RoleModel);
                             var msg = "Role Inserted Successfully";
@@ -299,6 +325,30 @@ namespace WebApi.Controllers
 
                 else
                 {
+                    using (IUowRole _repoModule = new UowRole(_httpContextAccessor))
+                    {
+                        foreach (var Module in objModel.ModuleDatatable)
+                        {
+                            if (Module.RARMode != "" && Module.RARMode != "string")
+                            {
+                                string RarMode = await _repoModule.RoleDALRepo.ModuleTypeCheckBeforeInsert(Module.RARMode);
+                                _repoModule.Commit();
+                                if (!string.IsNullOrEmpty(RarMode) && RarMode.Contains(Module.RARMode))
+                                {
+
+                                }
+                                else
+                                {
+                                    return BadRequest("Invalid Mode " + Module.RARMode);
+                                }
+                            }
+                            else if (Module.RARMode == "string")
+                            {
+                                return BadRequest("Invalid Mode " + Module.RARMode);
+                            }
+                        }
+
+                    }
                     using (IUowRole _repo = new UowRole(_httpContextAccessor))
                     {
                         string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
