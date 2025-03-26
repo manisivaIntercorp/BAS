@@ -7,6 +7,8 @@ namespace DataAccessLayer.Interface
         Task<List<GetRoleModel>> GetAllRole(long UpdatedBy);
         
         Task<(List<RoleModel?> roleModels, long? RetVal,string? Msg)> InsertUpdateRole(RoleModel? LM);
+
+        Task<string> ModuleTypeCheckBeforeInsert(string? RARMode);
         Task<(List<GetRoleModel?> roleModels, long? RetVal, string? Msg)> UpdateRole(GetRoleModel? LM);
         Task<(bool? DeleteRole, List<DeleteRoleInformation?> deleteRoleInformation)> DeleteRole(RolesDelete? rolesDelete,long UserId );
         Task<(RoleModel? rolemodel,List<Modules?> ModuleDatatable)> getModulesBasedOnRole(string? RoleGUID, long? UserGUID );
