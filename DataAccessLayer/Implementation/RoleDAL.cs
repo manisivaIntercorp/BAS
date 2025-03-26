@@ -6,6 +6,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using System.Data;
+using System.Threading.Tasks;
 
 namespace DataAccessLayer.Implementation
 {
@@ -126,7 +127,33 @@ namespace DataAccessLayer.Implementation
             return (roles, retVal, msg);
         }
 
+        public async Task<string> ModuleTypeCheckBeforeInsert(string? RarMode)
+        {
+            DynamicParameters parameters = new DynamicParameters();
 
+            parameters.Add("@ModuleMode", RarMode);
+            
+            parameters.Add("@Mode", Common.PageMode.CHECK_ModuleType);
+            
+            var result = await Connection.QueryMultipleAsync("dbo.sp_RoleUserCreation",
+                                                              parameters,
+                                                              transaction: Transaction,
+                                                              commandType: CommandType.StoredProcedure);
+
+
+            string output = string.Empty; // Default output
+
+            // Ensure all result sets are consumed to retrieve the output parameters
+            while (!result.IsConsumed)
+            {
+                var data = result.Read<string>().FirstOrDefault(); // Assume result contains string data
+                if (!string.IsNullOrEmpty(data))
+                {
+                    output = data; // Capture meaningful result
+                }
+            }
+            return output;
+        }
         public async Task<(List<GetRoleModel?> roleModels, long? RetVal, string? Msg)> UpdateRole(GetRoleModel? model)
         {
             DynamicParameters parameters = new DynamicParameters();
