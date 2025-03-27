@@ -209,7 +209,6 @@ namespace WebApi.Controllers
 
         //Getting Specific User ID from User Account Creation
         [HttpGet("GetUserAccountByGUId/{guid}")]
-
         public async Task<IActionResult> GetUserAccountByGUId(string guid)
         {
             try
@@ -225,6 +224,66 @@ namespace WebApi.Controllers
                         if (guid.Equals(guidresp))
                         {
                             var objuseraccountModel = await _repo.UserAccountDALRepo.GetUserAccountByGUId(guid);
+                            var response = new UserAccountResponse();
+                            if (objuseraccountModel.userAccounts != null || objuseraccountModel.UserRoles != null || objuseraccountModel.Org != null)
+                            {
+                                if (objuseraccountModel.userAccounts?.UserID is not null and 0)
+                                {
+                                    // Return 204 No Content
+                                    return NoContent();
+                                }
+                                if (objuseraccountModel.userAccounts?.UserID != null && objuseraccountModel.userAccounts.UserID != 0)
+                                {
+                                    response = new UserAccountResponse
+                                    {
+                                        User = objuseraccountModel.userAccounts,
+                                        Roles = objuseraccountModel.UserRoles,
+                                        Organizations = objuseraccountModel.Org
+                                    };
+
+                                }
+                                return Ok(response);
+
+                            }
+
+                        }
+                        else
+                        {
+                            return BadRequest("Please Check GUID");
+                        }
+                    }
+                    else
+                    {
+                        return BadRequest(Common.Messages.Login);
+                    }
+                    return Ok();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+                throw;
+            }
+        }
+
+        //Getting Specific User ID from User Account Creation
+        [HttpGet("ViewUserAccountByGUId/{guid}")]
+
+        public async Task<IActionResult> ViewUserAccountByGUId(string guid)
+        {
+            try
+            {
+                using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
+                {
+                    string responseGUId = _sessionService.GetSession(Common.SessionVariables.Guid);
+
+                    if (!string.IsNullOrEmpty(responseGUId))
+                    {
+                        await _auditLogService.LogAction("", "GetUserAccountByGUId", "");
+                        string? guidresp = await _guid.GetGUIDBasedOnUserGuid(guid);
+                        if (guid.Equals(guidresp))
+                        {
+                            var objuseraccountModel = await _repo.UserAccountDALRepo.ViewUserAccountByGUId(guid);
                             var response = new UserAccountResponse();
                             if (objuseraccountModel.userAccounts != null || objuseraccountModel.UserRoles != null || objuseraccountModel.Org != null)
                             {
@@ -305,7 +364,57 @@ namespace WebApi.Controllers
                 throw;
             }
         }
+        [HttpPost("CheckUserAccountBeforeInsert")]
+        public async Task<IActionResult> CheckUserAccountBeforeInsert(string UserName)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
 
+                string responseMsg = string.Empty;
+                string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
+                long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
+                string response = _sessionService.GetSession(Common.SessionVariables.Guid);
+                if (!string.IsNullOrEmpty(response))
+                {
+                    var userAccountModel = new UserAccountModel();
+                    userAccountModel.UserName = UserName;
+                    await _auditLogService.LogAction("", "CheckUserAccountBeforeInsert", "");
+                    using (IUowUserAccount _repo = new UowUserAccount(_httpContextAccessor))
+                    {
+                        var insertCheckResult = await _repo.UserAccountDALRepo.InsertCheckUserAccount(userAccountModel);
+                        if (insertCheckResult.InsertedUsers != null)
+                        {
+                            switch (insertCheckResult.RetVal)
+                            {
+                                case 0:// Success
+                                    return Ok(insertCheckResult.Msg);
+
+                                case 1:// Already Exists
+                                    _logger.LogError("UserName Already exists: " + (userAccountModel.UserName ?? "Already Exists"));
+                                    return BadRequest("UserName " + (userAccountModel.UserName ?? "Already Exists") + " Already Exists");
+                            }
+                        }
+
+                        return Ok(responseMsg);
+
+                    }
+                }
+                else
+                {
+                    return BadRequest(Common.Messages.Login);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex.Message + "  " + ex.StackTrace);
+
+                throw;
+            }
+        }
         //Insert New User Account Creation
         [HttpPost("insertUserAccount")]
         public async Task<IActionResult> InsertUserAccount(UserAccountInsertRequest objModel)
@@ -330,10 +439,10 @@ namespace WebApi.Controllers
                 {
                     // Check if ActiveOrg is neither "Y" nor "N" and is not null
                     var activeOrg = org?.ActiveOrg;
-                    if (!string.IsNullOrEmpty(activeOrg) && activeOrg != "Y" && activeOrg != "N")
-                    {
-                        return BadRequest("OrgDataTable ActiveOrg is invalid. Only 'Y' or 'N' are allowed.");
-                    }
+                    //if (!string.IsNullOrEmpty(activeOrg) && activeOrg != "Y" && activeOrg != "N")
+                    //{
+                    //    return BadRequest("OrgDataTable ActiveOrg is invalid. Only 'Y' or 'N' are allowed.");
+                    //}
                 }
                 string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                 long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
@@ -366,7 +475,7 @@ namespace WebApi.Controllers
                         if (result.InsertedUsers != null || result.OrgDetails == null || result.OrgDetails != null)
                         {
                             if ((result.InsertedUsers != null && result.InsertedUsers.Count > 0) &&
-                                 (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                 (result.OrgDetails != null))
                             {
                                 switch (result.RetVal)
                                 {
@@ -392,11 +501,7 @@ namespace WebApi.Controllers
                                 }
 
                             }
-                            else
-                            {
-                                _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                return BadRequest("Please Check Organization Name");
-                            }
+                            
                         }
                     }
                     return Ok(responseMsg);
@@ -422,10 +527,7 @@ namespace WebApi.Controllers
             {
                 return BadRequest("Invalid input data.");
             }
-            else if (userAccount?.Active != "Y" && userAccount?.Active != "N")
-            {
-                return BadRequest("Active  invalid. Only 'Y' or 'N' are allowed.");
-            }
+            
             else
             {
                 try
@@ -489,28 +591,14 @@ namespace WebApi.Controllers
         [HttpPut("updateUserAccount")]
         public async Task<IActionResult> UpdateUserAccount([FromBody] UserAccountUpdateRequest userAccount)
         {
-            if (userAccount == null)
+            if (userAccount == null && userAccount.UserAccount==null)
             {
                 return BadRequest("Invalid input data.");
             }
-            else if (userAccount?.UserAccount?.Active != "Y" && userAccount?.UserAccount?.Active != "N")
-            {
-                return BadRequest("Active  invalid. Only 'Y' or 'N' are allowed.");
-            }
-
             else
             {
                 try
                 {
-                    foreach (var org in userAccount.OrgDataTable)
-                    {
-                        // Check if ActiveOrg is neither "Y" nor "N" and is not null
-                        var activeOrg = org?.ActiveOrg;
-                        if (!string.IsNullOrEmpty(activeOrg) && activeOrg != "Y" && activeOrg != "N")
-                        {
-                            return BadRequest("OrgDataTable ActiveOrg is invalid. Only 'Y' or 'N' are allowed.");
-                        }
-                    }
                     string responseMsg = string.Empty;
                     string userIdStr = _sessionService.GetSession(Common.SessionVariables.UserID);
                     long userId = !string.IsNullOrEmpty(userIdStr) ? Convert.ToInt64(userIdStr) : 0;
@@ -546,7 +634,7 @@ namespace WebApi.Controllers
                                 if (result.updateuseraccount != null || result.OrgDetails == null || result.OrgDetails != null)
                                 {
                                     if ((result.updateuseraccount != null && result.updateuseraccount.Count > 0) &&
-                                        (result.OrgDetails != null && result.OrgDetails.Count > 0))
+                                        (result.OrgDetails != null))
                                         {
                                             switch (result.RetVal)
                                             {
@@ -566,11 +654,7 @@ namespace WebApi.Controllers
                                                     return NotFound("User Account Already Exists" + BadRequest());
                                             }
                                     }
-                                    else
-                                    {
-                                        _logger.LogError("Organization not found: " + (result.OrgDetails?.FirstOrDefault()?.OrgName ?? "Unknown Org"));
-                                        return BadRequest("Please Check Organization Name");
-                                    }
+                                   
                                 }
                             }
                         }
