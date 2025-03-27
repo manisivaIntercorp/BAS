@@ -193,13 +193,12 @@ namespace DataAccessLayer.Implementation
                 }
             }
             DynamicParameters parameters = new DynamicParameters();
-            parameters.Add("@UserId", model?.UserId);
             parameters.Add("@UserName", model?.UserName);
             
             parameters.Add("@RetVal", dbType: DbType.Int64, direction: ParameterDirection.Output);
             parameters.Add("@Msg", dbType: DbType.String, size: 200, direction: ParameterDirection.Output);
             
-            parameters.Add("@Mode", "CHECKUSEREXISTS");
+            parameters.Add("@Mode", Common.PageMode.CHECKUSEREXISTS);
 
             try
             {
@@ -634,7 +633,22 @@ namespace DataAccessLayer.Implementation
             return (UserAccount, RoleDetails, UserAccountOrg);
         }
 
-        
+        public async Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> ViewUserAccountByGUId(string? GUId)
+        {
+            DynamicParameters parameters = new DynamicParameters();
+            parameters.Add("@UserGuid", GUId);
+            parameters.Add("@Mode", Common.PageMode.VIEW);
+            var multi = await Connection.QueryMultipleAsync("sp_UserAccountCreation",
+                                                             parameters,
+                                                             transaction: Transaction,
+                                                             commandType: CommandType.StoredProcedure);
+            var UserAccount = (await multi.ReadAsync<GetUserAccount>())?.FirstOrDefault();
+            var RoleDetails = (await multi.ReadAsync<GetUserAccountRole>())?.ToList();
+            var UserAccountOrg = (await multi.ReadAsync<GetUserAccountOrg>())?.ToList();
+            return (UserAccount, RoleDetails, UserAccountOrg);
+        }
+
+
 
         public async Task<List<OrgDetails?>> GetOrgDetailsByUserGUId()
         {
