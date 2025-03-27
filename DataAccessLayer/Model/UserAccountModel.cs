@@ -168,6 +168,9 @@ namespace DataAccessLayer.Model
         [JsonIgnore]
         public DateTime? UserExpiryDateTime { get; set; }
         public string? ProfileImg { get; set; }
+        public string? LanguageName { get; set; }
+        public string? UserPolicyName { get; set; }
+        public string? RoleName { get; set; }
     }
     public class UpdateUserAccountModel
     {
