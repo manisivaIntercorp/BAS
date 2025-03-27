@@ -84,6 +84,9 @@ namespace DataAccessLayer.Model
             public const string GET_MODULE_INFORMATION= "GET_MODULE_INFORMATION";
             public const string GET_ORGMODULES= "GET_ORGMODULES";
             public const string MODULES = "MODULES";
+            public const string GET_PARENT= "GET_PARENT";
+            public const string GET_CLIENT_DETAIL = "GET_CLIENT_DETAIL";
+            public const string CHECK_ModuleType = "CHECK_ModuleType";
         }
     }
 
