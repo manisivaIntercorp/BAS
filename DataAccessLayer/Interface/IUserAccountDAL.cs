@@ -12,7 +12,7 @@ namespace DataAccessLayer.Interface
         Task<List<UserTimeZoneName?>> getAllUserTimeZoneInDropdown();
 
         Task<List<GetRoleName?>> getAllUserRoleInDropdown();
-        Task<(List<UserAccountModel?> InsertedUsers,  long? RetVal, string? Msg)> InsertCheckUserAccount(UserAccountModel? UM);
+        Task<(List<UserAccountModel?> InsertedUsers,  long? RetVal, string? Msg)> InsertCheckUserAccount(UserAccountModel? model);
         Task<(List<UserAccountModel?> InsertedUsers, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> InsertUpdateUserAccount(UserAccountModel? UM);
 
         Task<(List<DeleteRoleName?> deleteroles, int? RetVal, string? Msg)> DeleteRoleInUserAccount(DeleteRoleName RM);
@@ -23,6 +23,7 @@ namespace DataAccessLayer.Interface
         Task<(bool deleteuseraccount, List<DeleteResult> deleteResults)> DeleteUserAccount(long UpdatedBy,DeleteUserAccount deleteUserAccount);
 
         Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> GetUserAccountByGUId(string? GUId);
+        Task<(GetUserAccount? userAccounts, List<GetUserAccountRole>? UserRoles, List<GetUserAccountOrg>? Org)> ViewUserAccountByGUId(string? GUId);
         Task<List<OrgDetails?>> GetOrgDetailsByUserGUId();
 
         Task<(List<UpdateUserAccountModel?> updateuseraccount, List<OrgDetails?> OrgDetails, long? RetVal, string? Msg)> UpdateUserAccountAsync(UpdateUserAccountModel? userAccount);
